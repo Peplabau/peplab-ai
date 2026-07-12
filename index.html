@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#070A12" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Critical paint — dark shell before JS/CSS bundles load (prevents mobile FOUC) -->
+    <style>
+      html { background-color: #070A12; color-scheme: dark; }
+      body {
+        margin: 0;
+        background-color: #070A12;
+        color: #F4F6FA;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+        min-height: 100dvh;
+        background-color: #070A12;
+      }
+      @keyframes _plspin { to { transform: rotate(360deg); } }
+      @keyframes _plpulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+    </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://dbhoyrqehxbjvdvddixc.supabase.co" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-PS75R6HS');</script>
+    <!-- End Google Tag Manager -->
+
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="any" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
+    <!-- Google Search Console site verification — add the meta tag Google gives you when verifying peplab.com.au -->
+    <meta name="google-site-verification" content="iLycILwhUwN61SX6HC-gthDhN_4IUe3EywyhIpjNL5s" />
+    <meta name="google-site-verification" content="oK3daUWOAVvZQpyJIURiQAjIFTn6OpBU-Yc4OwZRmKc" />
+
+    <!-- ═══════════════════════════════════════════════
+         PRIMARY SEO
+    ════════════════════════════════════════════════ -->
+    <title>PEPLAB | Peptides Australia</title>
+    <meta name="description" content="Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only." />
+    <meta name="keywords" content="peptides australia, bpc 157 australia, bpc 157, bpc 157 peptide, buy bpc 157, buy peptides australia, buy peptides, bpc 157 pure, peptide 157, semaglutide peptide buy, bpc peptide, bpc 157 tb 500, best place to buy peptides australia, bpc 157 near me, order bpc 157, bpc 157 10mg, bpc 157 purchase, ghk peptide, tb 500 and bpc 157, bpc 157 5mg, bpc 157 reviews, bpc 157 peptide australia, bpc 157 injections, tb 500 bpc 157, purchase bpc 157, BPC-157 Australia, TB-500 Australia, buy peptides Australia, research peptides Australia, GHK-Cu Australia, Retatrutide for sale Australia, Semaglutide peptide Australia, Tirzepatide Australia, peptide supplier Sydney, HPLC tested peptides, lab grade peptides online, domestic peptide shipping Australia" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://peplab.com.au/" />
+
+    <!-- ═══════════════════════════════════════════════
+         GEO / LOCAL SEO
+    ════════════════════════════════════════════════ -->
+    <meta name="geo.region" content="AU-NSW" />
+    <meta name="geo.placename" content="Sydney, New South Wales, Australia" />
+
+    <!-- ═══════════════════════════════════════════════
+         OPEN GRAPH (Facebook, LinkedIn, etc.)
+    ════════════════════════════════════════════════ -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PEPLAB | Peptides Australia" />
+    <meta property="og:url" content="https://peplab.com.au/" />
+    <meta property="og:title" content="PEPLAB | Peptides Australia" />
+    <meta property="og:description" content="Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only." />
+    <meta property="og:image" content="https://peplab.com.au/chrome-seo.jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="PEPLAB — Peptides Australia" />
+    <meta property="og:locale" content="en_AU" />
+
+    <!-- ═══════════════════════════════════════════════
+         TWITTER / X CARD
+    ════════════════════════════════════════════════ -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@peplab_au" />
+    <meta name="twitter:title" content="PEPLAB | Peptides Australia" />
+    <meta name="twitter:description" content="Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only." />
+    <meta name="twitter:image" content="https://peplab.com.au/chrome-seo.jpeg" />
+
+    <!-- ═══════════════════════════════════════════════
+         STRUCTURED DATA — Organization + Website
+    ════════════════════════════════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://peplab.com.au/#organization",
+          "name": "PEPLAB | Peptides Australia",
+          "url": "https://peplab.com.au/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://peplab.com.au/favicon.png"
+          },
+          "image": "https://peplab.com.au/chrome-seo.jpeg",
+          "description": "Australian research peptide supplier. HPLC-verified, domestic shipping, ≥99% purity.",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Sydney",
+            "addressRegion": "NSW",
+            "addressCountry": "AU"
+          },
+          "areaServed": "AU",
+          "sameAs": [
+            "https://t.me/peplabau",
+            "https://www.trustpilot.com/review/peplab.com.au"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://peplab.com.au/#website",
+          "url": "https://peplab.com.au/",
+          "name": "PEPLAB | Peptides Australia",
+          "publisher": { "@id": "https://peplab.com.au/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://peplab.com.au/?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://peplab.com.au/#webpage",
+          "url": "https://peplab.com.au/",
+          "name": "PEPLAB | Peptides Australia",
+          "description": "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.",
+          "primaryImageOfPage": {
+            "@type": "ImageObject",
+            "url": "https://peplab.com.au/chrome-seo.jpeg",
+            "width": 1200,
+            "height": 630
+          },
+          "isPartOf": { "@id": "https://peplab.com.au/#website" },
+          "about": { "@id": "https://peplab.com.au/#organization" }
+        },
+        {
+          "@type": "ItemList",
+          "@id": "https://peplab.com.au/#sitewide-primary-nav",
+          "name": "PEPLAB primary pages",
+          "description": "Main sections PEPLAB links to from navigation and footer (helps crawlers infer site structure; Google sitelinks are still automated).",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Shop — research peptides catalogue", "url": "https://peplab.com.au/" },
+            { "@type": "ListItem", "position": 2, "name": "COA archive — published certificates", "url": "https://peplab.com.au/coa" },
+            { "@type": "ListItem", "position": 3, "name": "Reconstitution calculator", "url": "https://peplab.com.au/calculator" },
+            { "@type": "ListItem", "position": 4, "name": "About — quality & laboratory standards", "url": "https://peplab.com.au/standards" },
+            { "@type": "ListItem", "position": 5, "name": "Contact", "url": "https://peplab.com.au/contact-info" },
+            { "@type": "ListItem", "position": 6, "name": "FAQ", "url": "https://peplab.com.au/faq" },
+            { "@type": "ListItem", "position": 7, "name": "Shipping", "url": "https://peplab.com.au/shipping" },
+            { "@type": "ListItem", "position": 8, "name": "Leaderboard", "url": "https://peplab.com.au/leaderboard" },
+            { "@type": "ListItem", "position": 9, "name": "Track order", "url": "https://peplab.com.au/track-order" },
+            { "@type": "ListItem", "position": 10, "name": "Marketing landing", "url": "https://peplab.com.au/landing" },
+            { "@type": "ListItem", "position": 11, "name": "BPC-157", "url": "https://peplab.com.au/product/bpc-157" },
+            { "@type": "ListItem", "position": 12, "name": "Retatrutide", "url": "https://peplab.com.au/product/retatrutide" },
+            { "@type": "ListItem", "position": 13, "name": "GHK-Cu", "url": "https://peplab.com.au/product/ghk-cu" }
+          ]
+        }
+      ]
+    }
+    </script>
+  </head>
+  <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PS75R6HS"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div id="root"></div>
+    <!--
+      Inline loading shell — outside #root so React never auto-removes it.
+      App.tsx useEffect fades it out after the first browser paint (when CSS is
+      fully computed), eliminating the flash of unstyled content on mobile.
+    -->
+    <div id="app-loading" style="
+      position: fixed;
+      inset: 0;
+      background: #070A12;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 99999;
+      pointer-events: none;
+    ">
+      <!-- Wordmark — identical to navbar logo -->
+      <div style="display:flex;flex-direction:column;align-items:flex-start;">
+        <span style="
+          font-family: 'Sora', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          font-size: clamp(2rem, 8vw, 3rem);
+          line-height: 1;
+          user-select: none;
+          background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        ">PEPLAB</span>
+        <span style="
+          font-family: 'IBM Plex Mono', ui-monospace, monospace;
+          font-size: clamp(0.45rem, 1.8vw, 0.6rem);
+          font-weight: 500;
+          letter-spacing: 0.45em;
+          text-transform: uppercase;
+          color: #8B5CF6;
+          margin-top: 0.3rem;
+          animation: _plpulse 2s ease-in-out infinite;
+        ">PEPTIDES AUSTRALIA</span>
+      </div>
+      <!-- Spinner -->
+      <div style="
+        width: 24px;
+        height: 24px;
+        border: 2px solid rgba(46, 209, 180, 0.15);
+        border-top-color: #2ED1B4;
+        border-radius: 50%;
+        animation: _plspin 0.75s linear infinite;
+        margin-top: 0.5rem;
+      "></div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

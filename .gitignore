@@ -1,0 +1,22 @@
+/node_modules
+/dist
+/build
+.DS_Store
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+
+
+config.bat
+.venv/
+
+# Local environment variables — never commit real values.
+# `.env.example` (tracked) documents which variables to set.
+.env
+.env.local
+.env.*.local

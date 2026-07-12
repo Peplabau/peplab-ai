@@ -1,0 +1,69 @@
+import { useMemo, useRef, useState } from 'react';
+import { getStaticProducts } from '@/landing/lib/static-data';
+import type { Product } from '@/landing/products';
+import { shopPageUrl } from '@/landing/lib/site';
+import { useNewLandingReveal } from '@/landing/hooks/useNewLandingReveal';
+
+function categoryLabel(product: Product): string | null {
+  const raw = (product.category || product.type || '').replace(/-/g, ' ').trim();
+  if (!raw) return null;
+  return raw.toUpperCase();
+}
+
+function CatalogPill({ product }: { product: Product }) {
+  const tag = categoryLabel(product);
+
+  return (
+    <a href={shopPageUrl()} className="nl-catalog-pill">
+      {tag && <span className="nl-catalog-pill-tag">{tag}</span>}
+      <span className="font-semibold">{product.name}</span>
+    </a>
+  );
+}
+
+export default function NewLandingCatalogStrip() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const [products] = useState<Product[]>(() => getStaticProducts());
+
+  useNewLandingReveal(sectionRef, { start: 'top 92%' });
+
+  const marqueeProducts = useMemo(() => {
+    if (products.length === 0) return [];
+    const minItems = 12;
+    const repeated: Product[] = [];
+    while (repeated.length < minItems) {
+      repeated.push(...products);
+    }
+    return [...repeated, ...repeated];
+  }, [products]);
+
+  return (
+    <section ref={sectionRef} className="nl-catalog-strip relative z-20" aria-label="Live catalog">
+      <div className="nl-featured-container">
+        <div className="nl-catalog-strip-layout">
+          <div className="nl-catalog-strip-left nl-reveal-item">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nl-accent)] opacity-50" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--nl-accent)]" />
+            </span>
+            <span className="text-xs font-mono uppercase tracking-[0.14em] text-[var(--nl-accent)] font-bold whitespace-nowrap">
+              Live catalog
+            </span>
+          </div>
+
+          <div className="nl-catalog-marquee nl-catalog-strip-scroll nl-reveal-item">
+            {marqueeProducts.length > 0 ? (
+              <div className="nl-catalog-marquee-track">
+                {marqueeProducts.map((product, i) => (
+                  <CatalogPill key={`${product.id}-${i}`} product={product} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-[var(--nl-text-muted)] font-mono">Loading catalog…</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

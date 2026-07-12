@@ -1,0 +1,10 @@
+## Netlify build configuration for Vite (React SPA)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback so deep links work (served as index.html)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

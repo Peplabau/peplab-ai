@@ -1,0 +1,20 @@
+# https://supabase.com/docs/guides/cli/config
+# Guest checkout emails — lock down with rate limits / CAPTCHA in production if exposed.
+
+[functions.send-email]
+verify_jwt = false
+
+# -----------------------------------------------------------------------------
+# Auth — frictionless signup (no email verification)
+# -----------------------------------------------------------------------------
+# `enable_confirmations = false` lets new users land in their dashboard the
+# moment they hit "Create my account", with no verification email gate. The
+# branded welcome email is still sent from the app for context.
+#
+# IMPORTANT: this `config.toml` only affects a LOCAL Supabase stack started via
+# `supabase start`. For the hosted/production project you must mirror this in
+# the Supabase Dashboard:
+#   Authentication → Sign In / Up → Email → toggle "Confirm email" OFF.
+[auth.email]
+enable_signup = true
+enable_confirmations = false

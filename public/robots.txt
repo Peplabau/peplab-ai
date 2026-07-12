@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /checkout
+Disallow: /login
+Disallow: /settings
+Disallow: /promoter
+Disallow: /forgot-password
+Disallow: /reset-password
+Sitemap: https://peplab.com.au/sitemap.xml
