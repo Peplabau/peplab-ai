@@ -1,14 +1,15 @@
-import { Suspense, lazy, useEffect, useLayoutEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { LANDING_PATH, SHOP_PATH } from '@/lib/routes';
+import { LANDING_PATH } from '@/lib/routes';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { CartProvider } from '@/context/CartContext';
 import { RewardsProvider } from '@/context/RewardsContext';
 import { AffiliateProvider } from '@/context/AffiliateContext';
-import { getSiteSetting, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS } from '@/lib/settings';
-import { supabase } from '@/lib/supabase';
+// `DEFAULT_LANDING_PAGE_SETTINGS` was used by the ShopRoute homepage-gate check
+// (now commented out below). Import kept out of the tree until re-enabled.
+import { getSiteSetting, DEFAULT_AFFILIATE_PROGRAM_SETTINGS } from '@/lib/settings';
 import Navigation from '@/components/Navigation';
 import CartDrawer from '@/components/CartDrawer';
 import SignupWelcomeModal from '@/components/SignupWelcomeModal';
@@ -152,54 +153,68 @@ function HomePage() {
   );
 }
 
-type ShopRouteGate = 'loading' | 'public' | 'authed' | 'login';
-
-function ShopRouteLoading() {
-  return (
-    <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-}
+// The homepage / shop is always publicly viewable on peplab.ai.
+//
+// The `landing_page_settings.enabled` toggle in the admin panel used to gate
+// this route (redirecting anonymous visitors to /login when disabled). We
+// intentionally bypass that check now — the setting is still writable from
+// admin so nothing there breaks, but it no longer affects the storefront.
+//
+// The original gating logic is preserved below (commented out) so it can be
+// restored quickly if the requirement changes.
+//
+// type ShopRouteGate = 'loading' | 'public' | 'authed' | 'login';
+//
+// function ShopRouteLoading() {
+//   return (
+//     <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
+//       <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+//     </div>
+//   );
+// }
+//
+// function ShopRoute() {
+//   const [gate, setGate] = useState<ShopRouteGate>('loading');
+//
+//   useEffect(() => {
+//     let cancelled = false;
+//     const loadGate = async () => {
+//       try {
+//         const [settings, { data: { session } }] = await Promise.all([
+//           getSiteSetting('landing_page_settings', DEFAULT_LANDING_PAGE_SETTINGS),
+//           supabase.auth.getSession(),
+//         ]);
+//         if (cancelled) return;
+//
+//         const landingEnabled = settings.enabled !== false;
+//         const isLoggedIn = Boolean(session?.user);
+//
+//         if (landingEnabled) {
+//           setGate('public');
+//         } else if (isLoggedIn) {
+//           setGate('authed');
+//         } else {
+//           setGate('login');
+//         }
+//       } catch (error) {
+//         console.error('Failed to load shop route gate:', error);
+//         if (!cancelled) setGate('public');
+//       }
+//     };
+//     loadGate();
+//     return () => {
+//       cancelled = true;
+//     };
+//   }, []);
+//
+//   if (gate === 'loading') return <ShopRouteLoading />;
+//   if (gate === 'login') {
+//     return <Navigate to={`/login?redirect=${encodeURIComponent(SHOP_PATH)}`} replace />;
+//   }
+//   return <HomePage />;
+// }
 
 function ShopRoute() {
-  const [gate, setGate] = useState<ShopRouteGate>('loading');
-
-  useEffect(() => {
-    let cancelled = false;
-    const loadGate = async () => {
-      try {
-        const [settings, { data: { session } }] = await Promise.all([
-          getSiteSetting('landing_page_settings', DEFAULT_LANDING_PAGE_SETTINGS),
-          supabase.auth.getSession(),
-        ]);
-        if (cancelled) return;
-
-        const landingEnabled = settings.enabled !== false;
-        const isLoggedIn = Boolean(session?.user);
-
-        if (landingEnabled) {
-          setGate('public');
-        } else if (isLoggedIn) {
-          setGate('authed');
-        } else {
-          setGate('login');
-        }
-      } catch (error) {
-        console.error('Failed to load shop route gate:', error);
-        if (!cancelled) setGate('public');
-      }
-    };
-    loadGate();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (gate === 'loading') return <ShopRouteLoading />;
-  if (gate === 'login') {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(SHOP_PATH)}`} replace />;
-  }
   return <HomePage />;
 }
 
