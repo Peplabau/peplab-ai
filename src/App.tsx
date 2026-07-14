@@ -364,9 +364,9 @@ function ScrollToTop() {
  * off to peplab.ai. Every unknown route hard-redirects to /login so no
  * shop content is ever rendered on that host.
  *
- * The `/login` route here renders `LoginGateway` — a stripped-down sign-in
- * page that (unlike the full `Login.tsx` used on peplab.ai) offers no
- * sign-up flow and shows the referral-gate notice.
+ * The `/login` and `/signup` routes render `LoginGateway` — sign-in for
+ * returning members and referral-gated sign-up on this host only. After auth,
+ * users are handed off to peplab.ai already logged in.
  */
 function LoginOnlyApp() {
   return (
@@ -375,6 +375,7 @@ function LoginOnlyApp() {
       <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
         <Routes>
           <Route path="/login" element={<LoginGateway />} />
+          <Route path="/signup" element={<LoginGateway />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

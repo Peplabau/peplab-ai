@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, ShoppingBag, History, Shield, Gift, TrendingUp, Users, Award, Sparkles, Zap, Ticket } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, ShoppingBag, History, Shield, Gift, TrendingUp, Users, Award, Sparkles, Zap } from 'lucide-react';
 import { useRewards, REDEMPTION_TIERS, BONUS_POINTS } from '@/context/RewardsContext';
 import { supabase, signUp, signIn, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
@@ -8,7 +8,6 @@ import { sendSignUpWelcome } from '@/lib/email';
 import { resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
 import { isLoginOnlyDomain, buildCrossDomainLoginUrl, mainAppUrl } from '@/lib/domain';
-import { validateSignupReferralCode } from '@/lib/signup-referral';
 
 // Friendly fallback message in case the Supabase project still has
 // "Confirm email" enabled. With email-confirmation OFF (recommended), users
@@ -42,9 +41,7 @@ export default function Login() {
     name: '',
     email: '',
     password: '',
-    referralCode: '',
   });
-  const [referralFromLink, setReferralFromLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useRewards();
@@ -143,38 +140,9 @@ export default function Login() {
 
   useEffect(() => {
     const emailParam = searchParams.get('email');
-    if (emailParam) {
-      setFormData((prev) => ({ ...prev, email: decodeURIComponent(emailParam) }));
-    }
-
-    const codeParam = searchParams.get('code') ?? searchParams.get('refcode');
-    if (codeParam) {
-      setFormData((prev) => ({ ...prev, referralCode: decodeURIComponent(codeParam) }));
-    }
-
-    if (getReferrerIdFromUrl()) {
-      setReferralFromLink(true);
-    }
+    if (!emailParam) return;
+    setFormData((prev) => ({ ...prev, email: decodeURIComponent(emailParam) }));
   }, [searchParams]);
-
-  const resolveSignupReferrerId = async (): Promise<string | null> => {
-    const linkedRef = getReferrerIdFromUrl();
-    if (linkedRef) {
-      const linkedCheck = await validateSignupReferralCode(linkedRef);
-      if (!linkedCheck.valid) {
-        setError(linkedCheck.error);
-        return null;
-      }
-      return linkedCheck.referrerId;
-    }
-
-    const codeCheck = await validateSignupReferralCode(formData.referralCode);
-    if (!codeCheck.valid) {
-      setError(codeCheck.error);
-      return null;
-    }
-    return codeCheck.referrerId;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,18 +151,13 @@ export default function Login() {
 
     try {
       if (isSignUp) {
-        const referrerId = await resolveSignupReferrerId();
-        if (!referrerId) {
-          setIsLoading(false);
-          return;
-        }
-
+        const referrerId = getReferrerIdFromUrl();
         const { data: signUpData, error: signUpError } = await signUp(
           formData.email,
           formData.password,
           {
             name: formData.name,
-            referrer_id: referrerId,
+            ...(referrerId ? { referrer_id: referrerId } : {}),
           },
         );
 
@@ -307,18 +270,10 @@ export default function Login() {
             </h1>
             <p className="text-[#A9B3C7]">
               {isSignUp
-                ? 'Enter your referral code to create your PEPLAB account'
+                ? 'Join PEPLAB to unlock rewards and track your orders'
                 : 'Sign in to access your account and rewards'}
             </p>
           </div>
-
-          {isSignUp && (
-            <div className="mb-4 p-4 rounded-xl bg-[rgba(46,209,180,0.08)] border border-[rgba(46,209,180,0.2)]">
-              <p className="text-sm text-[#A9B3C7] leading-relaxed">
-                New accounts need a referral code from an existing member. Past customers without a code can contact support with their order number.
-              </p>
-            </div>
-          )}
 
           {/* Error Message */}
           {error && (
@@ -341,31 +296,6 @@ export default function Login() {
               </div>
             )} */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              {isSignUp && (
-                <div>
-                  <label className="block text-sm text-[#A9B3C7] mb-2">Referral code</label>
-                  {referralFromLink ? (
-                    <div className="flex items-center gap-3 rounded-xl bg-[rgba(34,197,94,0.1)] border border-[rgba(34,197,94,0.25)] px-4 py-3">
-                      <Ticket className="w-5 h-5 text-[#22C55E] shrink-0" />
-                      <p className="text-sm text-[#22C55E]">Referral link applied — you&apos;re good to sign up.</p>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A9B3C7]" />
-                      <input
-                        type="text"
-                        value={formData.referralCode}
-                        onChange={(e) => setFormData({ ...formData, referralCode: e.target.value.toUpperCase() })}
-                        required
-                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] placeholder-[#A9B3C7] focus:outline-none focus:border-[#2ED1B4] transition-colors uppercase tracking-wide"
-                        placeholder="MEMBER-CODE"
-                        autoComplete="off"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
               {isSignUp && (
                 <div>
                   <label className="block text-sm text-[#A9B3C7] mb-2">Full Name</label>
