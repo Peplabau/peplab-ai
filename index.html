@@ -54,6 +54,21 @@
          PRIMARY SEO
     ════════════════════════════════════════════════ -->
     <title>PEPLAB | Peptides Australia</title>
+    <!-- Login-only hosts (peplab.com.au / staging.*): retitle before React loads -->
+    <script>
+      (function () {
+        var raw = '%VITE_LOGIN_ONLY_HOSTS%';
+        var hosts = raw.split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+        if (!hosts.length) hosts = ['peplab.com.au', 'www.peplab.com.au', 'staging.peplab.com.au'];
+        var h = location.hostname.toLowerCase();
+        var full = location.host.toLowerCase();
+        var loginOnly = hosts.indexOf(h) !== -1 || hosts.indexOf(full) !== -1;
+        if (!loginOnly) return;
+        document.title = 'PEPLAB | Sign in';
+        var robots = document.querySelector('meta[name="robots"]');
+        if (robots) robots.setAttribute('content', 'noindex, nofollow');
+      })();
+    </script>
     <meta name="description" content="Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only." />
     <meta name="keywords" content="peptides australia, bpc 157 australia, bpc 157, bpc 157 peptide, buy bpc 157, buy peptides australia, buy peptides, bpc 157 pure, peptide 157, semaglutide peptide buy, bpc peptide, bpc 157 tb 500, best place to buy peptides australia, bpc 157 near me, order bpc 157, bpc 157 10mg, bpc 157 purchase, ghk peptide, tb 500 and bpc 157, bpc 157 5mg, bpc 157 reviews, bpc 157 peptide australia, bpc 157 injections, tb 500 bpc 157, purchase bpc 157, BPC-157 Australia, TB-500 Australia, buy peptides Australia, research peptides Australia, GHK-Cu Australia, Retatrutide for sale Australia, Semaglutide peptide Australia, Tirzepatide Australia, peptide supplier Sydney, HPLC tested peptides, lab grade peptides online, domestic peptide shipping Australia" />
     <meta name="robots" content="index, follow" />
@@ -207,7 +222,7 @@
           -webkit-text-fill-color: transparent;
           background-clip: text;
         ">PEPLAB</span>
-        <span style="
+        <span id="app-loading-eyebrow" style="
           font-family: 'IBM Plex Mono', ui-monospace, monospace;
           font-size: clamp(0.45rem, 1.8vw, 0.6rem);
           font-weight: 500;
@@ -229,6 +244,33 @@
         margin-top: 0.5rem;
       "></div>
     </div>
+    <script>
+      (function () {
+        var raw = '%VITE_LOGIN_ONLY_HOSTS%';
+        var hosts = raw.split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+        if (!hosts.length) hosts = ['peplab.com.au', 'www.peplab.com.au', 'staging.peplab.com.au'];
+        var h = location.hostname.toLowerCase();
+        var full = location.host.toLowerCase();
+        var loginOnly = hosts.indexOf(h) !== -1 || hosts.indexOf(full) !== -1;
+        if (!loginOnly) return;
+        var title = 'PEPLAB | Sign in';
+        var description = 'Sign in to your PEPLAB account. Member access for existing customers.';
+        document.title = title;
+        var eyebrow = document.getElementById('app-loading-eyebrow');
+        if (eyebrow) eyebrow.textContent = 'SIGN IN';
+        function setMeta(sel, content) {
+          var el = document.querySelector(sel);
+          if (el) el.setAttribute('content', content);
+        }
+        setMeta('meta[name="description"]', description);
+        setMeta('meta[name="robots"]', 'noindex, nofollow');
+        setMeta('meta[property="og:title"]', title);
+        setMeta('meta[property="og:description"]', description);
+        setMeta('meta[property="og:site_name"]', 'PEPLAB');
+        setMeta('meta[name="twitter:title"]', title);
+        setMeta('meta[name="twitter:description"]', description);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

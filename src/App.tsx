@@ -36,6 +36,7 @@ const Shipping = lazy(() => import('@/pages/Shipping'));
 const ContactInfo = lazy(() => import('@/pages/ContactInfo'));
 const Standards = lazy(() => import('@/pages/Standards'));
 const Login = lazy(() => import('@/pages/Login'));
+const LoginGateway = lazy(() => import('@/pages/LoginGateway'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
@@ -355,31 +356,31 @@ function ScrollToTop() {
 }
 
 /**
- * Login-only shell mounted on peplab.com.au.
+ * Login-only shell mounted on peplab.com.au (and any host in
+ * `VITE_LOGIN_ONLY_HOSTS`).
  *
  * peplab.com.au is under threat of takedown — we deliberately expose the
  * smallest possible surface (auth flow only) and hand successful sessions
  * off to peplab.ai. Every unknown route hard-redirects to /login so no
  * shop content is ever rendered on that host.
  *
- * `RewardsProvider` is included solely because `Login.tsx` calls
- * `useRewards()` — the provider itself is a no-op for a signed-out user.
+ * The `/login` route here renders `LoginGateway` — a stripped-down sign-in
+ * page that (unlike the full `Login.tsx` used on peplab.ai) offers no
+ * sign-up flow and shows the referral-gate notice.
  */
 function LoginOnlyApp() {
   return (
-    <RewardsProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </RewardsProvider>
+    <BrowserRouter>
+      <ScrollToTop />
+      <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
+        <Routes>
+          <Route path="/login" element={<LoginGateway />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
   );
 }
 

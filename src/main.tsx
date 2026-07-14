@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { supabase } from '@/lib/supabase'
-import { CROSS_DOMAIN_LOGIN_HASH_TYPE } from '@/lib/domain'
+import { CROSS_DOMAIN_LOGIN_HASH_TYPE, applyLoginGatewayDocumentBranding } from '@/lib/domain'
 
 /**
  * Consume a cross-domain login handoff (from peplab.com.au → peplab.ai)
@@ -48,6 +48,7 @@ async function consumeCrossDomainLoginHandoff(): Promise<void> {
 }
 
 async function boot() {
+  applyLoginGatewayDocumentBranding();
   await consumeCrossDomainLoginHandoff();
   createRoot(document.getElementById('root')!).render(<App />);
 }

@@ -27,6 +27,16 @@ const DEFAULT_MAIN_APP_ORIGIN = 'https://peplab.ai';
 /** Marker in the URL hash that identifies a cross-domain login handoff. */
 export const CROSS_DOMAIN_LOGIN_HASH_TYPE = 'cross-domain-login';
 
+/** Browser tab title on the login-only host (peplab.com.au / staging.*). */
+export const LOGIN_GATEWAY_PAGE_TITLE = 'PEPLAB | Sign in';
+
+/** Subtitle under the PEPLAB wordmark in the inline loading shell on login-only hosts. */
+export const LOGIN_GATEWAY_LOADING_EYEBROW = 'SIGN IN';
+
+/** Short meta description for the login gateway — no shop/SEO copy. */
+export const LOGIN_GATEWAY_META_DESCRIPTION =
+  'Sign in to your PEPLAB account. Member access for existing customers.';
+
 function parseHostList(raw: string | undefined): string[] {
   return (raw ?? '')
     .split(',')
@@ -86,4 +96,32 @@ export function buildCrossDomainLoginUrl(params: {
     next: params.next ?? '/dashboard',
   }).toString();
   return `${MAIN_APP_ORIGIN}/#${hash}`;
+}
+
+/**
+ * Apply login-gateway branding to the static document shell.
+ *
+ * Called from `main.tsx` on boot and mirrored by an inline script in
+ * `index.html` so the browser tab title updates before React loads.
+ */
+export function applyLoginGatewayDocumentBranding(): void {
+  if (!isLoginOnlyDomain()) return;
+
+  document.title = LOGIN_GATEWAY_PAGE_TITLE;
+
+  const setMeta = (selector: string, content: string) => {
+    const el = document.querySelector(selector);
+    if (el) el.setAttribute('content', content);
+  };
+
+  setMeta('meta[name="description"]', LOGIN_GATEWAY_META_DESCRIPTION);
+  setMeta('meta[name="robots"]', 'noindex, nofollow');
+  setMeta('meta[property="og:title"]', LOGIN_GATEWAY_PAGE_TITLE);
+  setMeta('meta[property="og:description"]', LOGIN_GATEWAY_META_DESCRIPTION);
+  setMeta('meta[property="og:site_name"]', 'PEPLAB');
+  setMeta('meta[name="twitter:title"]', LOGIN_GATEWAY_PAGE_TITLE);
+  setMeta('meta[name="twitter:description"]', LOGIN_GATEWAY_META_DESCRIPTION);
+
+  const eyebrow = document.getElementById('app-loading-eyebrow');
+  if (eyebrow) eyebrow.textContent = LOGIN_GATEWAY_LOADING_EYEBROW;
 }
