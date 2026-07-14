@@ -347,7 +347,7 @@ export default function LoginGateway() {
                   </div>
                   <h1 className="text-xl font-semibold text-[#F4F6FA] mb-1">Create account</h1>
                   <p className="text-sm text-[#A9B3C7] mb-5">
-                    Enter your referral code and details. You'll be taken to peplab.ai once you're in.
+                    Enter your referral code and details. We'll take you to your account once you're in.
                   </p>
 
                   {error && (
@@ -615,7 +615,7 @@ export default function LoginGateway() {
 
                     <p className="mt-4 flex items-start gap-2 text-xs text-[#6B7280]">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#2ED1B4] shrink-0 mt-0.5" />
-                      After sign-in or sign-up you'll be taken to peplab.ai, already logged in.
+                      After signing in or signing up, you'll be redirected to the shop.
                     </p>
                   </div>
                 )}
