@@ -19,6 +19,7 @@ import {
   User,
   Ticket,
   ArrowLeft,
+  MessageCircle,
 } from 'lucide-react';
 import { supabase, signIn, signUp, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
@@ -72,6 +73,7 @@ export default function LoginGateway() {
   const [referralFromLink, setReferralFromLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [telegramLink, setTelegramLink] = useState(CONFIG.SOCIAL.TELEGRAM);
+  const [whatsappLink, setWhatsappLink] = useState(DEFAULT_SUPPORT_LINKS.whatsapp_link);
 
   const getReferrerIdFromUrl = (): string | null => {
     const params = new URLSearchParams(window.location.search || '');
@@ -122,18 +124,18 @@ export default function LoginGateway() {
   }, [searchParams]);
 
   useEffect(() => {
-    const telegramValPromise = getSiteSetting('telegram_link', {
-      url: DEFAULT_SUPPORT_LINKS.telegram_link,
-    });
     let cancelled = false;
-    telegramValPromise
-      .then((telegramVal) => {
-        if (!cancelled) {
-          setTelegramLink((telegramVal as { url?: string })?.url || DEFAULT_SUPPORT_LINKS.telegram_link);
-        }
+    Promise.all([
+      getSiteSetting('telegram_link', { url: DEFAULT_SUPPORT_LINKS.telegram_link }),
+      getSiteSetting('whatsapp_link', { url: DEFAULT_SUPPORT_LINKS.whatsapp_link }),
+    ])
+      .then(([telegramVal, whatsappVal]) => {
+        if (cancelled) return;
+        setTelegramLink((telegramVal as { url?: string })?.url || DEFAULT_SUPPORT_LINKS.telegram_link);
+        setWhatsappLink((whatsappVal as { url?: string })?.url || '');
       })
       .catch(() => {
-        /* keep default */
+        /* keep defaults */
       });
     return () => {
       cancelled = true;
@@ -345,7 +347,7 @@ export default function LoginGateway() {
                   </div>
                   <h1 className="text-xl font-semibold text-[#F4F6FA] mb-1">Create account</h1>
                   <p className="text-sm text-[#A9B3C7] mb-5">
-                    Enter your referral code and details. You&apos;ll be taken to peplab.ai once you&apos;re in.
+                    Enter your referral code and details. You'll be taken to peplab.ai once you're in.
                   </p>
 
                   {error && (
@@ -360,7 +362,7 @@ export default function LoginGateway() {
                       {referralFromLink ? (
                         <div className="flex items-center gap-3 rounded-xl bg-[rgba(34,197,94,0.1)] border border-[rgba(34,197,94,0.25)] px-4 py-3">
                           <Ticket className="w-4 h-4 text-[#22C55E] shrink-0" />
-                          <p className="text-sm text-[#22C55E]">Referral link applied — you&apos;re good to sign up.</p>
+                          <p className="text-sm text-[#22C55E]">Referral link applied — you're good to sign up.</p>
                         </div>
                       ) : (
                         <div className="relative">
@@ -598,11 +600,22 @@ export default function LoginGateway() {
                         <Send className="w-4 h-4 text-[#0088CC]" />
                         Past customer? Contact us on Telegram
                       </a>
+                      {whatsappLink ? (
+                        <a
+                          href={whatsappLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium bg-[rgba(34,197,94,0.08)] border border-[rgba(34,197,94,0.2)] text-[#A9B3C7] hover:text-[#F4F6FA] hover:border-[rgba(34,197,94,0.35)] transition-colors"
+                        >
+                          <MessageCircle className="w-4 h-4 text-[#22C55E]" />
+                          Past customer? Contact us on WhatsApp
+                        </a>
+                      ) : null}
                     </div>
 
                     <p className="mt-4 flex items-start gap-2 text-xs text-[#6B7280]">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#2ED1B4] shrink-0 mt-0.5" />
-                      After sign-in or sign-up you&apos;ll be taken straight to peplab.ai, already logged in.
+                      After sign-in or sign-up you'll be taken to peplab.ai, already logged in.
                     </p>
                   </div>
                 )}
