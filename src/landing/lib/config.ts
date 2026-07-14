@@ -6,10 +6,11 @@ export const CONFIG = {
   SHARE_PREVIEW_IMAGE_PATH: '/chrome-seo.jpeg',
   FAVICON_PATH: '/favicon.png',
   SITE_DESCRIPTION: 'Premium Peptides Australia for research. Lab-tested, fast shipping, exceptional quality.',
-  CONTACT_EMAIL: 'contact@peplab.com.au',
+  // Contact email + phone intentionally omitted — support routed via Telegram / WhatsApp.
+  CONTACT_EMAIL: '',
   BUSINESS: {
-    PHONE_TEL: '+61451111104',
-    PHONE_DISPLAY: '+61 451 111 104',
+    PHONE_TEL: '',
+    PHONE_DISPLAY: '',
     ADDRESS_LINES: ['30 Shepherd Street Liverpool NSW 2170, Australia'] as const,
     BUSINESS_HOURS: 'Mon-Fri, 9:00 AM - 5:00 PM AEST',
   },

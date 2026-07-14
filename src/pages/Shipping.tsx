@@ -1,4 +1,4 @@
-import { ArrowLeft, Truck, MapPin, Package, Globe, Mail } from 'lucide-react';
+import { ArrowLeft, Truck, MapPin, Package, Globe, MessageCircle } from 'lucide-react';
 import Footer from '@/sections/Footer';
 import { CONFIG } from '@/lib/config';
 import { SEO } from '@/components/SEO';
@@ -254,12 +254,12 @@ export default function Shipping() {
                   If you have any questions about shipping or need assistance with your order, please contact us:
                 </p>
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.08)]">
-                  <Mail className="w-5 h-5 text-[#2ED1B4]" />
-                  <a 
-                    href="mailto:contact@peplab.com.au" 
+                  <MessageCircle className="w-5 h-5 text-[#2ED1B4]" />
+                  <a
+                    href="/contact-info"
                     className="text-[#F4F6FA] hover:text-[#2ED1B4] transition-colors"
                   >
-                    contact@peplab.com.au
+                    Telegram &amp; WhatsApp support
                   </a>
                 </div>
               </section>

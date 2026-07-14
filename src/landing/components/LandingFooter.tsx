@@ -3,9 +3,7 @@ import {
   Beaker,
   Clock,
   CreditCard,
-  Mail,
   MapPin,
-  Phone,
   Shield,
   Truck,
   Zap,
@@ -190,20 +188,6 @@ export default function LandingFooter({ hideCta = false }: LandingFooterProps) {
           <div className="rg-footer-col">
             <h4 className="rg-footer-col-heading">Business details</h4>
             <ul className="rg-footer-contact-detail">
-              <li>
-                <Mail className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
-                <div>
-                  <span className="rg-footer-contact-label">Email</span>
-                  <a href={`mailto:${CONFIG.CONTACT_EMAIL}`}>{CONFIG.CONTACT_EMAIL}</a>
-                </div>
-              </li>
-              <li>
-                <Phone className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
-                <div>
-                  <span className="rg-footer-contact-label">Phone</span>
-                  <a href={`tel:${CONFIG.BUSINESS.PHONE_TEL}`}>{CONFIG.BUSINESS.PHONE_DISPLAY}</a>
-                </div>
-              </li>
               <li>
                 <MapPin className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
                 <div>

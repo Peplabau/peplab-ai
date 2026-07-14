@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Mail, Send, ArrowLeft, MessageCircle, Clock, MapPin, Phone, ExternalLink } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Send, ArrowLeft, MessageCircle, Clock, MapPin, ExternalLink } from 'lucide-react';
 import { CONFIG } from '@/lib/config';
 import { SEO } from '@/components/SEO';
+import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -12,25 +13,50 @@ export default function Contact() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [telegramLink, setTelegramLink] = useState<string>(CONFIG.SOCIAL.TELEGRAM);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    let cancelled = false;
+    getSiteSetting('support_links', DEFAULT_SUPPORT_LINKS).then((links) => {
+      if (cancelled) return;
+      if (links?.telegram_url) setTelegramLink(links.telegram_url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Contact submissions are routed through Telegram instead of email — the
+  // support email is intentionally not shown or transmitted from the browser.
+  // We open the Telegram chat in a new tab; the user pastes the message they
+  // just typed into that chat.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Create mailto link
-    const mailtoLink = `mailto:${CONFIG.CONTACT_EMAIL}?subject=${encodeURIComponent(
-      formData.subject || 'Enquiry from PEPLAB Website'
-    )}&body=${encodeURIComponent(
-      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
-    )}`;
-    
-    // Open email client
-    window.location.href = mailtoLink;
-    
-    setTimeout(() => {
+
+    try {
+      const composedMessage = [
+        formData.subject ? `Subject: ${formData.subject}` : null,
+        formData.name ? `Name: ${formData.name}` : null,
+        formData.email ? `Reply-to: ${formData.email}` : null,
+        '',
+        formData.message,
+      ]
+        .filter((line) => line !== null)
+        .join('\n');
+
+      try {
+        await navigator.clipboard?.writeText(composedMessage);
+      } catch {
+        // Clipboard may be blocked (permissions / http). Ignore — the user can
+        // retype the message in Telegram. The success screen explains this.
+      }
+
+      window.open(telegramLink, '_blank', 'noopener,noreferrer');
+    } finally {
       setIsSubmitting(false);
       setIsSent(true);
-    }, 1000);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -89,29 +115,18 @@ export default function Contact() {
             {/* Contact Info */}
             <div className="lg:col-span-1 space-y-6">
               <div className="p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-                <div className="w-10 h-10 rounded-xl bg-[rgba(46,209,180,0.1)] flex items-center justify-center mb-3">
-                  <Mail className="w-5 h-5 text-[#2ED1B4]" />
+                <div className="w-10 h-10 rounded-xl bg-[rgba(0,136,204,0.1)] flex items-center justify-center mb-3">
+                  <Send className="w-5 h-5 text-[#0088CC]" />
                 </div>
-                <h3 className="text-sm font-bold text-[#F4F6FA] mb-1">Email</h3>
+                <h3 className="text-sm font-bold text-[#F4F6FA] mb-1">Telegram support</h3>
+                <p className="text-xs text-[#A9B3C7] mb-2">Fastest way to reach us — replies typically within a few hours.</p>
                 <a
-                  href={`mailto:${CONFIG.CONTACT_EMAIL}`}
-                  className="text-sm text-[#A9B3C7] hover:text-[#2ED1B4] transition-colors break-all"
+                  href={telegramLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-[#0088CC] hover:underline break-all"
                 >
-                  {CONFIG.CONTACT_EMAIL}
-                </a>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-                <div className="w-10 h-10 rounded-xl bg-[rgba(236,72,153,0.1)] flex items-center justify-center mb-3">
-                  <Phone className="w-5 h-5 text-[#EC4899]" />
-                </div>
-                <h3 className="text-sm font-bold text-[#F4F6FA] mb-1">Phone</h3>
-                <p className="text-xs text-[#A9B3C7] mb-2">Mon–Fri, 9:00 AM–6:00 PM AEDT</p>
-                <a
-                  href={`tel:${CONFIG.BUSINESS.PHONE_TEL}`}
-                  className="text-sm text-[#A9B3C7] hover:text-[#EC4899] transition-colors"
-                >
-                  {CONFIG.BUSINESS.PHONE_DISPLAY}
+                  Open Telegram chat
                 </a>
               </div>
 
@@ -125,9 +140,6 @@ export default function Contact() {
                     <span key={line} className="block">{line}</span>
                   ))}
                 </address>
-                <p className="text-xs text-[#A9B3C7] mb-2">
-                  ABN: <span className="text-[#F4F6FA]">{CONFIG.BUSINESS.ABN}</span>
-                </p>
                 <a
                   href={mapsUrl}
                   target="_blank"
@@ -153,15 +165,25 @@ export default function Contact() {
               <div className="p-6 sm:p-8 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
                 {isSent ? (
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 mx-auto rounded-full bg-[rgba(46,209,180,0.15)] flex items-center justify-center mb-4">
-                      <MessageCircle className="w-8 h-8 text-[#2ED1B4]" />
+                    <div className="w-16 h-16 mx-auto rounded-full bg-[rgba(0,136,204,0.15)] flex items-center justify-center mb-4">
+                      <Send className="w-8 h-8 text-[#0088CC]" />
                     </div>
-                    <h3 className="text-xl font-bold text-[#F4F6FA] mb-2">Message Ready!</h3>
-                    <p className="text-sm text-[#A9B3C7] mb-6">
-                      Your email client should have opened. If not, you can email us directly at{' '}
-                      <a href={`mailto:${CONFIG.CONTACT_EMAIL}`} className="text-[#2ED1B4] hover:underline">
-                        {CONFIG.CONTACT_EMAIL}
+                    <h3 className="text-xl font-bold text-[#F4F6FA] mb-2">Telegram opened</h3>
+                    <p className="text-sm text-[#A9B3C7] mb-2">
+                      We&apos;ve opened our Telegram chat in a new tab and copied your message to the clipboard —
+                      just paste it there and hit send.
+                    </p>
+                    <p className="text-xs text-[#A9B3C7] mb-6">
+                      If the new tab didn&apos;t open,{' '}
+                      <a
+                        href={telegramLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#0088CC] hover:underline"
+                      >
+                        open Telegram support here
                       </a>
+                      .
                     </p>
                     <button
                       onClick={() => {

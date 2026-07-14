@@ -17,9 +17,13 @@ export const CONFIG = {
   // is a dev-only fallback via the Vite proxy — DO NOT set it in production
   // or the Resend key leaks into the public bundle.
   RESEND_API_KEY: import.meta.env.VITE_RESEND_API_KEY || '',
-  FROM_EMAIL: import.meta.env.VITE_FROM_EMAIL || 'contact@peplab.com.au',
-  SUPPORT_EMAIL: 'contact@peplab.com.au',
-  CONTACT_EMAIL: 'contact@peplab.com.au',
+  // FROM_EMAIL is used server-side only (Supabase Edge Function → Resend "From:" header)
+  // and by the dev-only Vite proxy path. Keep it out of the client UI.
+  FROM_EMAIL: import.meta.env.VITE_FROM_EMAIL || '',
+  // Public contact email intentionally left blank — customer-facing pages now
+  // route enquiries through the Telegram / WhatsApp support page instead.
+  SUPPORT_EMAIL: '',
+  CONTACT_EMAIL: '',
   /**
    * When false (default), transactional email uses branded HTML from code — not `email_templates` body.
    * Set VITE_EMAIL_USE_SUPABASE_HTML_TEMPLATES=true only if you maintain HTML in Supabase and want that instead.
@@ -63,9 +67,11 @@ export const CONFIG = {
   // Business Info
   BUSINESS: {
     NAME: 'PEPLAB',
-    ABN: '58 670 940 431',
-    PHONE_DISPLAY: '+61 451 111 104',
-    PHONE_TEL: '+61451111104',
+    // ABN + phone number intentionally omitted from the client bundle for
+    // privacy. They remain on official documentation only.
+    ABN: '',
+    PHONE_DISPLAY: '',
+    PHONE_TEL: '',
     ADDRESS_LINES: ['30 Shepherd Street Liverpool NSW 2170, Australia'] as const,
     BUSINESS_HOURS: 'Mon-Fri, 9:00 AM - 5:00 PM AEST',
   },

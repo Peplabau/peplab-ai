@@ -428,9 +428,9 @@ export default function Terms() {
             </p>
             <p className="text-gray-400 leading-relaxed mt-4">
               <strong className="text-white">Opt-out.</strong> You may opt out of marketing SMS messages at any time by
-              replying STOP to any marketing SMS, by using the unsubscribe link in marketing emails, or by contacting us at{' '}
-              <a href="mailto:contact@peplab.com.au" className="text-[#2ED1B4] hover:underline">
-                contact@peplab.com.au
+              replying STOP to any marketing SMS, by using the unsubscribe link in marketing emails, or by contacting us via our{' '}
+              <a href="/contact-info" className="text-[#2ED1B4] hover:underline">
+                support channels
               </a>
               . Transactional messages relating to your order, account or legal obligations may continue regardless of
               marketing opt-out preferences.
@@ -511,15 +511,9 @@ export default function Terms() {
             <div className="p-4 rounded-xl bg-[rgba(46,209,180,0.1)] border border-[rgba(46,209,180,0.2)]">
               <p className="text-white font-medium">PEPLAB</p>
               <p className="text-gray-400">
-                Website:{' '}
-                <a href="https://www.peplab.com.au" className="text-[#2ED1B4] hover:underline">
-                  https://www.peplab.com.au
-                </a>
-              </p>
-              <p className="text-gray-400">
-                Email:{' '}
-                <a href="mailto:contact@peplab.com.au" className="text-[#2ED1B4] hover:underline">
-                  contact@peplab.com.au
+                Support:{' '}
+                <a href="/contact-info" className="text-[#2ED1B4] hover:underline">
+                  Telegram &amp; WhatsApp support
                 </a>
               </p>
               <p className="text-gray-400">

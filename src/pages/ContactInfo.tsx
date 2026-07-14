@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowLeft, Mail, MessageCircle, Clock, MapPin, ExternalLink, Send, Phone } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Clock, MapPin, ExternalLink, Send } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { CONFIG } from '@/lib/config';
@@ -161,47 +161,12 @@ export default function ContactInfo() {
               Contact <span className="gradient-text">Information</span>
             </h1>
             <p className="text-base sm:text-lg text-[#A9B3C7] max-w-xl mx-auto">
-              We&apos;re here to help. Email us anytime, or scan a QR code below to jump straight into Telegram
-              or WhatsApp.
+              We&apos;re here to help. Scan a QR code below or tap through to jump straight into Telegram or WhatsApp.
             </p>
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
-            <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)] hover:border-[rgba(46,209,180,0.3)] transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-[rgba(46,209,180,0.1)] flex items-center justify-center mb-4">
-                <Mail className="w-6 h-6 text-[#2ED1B4]" />
-              </div>
-              <h3 className="text-lg font-bold text-[#F4F6FA] mb-2">Email</h3>
-              <p className="text-sm text-[#A9B3C7] mb-4">
-                Send us an email — we reply within 24–48 hours.
-              </p>
-              <a
-                href={`mailto:${CONFIG.CONTACT_EMAIL}`}
-                className="inline-flex items-center gap-2 text-[#2ED1B4] hover:underline break-all"
-              >
-                {CONFIG.CONTACT_EMAIL}
-                <ExternalLink className="w-4 h-4 shrink-0" />
-              </a>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)] hover:border-[rgba(236,72,153,0.35)] transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-[rgba(236,72,153,0.1)] flex items-center justify-center mb-4">
-                <Phone className="w-6 h-6 text-[#EC4899]" />
-              </div>
-              <h3 className="text-lg font-bold text-[#F4F6FA] mb-2">Phone</h3>
-              <p className="text-sm text-[#A9B3C7] mb-4">
-                Call or text during business hours — tap to dial on mobile.
-              </p>
-              <a
-                href={`tel:${CONFIG.BUSINESS.PHONE_TEL}`}
-                className="inline-flex items-center gap-2 text-[#EC4899] hover:underline whitespace-nowrap"
-              >
-                {CONFIG.BUSINESS.PHONE_DISPLAY}
-                <ExternalLink className="w-4 h-4 shrink-0" />
-              </a>
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)] hover:border-[rgba(0,136,204,0.35)] transition-colors">
               <div className="w-12 h-12 rounded-xl bg-[rgba(0,136,204,0.12)] flex items-center justify-center mb-4">
                 <Send className="w-6 h-6 text-[#0088CC]" />
@@ -280,9 +245,6 @@ export default function ContactInfo() {
                   <span key={line} className="block">{line}</span>
                 ))}
               </address>
-              <p className="text-sm text-[#A9B3C7] mb-4">
-                ABN: <span className="text-[#F4F6FA]">{CONFIG.BUSINESS.ABN}</span>
-              </p>
               <p className="text-sm text-[#A9B3C7] mb-4">
                 Australian-based with dispatch from our local warehouse. EU shipping available on select orders.
               </p>

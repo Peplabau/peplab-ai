@@ -4,9 +4,7 @@ import {
   Beaker,
   Clock,
   CreditCard,
-  Mail,
   MapPin,
-  Phone,
   Shield,
   Truck,
 } from 'lucide-react';
@@ -161,27 +159,6 @@ export default function Footer() {
           <div className="nl-footer-col">
             <h4 className="nl-footer-col-heading">Business details</h4>
             <ul className="nl-footer-contact-detail">
-              <li>
-                <Mail className="w-4 h-4 shrink-0 text-[#2ED1B4]" aria-hidden />
-                <div>
-                  <span className="nl-footer-contact-label">Email</span>
-                  <a href={`mailto:${CONFIG.CONTACT_EMAIL}`}>{CONFIG.CONTACT_EMAIL}</a>
-                </div>
-              </li>
-              <li>
-                <Phone className="w-4 h-4 shrink-0 text-[#2ED1B4]" aria-hidden />
-                <div>
-                  <span className="nl-footer-contact-label">Phone</span>
-                  <a href={`tel:${CONFIG.BUSINESS.PHONE_TEL}`}>{CONFIG.BUSINESS.PHONE_DISPLAY}</a>
-                </div>
-              </li>
-              <li>
-                <Shield className="w-4 h-4 shrink-0 text-[#2ED1B4]" aria-hidden />
-                <div>
-                  <span className="nl-footer-contact-label">ABN</span>
-                  <span className="nl-footer-contact-text">{CONFIG.BUSINESS.ABN}</span>
-                </div>
-              </li>
               <li>
                 <MapPin className="w-4 h-4 shrink-0 text-[#2ED1B4]" aria-hidden />
                 <div>

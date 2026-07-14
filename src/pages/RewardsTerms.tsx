@@ -258,7 +258,12 @@ export default function RewardsTerms() {
               <div className="space-y-3 text-[#A9B3C7]">
                 <p>For questions or concerns regarding the PEPLAB Rewards Program, please contact us:</p>
                 <div className="mt-4 p-4 rounded-xl bg-[rgba(7,10,18,0.5)]">
-                  <p className="text-[#F4F6FA]">Email: contact@peplab.com.au</p>
+                  <p className="text-[#F4F6FA]">
+                    Support:{' '}
+                    <a href="/contact-info" className="text-[#2ED1B4] hover:underline">
+                      Telegram &amp; WhatsApp support
+                    </a>
+                  </p>
                   <p className="text-[#A9B3C7] mt-1">Response time: 24-48 hours</p>
                 </div>
               </div>

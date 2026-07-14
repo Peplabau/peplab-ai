@@ -131,7 +131,7 @@ export default function Refund() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-[#2ED1B4] text-[#070A12] flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
-                <span>Email <a href="mailto:contact@peplab.com.au" className="text-[#2ED1B4] hover:underline">contact@peplab.com.au</a> or message us on Telegram</span>
+                <span>Message us via our <a href="/contact-info" className="text-[#2ED1B4] hover:underline">Telegram or WhatsApp support</a></span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-[#2ED1B4] text-[#070A12] flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
@@ -258,7 +258,7 @@ export default function Refund() {
             <h2 className="text-xl font-semibold text-white mb-4">9. Contact Us</h2>
             <div className="p-4 rounded-xl bg-[rgba(46,209,180,0.1)] border border-[rgba(46,209,180,0.2)]">
               <p className="text-white font-medium">PEPLAB</p>
-              <p className="text-gray-400">Email: <a href="mailto:contact@peplab.com.au" className="text-[#2ED1B4] hover:underline">contact@peplab.com.au</a></p>
+              <p className="text-gray-400">Support: <a href="/contact-info" className="text-[#2ED1B4] hover:underline">Telegram &amp; WhatsApp support</a></p>
               <p className="text-gray-400">Telegram: <a href="https://t.me/peplabau" target="_blank" rel="noopener noreferrer" className="text-[#2ED1B4] hover:underline">@peplabau</a></p>
             </div>
           </section>
