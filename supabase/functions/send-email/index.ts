@@ -4,7 +4,13 @@
  * Dashboard: Edge Functions → Create → name: send-email → paste this file.
  * Secrets (Edge Functions → send-email → Secrets, or Project Settings → Edge Functions):
  *   RESEND_API_KEY       = re_...
- *   RESEND_FROM_EMAIL    = contact@peplab.com.au
+ *   RESEND_FROM_EMAIL    = noreply@peplab.ai
+ *   RESEND_FROM_NAME     = PEPLAB   (optional — defaults to PEPLAB)
+ *
+ * After changing the from address you must:
+ *   1. Verify peplab.ai as a sending domain in Resend (SPF/DKIM DNS records).
+ *   2. Update the RESEND_FROM_EMAIL secret above in Supabase — the code cannot
+ *      change production secrets; that step is manual in the dashboard.
  *
  * Settings: allow unauthenticated invoke if you use guest checkout
  *   (CLI: supabase/config.toml verify_jwt = false for this function)
@@ -14,6 +20,15 @@ const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+/** Build a Resend-compatible From header, e.g. `PEPLAB <noreply@peplab.ai>`. */
+function resolveFromAddress(): string | null {
+  const email = Deno.env.get("RESEND_FROM_EMAIL")?.trim();
+  if (!email) return null;
+  if (email.includes("<") && email.includes(">")) return email;
+  const name = Deno.env.get("RESEND_FROM_NAME")?.trim() || "PEPLAB";
+  return `${name} <${email}>`;
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -29,7 +44,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const key = Deno.env.get("RESEND_API_KEY");
-    const from = Deno.env.get("RESEND_FROM_EMAIL");
+    const from = resolveFromAddress();
     if (!key || !from) {
       return new Response(
         JSON.stringify({
