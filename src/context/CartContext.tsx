@@ -3,7 +3,12 @@ import { supabase, getCurrentUser } from '@/lib/supabase';
 import { getCartLineUnitPrice } from '@/utils/pricing';
 import { CONFIG } from '@/lib/config';
 import { sendAbandonedCart } from '@/lib/email';
-import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, type DiscountSettings } from '@/lib/settings';
+import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, type DiscountSettings, type FreeGiftSettings } from '@/lib/settings';
+import {
+  isBrokenFreeGiftImage,
+  loadFreeGiftSettings,
+  resolveFreeGiftCartItem,
+} from '@/lib/free-gift';
 
 export interface CartItem {
   productId: string;
@@ -39,21 +44,11 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const FREE_GIFT_THRESHOLD = 300;
-const FREE_GIFT_ITEM: CartItem = {
-  productId: 'free-bac-water',
-  name: 'BAC Water',
-  dosage: '3 mL',
-  price: 0,
-  quantity: 1,
-  image: '/bac-water.png',
-  isFree: true,
-};
-
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [freeGiftAdded, setFreeGiftAdded] = useState(false);
+  const [freeGiftSettings, setFreeGiftSettings] = useState<FreeGiftSettings>(DEFAULT_FREE_GIFT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   /** Last server-side cart update (for abandoned-cart email timing) */
@@ -76,7 +71,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     void (async () => {
       const s = await getSiteSetting('discount_settings', DEFAULT_DISCOUNT_SETTINGS);
-      if (!cancelled) setBundleDiscountSettings(s);
+      const gift = await loadFreeGiftSettings();
+      if (!cancelled) {
+        setBundleDiscountSettings(s);
+        setFreeGiftSettings(gift);
+      }
     })();
     return () => {
       cancelled = true;
@@ -204,20 +203,68 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Auto-add/remove free gift based on threshold
   useEffect(() => {
-    const hasFreeGift = items.some(item => item.isFree);
-    
-    if (paidItemsTotal >= FREE_GIFT_THRESHOLD && !hasFreeGift) {
-      const newItems = [...items, FREE_GIFT_ITEM];
+    if (isLoading) return;
+    if (freeGiftSettings.enabled === false) {
+      if (items.some((item) => item.isFree)) {
+        const newItems = items.filter((item) => !item.isFree);
+        setItems(newItems);
+        void saveCartToSupabase(newItems);
+      }
+      setFreeGiftAdded(false);
+      return;
+    }
+
+    const threshold = freeGiftSettings.threshold ?? DEFAULT_FREE_GIFT_SETTINGS.threshold;
+    const hasFreeGift = items.some((item) => item.isFree);
+
+    if (paidItemsTotal >= threshold && !hasFreeGift) {
+      let cancelled = false;
+      void resolveFreeGiftCartItem(freeGiftSettings).then((giftItem) => {
+        if (cancelled) return;
+        setItems((prev) => {
+          if (prev.some((item) => item.isFree)) return prev;
+          const next = [...prev, giftItem];
+          void saveCartToSupabase(next);
+          return next;
+        });
+        setFreeGiftAdded(true);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (paidItemsTotal < threshold && hasFreeGift) {
+      const newItems = items.filter((item) => !item.isFree);
       setItems(newItems);
-      saveCartToSupabase(newItems);
-      setFreeGiftAdded(true);
-    } else if (paidItemsTotal < FREE_GIFT_THRESHOLD && hasFreeGift) {
-      const newItems = items.filter(item => !item.isFree);
-      setItems(newItems);
-      saveCartToSupabase(newItems);
+      void saveCartToSupabase(newItems);
       setFreeGiftAdded(false);
     }
-  }, [paidItemsTotal, items, saveCartToSupabase]);
+  }, [isLoading, paidItemsTotal, items, saveCartToSupabase, freeGiftSettings]);
+
+  // Repair persisted free-gift lines that still point at missing static assets.
+  useEffect(() => {
+    if (isLoading) return;
+    const freeItem = items.find((item) => item.isFree);
+    if (!freeItem || !isBrokenFreeGiftImage(freeItem.image)) return;
+
+    let cancelled = false;
+    void resolveFreeGiftCartItem(freeGiftSettings).then((giftItem) => {
+      if (cancelled || !giftItem.image) return;
+      setItems((prev) => {
+        const next = prev.map((item) =>
+          item.isFree
+            ? { ...item, image: giftItem.image, name: giftItem.name, dosage: giftItem.dosage }
+            : item,
+        );
+        void saveCartToSupabase(next);
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, items, freeGiftSettings, saveCartToSupabase]);
 
   // Logged-in users: one cart reminder per ~7 days if the cart was last updated 24+ hours ago and still has items.
   useEffect(() => {

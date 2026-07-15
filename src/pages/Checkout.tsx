@@ -21,6 +21,7 @@ import { useRewards, REDEMPTION_TIERS } from '@/context/RewardsContext';
 import { useAffiliate } from '@/context/AffiliateContext';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 import { CONFIG } from '@/lib/config';
+import { getOptimizedProductImageUrl } from '@/lib/product-image';
 import { HOME_PATH, SHOP_PATH } from '@/lib/routes';
 import { getSiteSetting, DEFAULT_BANK_DETAILS, type BankDetails } from '@/lib/settings';
 import {
@@ -703,7 +704,11 @@ export default function Checkout() {
             <div className="space-y-1.5 mb-2">
               {items.map((item) => (
                 <div key={`${item.productId}-${item.dosage}-${item.isPreorder ? 'p' : ''}`} className="flex items-center gap-2">
-                  <img src={item.image} alt={item.name} className="w-10 h-10 object-contain rounded bg-black/30" />
+                  <img
+                    src={getOptimizedProductImageUrl(item.image, { width: 96 })}
+                    alt={item.name}
+                    className="w-10 h-10 object-contain rounded bg-black/30"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-xs text-white truncate">{item.name}</p>
