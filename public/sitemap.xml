@@ -1,242 +1,242 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://peplab.com.au/</loc>
+    <loc>https://peplab.ai/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/shop</loc>
+    <loc>https://peplab.ai/shop</loc>
     <changefreq>weekly</changefreq>
     <priority>0.98</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/landing</loc>
+    <loc>https://peplab.ai/landing</loc>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/coa</loc>
+    <loc>https://peplab.ai/coa</loc>
     <changefreq>weekly</changefreq>
     <priority>0.88</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/calculator</loc>
+    <loc>https://peplab.ai/calculator</loc>
     <changefreq>monthly</changefreq>
     <priority>0.78</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/leaderboard</loc>
+    <loc>https://peplab.ai/leaderboard</loc>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/standards</loc>
+    <loc>https://peplab.ai/standards</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/contact-info</loc>
+    <loc>https://peplab.ai/contact-info</loc>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/contact</loc>
+    <loc>https://peplab.ai/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.65</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/faq</loc>
+    <loc>https://peplab.ai/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.72</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/shipping</loc>
+    <loc>https://peplab.ai/shipping</loc>
     <changefreq>monthly</changefreq>
     <priority>0.62</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/track-order</loc>
+    <loc>https://peplab.ai/track-order</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/terms</loc>
+    <loc>https://peplab.ai/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/privacy</loc>
+    <loc>https://peplab.ai/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.38</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/refund</loc>
+    <loc>https://peplab.ai/refund</loc>
     <changefreq>yearly</changefreq>
     <priority>0.38</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/legal</loc>
+    <loc>https://peplab.ai/legal</loc>
     <changefreq>yearly</changefreq>
     <priority>0.38</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/rewards-terms</loc>
+    <loc>https://peplab.ai/rewards-terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.35</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/retatrutide</loc>
+    <loc>https://peplab.ai/product/retatrutide</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/semaglutide</loc>
+    <loc>https://peplab.ai/product/semaglutide</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/tirzepatide</loc>
+    <loc>https://peplab.ai/product/tirzepatide</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/nad</loc>
+    <loc>https://peplab.ai/product/nad</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/glow</loc>
+    <loc>https://peplab.ai/product/glow</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/klow</loc>
+    <loc>https://peplab.ai/product/klow</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/ghk-cu</loc>
+    <loc>https://peplab.ai/product/ghk-cu</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/semax</loc>
+    <loc>https://peplab.ai/product/semax</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/selank</loc>
+    <loc>https://peplab.ai/product/selank</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/mt-2</loc>
+    <loc>https://peplab.ai/product/mt-2</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/cagrilintide</loc>
+    <loc>https://peplab.ai/product/cagrilintide</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/bac-water</loc>
+    <loc>https://peplab.ai/product/bac-water</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/bpc-157</loc>
+    <loc>https://peplab.ai/product/bpc-157</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/tb-500</loc>
+    <loc>https://peplab.ai/product/tb-500</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/hgh-191aa</loc>
+    <loc>https://peplab.ai/product/hgh-191aa</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/tesamorelin</loc>
+    <loc>https://peplab.ai/product/tesamorelin</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/l-carnitine</loc>
+    <loc>https://peplab.ai/product/l-carnitine</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/bpc-tb-combo</loc>
+    <loc>https://peplab.ai/product/bpc-tb-combo</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/igf-1-lr3</loc>
+    <loc>https://peplab.ai/product/igf-1-lr3</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/ipamorelin</loc>
+    <loc>https://peplab.ai/product/ipamorelin</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/epithalon</loc>
+    <loc>https://peplab.ai/product/epithalon</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/cjc-1295-no-dac</loc>
+    <loc>https://peplab.ai/product/cjc-1295-no-dac</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/pt-141</loc>
+    <loc>https://peplab.ai/product/pt-141</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/cagrilintide-semaglutide</loc>
+    <loc>https://peplab.ai/product/cagrilintide-semaglutide</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/mots-c</loc>
+    <loc>https://peplab.ai/product/mots-c</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/glutathione</loc>
+    <loc>https://peplab.ai/product/glutathione</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/ss-31</loc>
+    <loc>https://peplab.ai/product/ss-31</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/snap-8</loc>
+    <loc>https://peplab.ai/product/snap-8</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/dsip</loc>
+    <loc>https://peplab.ai/product/dsip</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/sharps-container</loc>
+    <loc>https://peplab.ai/product/sharps-container</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
   <url>
-    <loc>https://peplab.com.au/product/syringes-1ml-31g</loc>
+    <loc>https://peplab.ai/product/syringes-1ml-31g</loc>
     <changefreq>weekly</changefreq>
     <priority>0.82</priority>
   </url>
