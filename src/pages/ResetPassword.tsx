@@ -93,12 +93,9 @@ export default function ResetPassword() {
       {/* Navigation */}
       <nav className="relative z-50 px-6 lg:px-12 py-6">
         <div className="flex items-center justify-between">
-          <a href="/" className="flex flex-col items-start">
+          <a href="/" className="flex items-start">
             <span className="text-3xl lg:text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
               PEPLAB
-            </span>
-            <span className="text-xs lg:text-sm font-mono uppercase tracking-[0.5em] text-[#8B5CF6] mt-0.5">
-              PEPTIDES AUSTRALIA
             </span>
           </a>
         </div>
