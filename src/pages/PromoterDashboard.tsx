@@ -8,9 +8,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { useAffiliate } from '@/context/AffiliateContext';
 import { BONUS_POINTS } from '@/context/RewardsContext';
-import { CONFIG } from '@/lib/config';
 import PromoCodeEditor from '@/components/PromoCodeEditor';
 import { SEO } from '@/components/SEO';
+import { mainAppUrl } from '@/lib/domain';
 
 /**
  * Promoter dashboard.
@@ -55,7 +55,7 @@ export default function PromoterDashboard() {
   };
 
   const referralLink = myPromoter
-    ? `${CONFIG.SITE_URL || window.location.origin}/?aff=${myPromoter.referral_code}`
+    ? mainAppUrl(`/?aff=${myPromoter.referral_code}`)
     : '';
 
   const handleCopyLink = () => {

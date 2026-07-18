@@ -3,6 +3,7 @@ import { CONFIG } from './config';
 import { DEFAULT_BANK_DETAILS, DEFAULT_SUPPORT_LINKS, getSiteSetting, type BankDetails } from './settings';
 import { supabase } from './supabase';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
+import { MAIN_APP_ORIGIN } from '@/lib/domain';
 import {
   wrapPeplabEmail,
   emailCtaRow,
@@ -18,6 +19,11 @@ import {
 } from './email-layout';
 
 const T = EMAIL_THEME;
+
+/** Shop origin for clickable email links (peplab.ai). SEO SITE_URL may be peplab.com.au. */
+function shopOrigin(): string {
+  return (MAIN_APP_ORIGIN || CONFIG.SITE_URL || 'https://peplab.ai').replace(/\/$/, '');
+}
 
 async function getEmailSupportLinks(): Promise<EmailSupportLinks> {
   const [telegramVal, whatsappVal] = await Promise.all([
@@ -485,7 +491,7 @@ export const sendOrderTrackingUpdate = async (
   const on = escapeHtml(displayOrderNo);
   const stLabel = escapeHtml(statusLabel);
   const stDesc = escapeHtml(statusDesc);
-  const site = CONFIG.SITE_URL.replace(/\/$/, '');
+  const site = shopOrigin();
   const trackUrl = `${site}/track-order?order=${encodeURIComponent(displayOrderNo)}&email=${encodeURIComponent(to)}`;
 
   // Build a tracking-number callout only when we actually have one.
@@ -553,7 +559,7 @@ const WELCOME_EMAIL_IMAGE_CID = 'peplab-welcome-hero';
 export const sendSignUpWelcome = async (to: string, name: string): Promise<boolean> => {
   const displayName = (name || '').trim() || 'there';
   const template = await getEmailTemplate('signup_welcome');
-  const site = CONFIG.SITE_URL.replace(/\/$/, '');
+  const site = shopOrigin();
   const path = CONFIG.WELCOME_EMAIL_IMAGE_PATH.startsWith('/')
     ? CONFIG.WELCOME_EMAIL_IMAGE_PATH
     : `/${CONFIG.WELCOME_EMAIL_IMAGE_PATH}`;
@@ -590,7 +596,7 @@ export const sendSignUpWelcome = async (to: string, name: string): Promise<boole
         bodyHtml: defaultBody,
       }))
     .replace(/{name}/g, displayName)
-    .replace(/{site_url}/g, CONFIG.SITE_URL)
+    .replace(/{site_url}/g, site)
     .replace(/{welcome_image_url}/g, welcomeImageInlineSrc);
 
   const subject =
@@ -684,7 +690,7 @@ export const sendPromoterCommissionEmail = async (
 ): Promise<boolean> => {
   const name = escapeHtml(data.promoter_name);
   const on = escapeHtml(formatOrderNumberDisplay(data.order_number));
-  const dashboardUrl = `${CONFIG.SITE_URL || 'https://peplab.ai'}/promoter`;
+  const dashboardUrl = `${shopOrigin()}/promoter`;
   const defaultBody = `
     <p style="margin:0 0 14px;text-align:center;font-size:15px;color:${T.muted};">Hey ${name},</p>
     <p style="margin:0 0 18px;text-align:center;font-size:15px;color:${T.muted};">Great news — someone used your referral code!</p>

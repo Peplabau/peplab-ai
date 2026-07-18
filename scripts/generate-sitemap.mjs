@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
-const SITE_URL = (process.env.VITE_SITE_URL || 'https://peplab.ai').replace(/\/$/, '');
+const SITE_URL = (process.env.VITE_SITE_URL || 'https://peplab.com.au').replace(/\/$/, '');
 
 const STATIC_ROUTES = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },

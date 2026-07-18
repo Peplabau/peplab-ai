@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 import { getCartLineUnitPrice } from '@/utils/pricing';
-import { CONFIG } from '@/lib/config';
 import { sendAbandonedCart } from '@/lib/email';
+import { mainAppUrl } from '@/lib/domain';
 import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, type DiscountSettings, type FreeGiftSettings } from '@/lib/settings';
 import {
   isBrokenFreeGiftImage,
@@ -293,7 +293,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (cancelled || !user?.email) return;
 
-      const checkoutUrl = `${CONFIG.SITE_URL.replace(/\/$/, '')}/checkout`;
+      const checkoutUrl = mainAppUrl('/checkout');
       const ok = await sendAbandonedCart(user.email, { items: paid, checkoutUrl });
       if (ok) {
         try {

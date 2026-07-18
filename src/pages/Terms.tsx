@@ -50,8 +50,8 @@ export default function Terms() {
         <section className="p-6 rounded-2xl bg-white/5 border border-white/10 mb-8">
           <p className="text-gray-400 leading-relaxed">
             These Terms of Service ("Terms") govern your access to and use of the website{' '}
-            <a href="https://peplab.ai" className="text-[#2ED1B4] hover:underline">
-              https://peplab.ai
+            <a href="https://www.peplab.com.au" className="text-[#2ED1B4] hover:underline">
+              https://www.peplab.com.au
             </a>{' '}
             ("the Website") and the purchase of any products supplied by PEPLAB ("we," "us," "our"). By browsing the site,
             registering an account or placing an order, you confirm that you have read, understood and agree to be bound by
