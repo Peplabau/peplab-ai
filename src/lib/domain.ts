@@ -1,25 +1,25 @@
 /**
- * Cross-domain split for the PEPLAB storefront.
+ * Dual-domain PEPLAB storefront (same Vercel project, both Production).
  *
- * Because the primary Australian domain (peplab.com.au) is under threat of
- * being taken down, we operate the site from two hosts at the same time:
+ *   peplab.com.au  → Google / SEO / Ads canonical domain (sitemap, og:url,
+ *                    <link rel="canonical"> always point here via VITE_SITE_URL).
+ *                    Serves the full shop so Google can index it — do NOT
+ *                    301-redirect this host to peplab.ai.
+ *   peplab.ai      → User-facing shop + email CTAs (VITE_MAIN_APP_ORIGIN).
+ *                    Users browse and click email links here.
  *
- *   - peplab.com.au  → LOGIN-ONLY. Renders nothing but the auth pages.
- *                      After a successful login we hand the freshly-issued
- *                      Supabase tokens off to the main app via a URL hash
- *                      fragment and redirect there.
- *   - peplab.ai      → MAIN APP. Runs the full storefront, dashboard, etc.
+ * Optional login-only shell (auth pages only + cross-domain handoff) is for
+ * staging / emergency lockdown via VITE_LOGIN_ONLY_HOSTS — leave empty in
+ * Production so Google can index peplab.com.au.
  *
- * Both hosts serve the *same* Vite build; behaviour is branched at runtime
- * based on `window.location.hostname`.
- *
- * Overrideable in dev via env vars:
- *   VITE_LOGIN_ONLY_HOSTS = "peplab.com.au,www.peplab.com.au,localhost:5173"
- *   VITE_MAIN_APP_ORIGIN  = "https://peplab.ai"
+ * Env:
+ *   VITE_SITE_URL           = https://peplab.com.au   (SEO only)
+ *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai       (users + emails)
+ *   VITE_LOGIN_ONLY_HOSTS   = (empty in prod) or staging.peplab.com.au
  */
 
-/** Hosts that should only render the login/auth flow. Comma-separated. */
-const DEFAULT_LOGIN_ONLY_HOSTS = 'peplab.com.au,www.peplab.com.au';
+/** Hosts that should only render the login/auth flow. Empty = full shop everywhere. */
+const DEFAULT_LOGIN_ONLY_HOSTS = '';
 
 /** Full origin (protocol + host) of the main app where the shop actually lives. */
 const DEFAULT_MAIN_APP_ORIGIN = 'https://peplab.ai';

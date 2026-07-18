@@ -241,7 +241,7 @@ export default function LandingFooter({ hideCta = false }: LandingFooterProps) {
           <p className="rg-footer-meta-copy">
             © {new Date().getFullYear()} PEPLAB. All rights reserved. · Research use only ·{' '}
             <a href={shopPageUrl()} className="rg-footer-domain-link">
-              peplab.com.au
+              peplab.ai
             </a>
           </p>
         </div>

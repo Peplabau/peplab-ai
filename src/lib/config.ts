@@ -54,7 +54,7 @@ export const CONFIG = {
   },
 
   // Site Info
-  // Public SEO / Google Ads domain. Shop app lives on VITE_MAIN_APP_ORIGIN (peplab.ai).
+  // Google / SEO / Ads only (canonical, sitemap, og). Users+emails use peplab.ai.
   SITE_URL: import.meta.env.VITE_SITE_URL || 'https://peplab.com.au',
   SITE_NAME: 'PEPLAB - Peptides Australia',
   SITE_DESCRIPTION: 'Premium Peptides Australia for research. Lab-tested, fast shipping, exceptional quality.',

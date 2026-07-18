@@ -54,12 +54,12 @@
          PRIMARY SEO
     ════════════════════════════════════════════════ -->
     <title>PEPLAB | Peptides Australia</title>
-    <!-- Login-only hosts (peplab.com.au / staging.*): retitle before React loads -->
+    <!-- Login-only hosts (from VITE_LOGIN_ONLY_HOSTS only — empty = full shop / indexable) -->
     <script>
       (function () {
         var raw = '%VITE_LOGIN_ONLY_HOSTS%';
         var hosts = raw.split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
-        if (!hosts.length) hosts = ['peplab.com.au', 'www.peplab.com.au', 'staging.peplab.com.au'];
+        if (!hosts.length) return;
         var h = location.hostname.toLowerCase();
         var full = location.host.toLowerCase();
         var loginOnly = hosts.indexOf(h) !== -1 || hosts.indexOf(full) !== -1;
@@ -248,7 +248,7 @@
       (function () {
         var raw = '%VITE_LOGIN_ONLY_HOSTS%';
         var hosts = raw.split(',').map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
-        if (!hosts.length) hosts = ['peplab.com.au', 'www.peplab.com.au', 'staging.peplab.com.au'];
+        if (!hosts.length) return;
         var h = location.hostname.toLowerCase();
         var full = location.host.toLowerCase();
         var loginOnly = hosts.indexOf(h) !== -1 || hosts.indexOf(full) !== -1;
