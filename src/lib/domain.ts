@@ -1,24 +1,23 @@
 /**
  * Dual-domain PEPLAB storefront (same Vercel project, both Production).
  *
- *   peplab.com.au  → Google / SEO / Ads canonical domain (sitemap, og:url,
- *                    <link rel="canonical"> always point here via VITE_SITE_URL).
- *                    Serves the full shop so Google can index it — do NOT
- *                    301-redirect this host to peplab.ai.
- *   peplab.ai      → User-facing shop + email CTAs (VITE_MAIN_APP_ORIGIN).
- *                    Users browse and click email links here.
+ * FULL SEO MODE (default / production):
+ *   peplab.com.au  → Full shop, indexable. Google canonical domain
+ *                    (VITE_SITE_URL). Do NOT redirect to peplab.ai.
+ *   peplab.ai      → Same shop for users + email CTAs
+ *                    (VITE_MAIN_APP_ORIGIN). Canonical tags still point
+ *                    at peplab.com.au so ranking consolidates there.
  *
- * Optional login-only shell (auth pages only + cross-domain handoff) is for
- * staging / emergency lockdown via VITE_LOGIN_ONLY_HOSTS — leave empty in
- * Production so Google can index peplab.com.au.
+ * Optional login-only shell (auth pages + noindex) only when you explicitly
+ * set VITE_LOGIN_ONLY_HOSTS (e.g. staging.peplab.com.au). Leave EMPTY for SEO.
  *
  * Env:
- *   VITE_SITE_URL           = https://peplab.com.au   (SEO only)
- *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai       (users + emails)
- *   VITE_LOGIN_ONLY_HOSTS   = (empty in prod) or staging.peplab.com.au
+ *   VITE_SITE_URL           = https://peplab.com.au
+ *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai
+ *   VITE_LOGIN_ONLY_HOSTS   = (empty in Production)
  */
 
-/** Hosts that should only render the login/auth flow. Empty = full shop everywhere. */
+/** Hosts that only render the login/auth flow. Empty = full shop everywhere (SEO). */
 const DEFAULT_LOGIN_ONLY_HOSTS = '';
 
 /** Full origin (protocol + host) of the main app where the shop actually lives. */
@@ -44,9 +43,19 @@ function parseHostList(raw: string | undefined): string[] {
     .filter(Boolean);
 }
 
-const LOGIN_ONLY_HOSTS = parseHostList(
-  import.meta.env.VITE_LOGIN_ONLY_HOSTS ?? DEFAULT_LOGIN_ONLY_HOSTS,
-);
+/**
+ * Only hosts listed in VITE_LOGIN_ONLY_HOSTS are gated.
+ * Blank / missing env = no login-only hosts (full SEO storefront on every domain).
+ */
+function resolveLoginOnlyHosts(): string[] {
+  const raw = import.meta.env.VITE_LOGIN_ONLY_HOSTS;
+  if (typeof raw === 'string' && raw.trim().length > 0) {
+    return parseHostList(raw);
+  }
+  return parseHostList(DEFAULT_LOGIN_ONLY_HOSTS);
+}
+
+const LOGIN_ONLY_HOSTS = resolveLoginOnlyHosts();
 
 export const MAIN_APP_ORIGIN: string = (
   import.meta.env.VITE_MAIN_APP_ORIGIN ?? DEFAULT_MAIN_APP_ORIGIN
