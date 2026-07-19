@@ -1,5 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/product/retatrutide", "destination": "/product/reta", "permanent": true },
+    { "source": "/product/semaglutide", "destination": "/product/Semaglutide", "permanent": true },
+    { "source": "/product/bacteriostatic-water", "destination": "/product/bac-water", "permanent": true },
+    { "source": "/product/tb500", "destination": "/product/tb-500", "permanent": true },
+    { "source": "/product/hgh", "destination": "/product/hgh-191aa", "permanent": true },
+    { "source": "/product/epithalon", "destination": "/product/epitalon", "permanent": true },
+    { "source": "/product/bpc-tb-combo", "destination": "/product/bpc-5mg-tb-5mg", "permanent": true },
+    { "source": "/product/bpc-157-tb500", "destination": "/product/bpc-5mg-tb-5mg", "permanent": true },
+    { "source": "/product/bpc-157-tb-500", "destination": "/product/bpc-5mg-tb-5mg", "permanent": true },
+    { "source": "/product/gsh-glutathione", "destination": "/product/glutathione", "permanent": true },
+    { "source": "/product/melanotan-ii", "destination": "/product/mt-2", "permanent": true },
+    { "source": "/product/syringes-1ml-31g", "destination": "/product/1ml-31g-6mm-syringes", "permanent": true }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

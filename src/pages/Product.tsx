@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, Beaker, FileText, FlaskConical, Shield } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import StorefrontLayout from '@/components/StorefrontLayout';
@@ -10,6 +10,7 @@ import { SHOP_PATH } from '@/lib/routes';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Product } from '@/products';
 import { getProductBySlug } from '@/lib/supabase-db';
+import { resolveProductSlug } from '@/lib/product-slug-aliases';
 import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, type DiscountSettings } from '@/lib/settings';
 import {
   getTechnicalPropertyRows,
@@ -31,7 +32,9 @@ const STOREFRONT_COA_ENABLED = CONFIG.FEATURES.ENABLE_STOREFRONT_COA;
 export default function ProductPage() {
   const navigate = useNavigate();
   const params = useParams();
-  const slug = params.slug;
+  const rawSlug = params.slug;
+  const slug = rawSlug ? resolveProductSlug(rawSlug) : undefined;
+  const needsAliasRedirect = Boolean(rawSlug && slug && rawSlug !== slug);
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,9 +51,11 @@ export default function ProductPage() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!slug) {
-      setLoading(false);
-      setError('Missing product slug.');
+    if (needsAliasRedirect || !slug) {
+      if (!slug && !needsAliasRedirect) {
+        setLoading(false);
+        setError('Missing product slug.');
+      }
       return;
     }
 
@@ -82,7 +87,11 @@ export default function ProductPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, needsAliasRedirect]);
+
+  if (needsAliasRedirect && slug) {
+    return <Navigate to={`/product/${slug}`} replace />;
+  }
 
   const seo = useMemo(() => {
     if (!product || !slug) return null;

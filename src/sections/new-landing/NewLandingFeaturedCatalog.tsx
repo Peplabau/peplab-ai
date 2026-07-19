@@ -11,10 +11,10 @@ import { SHOP_PATH } from '@/lib/routes';
 
 const FEATURED_IDS = [
   'ghk-cu',
-  'retatrutide',
+  'reta',
   'bpc-157',
   'tb-500',
-  'semaglutide',
+  'Semaglutide',
   'tirzepatide',
 ] as const;
 
