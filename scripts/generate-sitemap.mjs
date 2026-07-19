@@ -1,10 +1,13 @@
 /**
- * Regenerates public/sitemap.xml from static routes + product slugs in src/products.ts.
+ * Regenerates public/sitemap.xml from static routes + live storefront slugs.
  * Run before production builds: npm run build (via prebuild).
+ *
+ * Uses scripts/storefront-product-slugs.mjs — NOT seed ids from src/products.ts.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { STOREFRONT_PRODUCT_SLUGS } from './storefront-product-slugs.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
@@ -30,15 +33,6 @@ const STATIC_ROUTES = [
   { path: '/rewards-terms', priority: '0.35', changefreq: 'yearly' },
 ];
 
-function extractProductSlugs() {
-  const productsTs = readFileSync(join(root, 'src/products.ts'), 'utf8');
-  const slugs = [];
-  for (const match of productsTs.matchAll(/^\s+id:\s+'([^']+)'/gm)) {
-    slugs.push(match[1]);
-  }
-  return [...new Set(slugs)];
-}
-
 function urlEntry(path, priority, changefreq) {
   return `  <url>
     <loc>${SITE_URL}${path}</loc>
@@ -47,9 +41,8 @@ function urlEntry(path, priority, changefreq) {
   </url>`;
 }
 
-const productSlugs = extractProductSlugs();
-const productEntries = productSlugs.map((slug) =>
-  urlEntry(`/product/${slug}`, '0.82', 'weekly'),
+const productEntries = STOREFRONT_PRODUCT_SLUGS.map(({ slug, priority }) =>
+  urlEntry(`/product/${slug}`, priority || '0.82', 'weekly'),
 );
 
 const staticEntries = STATIC_ROUTES.map((route) =>
@@ -64,4 +57,6 @@ ${[...staticEntries, ...productEntries].join('\n')}
 
 const outPath = join(root, 'public/sitemap.xml');
 writeFileSync(outPath, xml, 'utf8');
-console.log(`Wrote ${staticEntries.length + productEntries.length} URLs to public/sitemap.xml`);
+console.log(
+  `Wrote ${staticEntries.length + productEntries.length} URLs to public/sitemap.xml (${productEntries.length} products)`,
+);
