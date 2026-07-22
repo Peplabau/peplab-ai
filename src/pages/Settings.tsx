@@ -12,6 +12,7 @@ import {
   Check,
   AlertTriangle,
   LogOut,
+  MapPin,
 } from 'lucide-react';
 import { getCurrentUser, signOut } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
@@ -19,6 +20,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import BirthdayRewardCard from '@/components/BirthdayRewardCard';
 import { SEO } from '@/components/SEO';
 import { useRewards } from '@/context/RewardsContext';
+import {
+  EMPTY_CHECKOUT_SHIPPING,
+  loadCheckoutDefaults,
+  saveCheckoutProfile,
+  type CheckoutShippingDetails,
+} from '@/lib/checkout-profile';
 
 interface UserSettings {
   name: string;
@@ -26,6 +33,7 @@ interface UserSettings {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+  shipping: CheckoutShippingDetails;
   notifications: {
     orderUpdates: boolean;
     promotions: boolean;
@@ -94,6 +102,7 @@ export default function Settings() {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
+    shipping: { ...EMPTY_CHECKOUT_SHIPPING },
     notifications: DEFAULT_NOTIFICATIONS,
   });
 
@@ -122,10 +131,21 @@ export default function Settings() {
         const email = user.email ?? '';
         const notif = user.user_metadata?.notifications as Partial<typeof DEFAULT_NOTIFICATIONS> | undefined;
         setUserData({ name, email, joinDate: formatMemberSince(user.created_at) });
+
+        let shipping = { ...EMPTY_CHECKOUT_SHIPPING };
+        try {
+          const defaults = await loadCheckoutDefaults(user.id);
+          if (defaults.shipping) shipping = defaults.shipping;
+        } catch {
+          /* ignore — settings still usable */
+        }
+
+        if (!mounted) return;
         setSettings((prev) => ({
           ...prev,
           name,
           email,
+          shipping,
           notifications: { ...DEFAULT_NOTIFICATIONS, ...notif },
         }));
       } catch (_) {
@@ -139,6 +159,15 @@ export default function Settings() {
 
   const handleInputChange = (field: keyof UserSettings, value: string) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
+    setSaveSuccess(false);
+    setSaveError(null);
+  };
+
+  const handleShippingChange = (field: keyof CheckoutShippingDetails, value: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      shipping: { ...prev.shipping, [field]: value },
+    }));
     setSaveSuccess(false);
     setSaveError(null);
   };
@@ -199,6 +228,18 @@ export default function Settings() {
         ]);
         const { data, error } = result;
         if (error) throw error;
+
+        // Persist shipping to profiles for checkout autofill (best-effort).
+        const shipResult = await saveCheckoutProfile(user.id, settings.shipping, {
+          alsoUpdateFullName: !settings.name.trim(),
+        });
+        if (!shipResult.ok && shipResult.error) {
+          console.warn('Settings shipping save:', shipResult.error);
+        }
+        // Keep profiles.full_name in sync with the display name field.
+        if (settings.name.trim()) {
+          await supabase.from('profiles').update({ full_name: settings.name.trim() }).eq('id', user.id);
+        }
 
         setUserData((prev) => ({
           ...prev,
@@ -360,7 +401,7 @@ export default function Settings() {
           <h1 className="text-4xl font-bold text-[#F4F6FA] mb-2">
             Account <span className="gradient-text">Settings</span>
           </h1>
-          <p className="text-[#A9B3C7]">Manage your profile, password, and notification preferences.</p>
+          <p className="text-[#A9B3C7]">Manage your profile, saved delivery address, password, and notifications.</p>
         </div>
 
         <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8 lg:items-start">
@@ -450,6 +491,116 @@ export default function Settings() {
                             className={inputClass}
                             placeholder="your@email.com"
                             autoComplete="email"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-[rgba(244,246,250,0.08)]">
+                      <div className="flex items-start gap-2 mb-4">
+                        <MapPin className="w-5 h-5 text-[#2ED1B4] shrink-0 mt-0.5" />
+                        <div>
+                          <h3 className="text-base font-semibold text-[#F4F6FA]">Saved delivery address</h3>
+                          <p className="text-sm text-[#A9B3C7] mt-0.5">
+                            Used to autofill checkout. Placing an order also updates these details.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-[#A9B3C7] mb-2">First name</label>
+                            <input
+                              type="text"
+                              value={settings.shipping.firstName}
+                              onChange={(e) => handleShippingChange('firstName', e.target.value)}
+                              className={inputClass.replace('pl-12', 'pl-4')}
+                              placeholder="First name"
+                              autoComplete="given-name"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#A9B3C7] mb-2">Last name</label>
+                            <input
+                              type="text"
+                              value={settings.shipping.lastName}
+                              onChange={(e) => handleShippingChange('lastName', e.target.value)}
+                              className={inputClass.replace('pl-12', 'pl-4')}
+                              placeholder="Last name"
+                              autoComplete="family-name"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-[#A9B3C7] mb-2">Street address</label>
+                          <input
+                            type="text"
+                            value={settings.shipping.address}
+                            onChange={(e) => handleShippingChange('address', e.target.value)}
+                            className={inputClass.replace('pl-12', 'pl-4')}
+                            placeholder="Street address"
+                            autoComplete="street-address"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-[#A9B3C7] mb-2">Apartment / unit (optional)</label>
+                          <input
+                            type="text"
+                            value={settings.shipping.apartment}
+                            onChange={(e) => handleShippingChange('apartment', e.target.value)}
+                            className={inputClass.replace('pl-12', 'pl-4')}
+                            placeholder="Unit, apartment, etc."
+                            autoComplete="address-line2"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-[#A9B3C7] mb-2">Suburb</label>
+                            <input
+                              type="text"
+                              value={settings.shipping.suburb}
+                              onChange={(e) => handleShippingChange('suburb', e.target.value)}
+                              className={inputClass.replace('pl-12', 'pl-4')}
+                              placeholder="Suburb"
+                              autoComplete="address-level2"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#A9B3C7] mb-2">State</label>
+                            <select
+                              value={settings.shipping.state}
+                              onChange={(e) => handleShippingChange('state', e.target.value)}
+                              className={inputClass.replace('pl-12', 'pl-4')}
+                              autoComplete="address-level1"
+                            >
+                              <option value="">State</option>
+                              {['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#A9B3C7] mb-2">Postcode</label>
+                            <input
+                              type="text"
+                              value={settings.shipping.postcode}
+                              onChange={(e) => handleShippingChange('postcode', e.target.value)}
+                              className={inputClass.replace('pl-12', 'pl-4')}
+                              placeholder="Postcode"
+                              autoComplete="postal-code"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-[#A9B3C7] mb-2">Phone</label>
+                          <input
+                            type="tel"
+                            value={settings.shipping.phone}
+                            onChange={(e) => handleShippingChange('phone', e.target.value)}
+                            className={inputClass.replace('pl-12', 'pl-4')}
+                            placeholder="Phone number"
+                            autoComplete="tel"
                           />
                         </div>
                       </div>

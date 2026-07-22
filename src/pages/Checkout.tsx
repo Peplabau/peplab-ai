@@ -41,6 +41,14 @@ import {
   calculatePurchasePoints,
   DISCOUNT_PROMO_PURCHASE_POINTS_DEDUCTION,
 } from '@/utils/points';
+import {
+  EMPTY_CHECKOUT_SHIPPING,
+  loadCheckoutDefaults,
+  mergeShippingDefaults,
+  saveCheckoutProfile,
+  type CheckoutShippingDetails,
+} from '@/lib/checkout-profile';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ShippingMethod {
   id: string;
@@ -64,11 +72,13 @@ function formatShippingForEmail(
 }
 
 export default function Checkout() {
-  const { items, paidItemsTotal, clearCart } = useCart();
+  const { items, paidItemsTotal, clearCart, isLoading: isCartLoading } = useCart();
   const { balance, redeemPoints } = useRewards();
   const { appliedCode, appliedPromotion, applyCode, clearCode } = useAffiliate();
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  /** False until auth + saved shipping are resolved — prevents empty→filled flash. */
+  const [isCheckoutReady, setIsCheckoutReady] = useState(false);
 
   // Affiliate code input state
   const [affiliateInput, setAffiliateInput] = useState('');
@@ -76,16 +86,11 @@ export default function Checkout() {
   const [affiliateError, setAffiliateError] = useState<string | null>(null);
 
   const [contactEmail, setContactEmail] = useState('');
-  const [shippingAddress, setShippingAddress] = useState({
-    firstName: '',
-    lastName: '',
-    address: '',
-    apartment: '',
-    suburb: '',
-    state: '',
-    postcode: '',
-    phone: ''
+  const [shippingAddress, setShippingAddress] = useState<CheckoutShippingDetails>({
+    ...EMPTY_CHECKOUT_SHIPPING,
   });
+  /** Shown when we autofilled from saved profile / last order. */
+  const [autofillNotice, setAutofillNotice] = useState<string | null>(null);
   const [selectedShipping, setSelectedShipping] = useState<string>('express');
   const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [ageVerified, setAgeVerified] = useState(false);
@@ -111,17 +116,59 @@ export default function Checkout() {
 
   const [bankDetails, setBankDetails] = useState<BankDetails>(DEFAULT_BANK_DETAILS);
 
-  // Get current user on mount
+  // Resolve auth + saved shipping BEFORE painting the form (avoids empty→filled glitch).
   useEffect(() => {
-    const getUser = async () => {
-      const user = await getCurrentUser();
-      if (user) {
+    let cancelled = false;
+    const prepareCheckout = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (cancelled) return;
+
+        if (!user) {
+          setUserId(null);
+          setIsLoggedIn(false);
+          return;
+        }
+
         setUserId(user.id);
         setIsLoggedIn(true);
-        if (user.email) setContactEmail(user.email);
+
+        let nextEmail = user.email || '';
+        let nextShipping: CheckoutShippingDetails = { ...EMPTY_CHECKOUT_SHIPPING };
+        let nextNotice: string | null = null;
+
+        try {
+          const defaults = await loadCheckoutDefaults(user.id);
+          if (cancelled) return;
+          if (defaults.email) nextEmail = nextEmail || defaults.email;
+          if (defaults.shipping) {
+            nextShipping = mergeShippingDefaults(nextShipping, defaults.shipping);
+            if (defaults.source === 'profile') {
+              nextNotice = 'Details filled from your saved profile.';
+            } else if (defaults.source === 'order' || defaults.source === 'mixed') {
+              nextNotice =
+                'Details filled from your last order. You can edit anything before placing.';
+            }
+          }
+        } catch (err) {
+          // Autofill must never block checkout.
+          console.warn('Checkout autofill skipped:', err);
+        }
+
+        if (cancelled) return;
+        setContactEmail(nextEmail);
+        setShippingAddress(nextShipping);
+        setAutofillNotice(nextNotice);
+      } catch (err) {
+        console.warn('Checkout prepare failed:', err);
+      } finally {
+        if (!cancelled) setIsCheckoutReady(true);
       }
     };
-    getUser();
+    void prepareCheckout();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Load admin-editable bank details for the order confirmation page.
@@ -424,6 +471,13 @@ export default function Checkout() {
         );
       }
 
+      // Save shipping to profile for next checkout (logged-in only, best-effort).
+      if (!error && userId) {
+        void saveCheckoutProfile(userId, shippingAddress).catch((saveErr) => {
+          console.warn('Could not save shipping to profile:', saveErr);
+        });
+      }
+
       clearCart();
       setOrderComplete(true);
     } catch (err) {
@@ -645,7 +699,30 @@ export default function Checkout() {
     );
   }
 
-  // Empty cart
+  // Wait for cart + saved details so we never flash empty cart / empty form.
+  if (isCartLoading || !isCheckoutReady) {
+    return (
+      <>
+        <SEO title="Checkout | PEPLAB" noIndex />
+        <div className="min-h-screen bg-[#070A12]">
+          <nav className="px-4 py-4 border-b border-white/10 flex items-center justify-between">
+            <span className="text-xl font-bold tracking-wider gradient-text">PEPLAB</span>
+            <span className="text-sm text-gray-500">Loading checkout…</span>
+          </nav>
+          <main className="px-4 py-6 max-w-lg mx-auto space-y-3">
+            <Skeleton className="h-7 w-48 rounded-lg" />
+            <Skeleton className="h-28 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-40 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </main>
+        </div>
+      </>
+    );
+  }
+
+  // Empty cart (only after cart has finished loading)
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-[#070A12] flex items-center justify-center">
@@ -818,6 +895,26 @@ export default function Checkout() {
               <MapPin className="w-3.5 h-3.5 text-[#8B5CF6]" />
               Delivery
             </h2>
+            {autofillNotice && (
+              <div className="mb-2 flex items-start gap-2 px-2.5 py-2 rounded-lg bg-[rgba(46,209,180,0.1)] border border-[rgba(46,209,180,0.25)]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#2ED1B4] shrink-0 mt-0.5" />
+                <p className="text-[11px] text-[#A9B3C7] leading-snug flex-1">{autofillNotice}</p>
+                <button
+                  type="button"
+                  onClick={() => setAutofillNotice(null)}
+                  className="text-[#6B7280] hover:text-[#F4F6FA] shrink-0"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+            {!isLoggedIn && (
+              <p className="mb-2 text-[11px] text-[#6B7280] leading-snug">
+                <a href="/login" className="text-[#2ED1B4] hover:underline">Sign in</a>
+                {' '}to autofill your saved address next time.
+              </p>
+            )}
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <input 
@@ -825,6 +922,7 @@ export default function Checkout() {
                   value={shippingAddress.firstName} 
                   onChange={(e) => setShippingAddress({...shippingAddress, firstName: e.target.value})} 
                   required
+                  autoComplete="given-name"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                   placeholder="First name"
                 />
@@ -833,6 +931,7 @@ export default function Checkout() {
                   value={shippingAddress.lastName} 
                   onChange={(e) => setShippingAddress({...shippingAddress, lastName: e.target.value})} 
                   required
+                  autoComplete="family-name"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                   placeholder="Last name"
                 />
@@ -842,8 +941,17 @@ export default function Checkout() {
                 value={shippingAddress.address} 
                 onChange={(e) => setShippingAddress({...shippingAddress, address: e.target.value})} 
                 required
+                autoComplete="street-address"
                 className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                 placeholder="Street address"
+              />
+              <input
+                type="text"
+                value={shippingAddress.apartment}
+                onChange={(e) => setShippingAddress({ ...shippingAddress, apartment: e.target.value })}
+                autoComplete="address-line2"
+                className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
+                placeholder="Apartment / unit (optional)"
               />
               <div className="grid grid-cols-2 gap-2">
                 <input 
@@ -851,6 +959,7 @@ export default function Checkout() {
                   value={shippingAddress.suburb} 
                   onChange={(e) => setShippingAddress({...shippingAddress, suburb: e.target.value})} 
                   required
+                  autoComplete="address-level2"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                   placeholder="Suburb"
                 />
@@ -859,6 +968,7 @@ export default function Checkout() {
                   value={shippingAddress.postcode} 
                   onChange={(e) => setShippingAddress({...shippingAddress, postcode: e.target.value})} 
                   required
+                  autoComplete="postal-code"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                   placeholder="Postcode"
                 />
@@ -868,6 +978,7 @@ export default function Checkout() {
                   value={shippingAddress.state} 
                   onChange={(e) => setShippingAddress({...shippingAddress, state: e.target.value})} 
                   required
+                  autoComplete="address-level1"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                 >
                   <option value="">State</option>
@@ -885,6 +996,7 @@ export default function Checkout() {
                   value={shippingAddress.phone} 
                   onChange={(e) => setShippingAddress({...shippingAddress, phone: e.target.value})} 
                   required
+                  autoComplete="tel"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                   placeholder="Phone"
                 />
