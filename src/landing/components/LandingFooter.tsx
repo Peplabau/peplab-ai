@@ -153,6 +153,9 @@ export default function LandingFooter({ hideCta = false }: LandingFooterProps) {
                 <a href={shopUrl('/standards')}>Our standards</a>
               </li>
               <li>
+                <a href={shopUrl('/protocols')}>Dosage chart</a>
+              </li>
+              <li>
                 <a href={`${shopUrl('/')}#tutorial`}>Reconstitution guide</a>
               </li>
               <li>

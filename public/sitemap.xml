@@ -26,6 +26,11 @@
     <priority>0.78</priority>
   </url>
   <url>
+    <loc>https://peplab.com.au/protocols</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.86</priority>
+  </url>
+  <url>
     <loc>https://peplab.com.au/leaderboard</loc>
     <changefreq>weekly</changefreq>
     <priority>0.72</priority>

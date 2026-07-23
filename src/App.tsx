@@ -51,6 +51,7 @@ const PromoterDashboard = lazy(() => import('@/pages/PromoterDashboard'));
 const TrackOrder = lazy(() => import('@/pages/TrackOrder'));
 const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
 const Calculator = lazy(() => import('@/pages/Calculator'));
+const Protocols = lazy(() => import('@/pages/Protocols'));
 const CoaArchive = lazy(() => import('@/pages/CoaArchive'));
 const PeplabLandingRoute = lazy(() => import('@/pages/PeplabLandingRoute'));
 
@@ -439,6 +440,8 @@ function App() {
               <Route path="/promoter" element={<PromoterDashboard />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/calculator" element={<Calculator />} />
+              <Route path="/protocols" element={<Protocols />} />
+              <Route path="/peptide-dosage-chart" element={<Navigate to="/protocols" replace />} />
               <Route path="/coa" element={<CoaArchive />} />
               <Route path="/track-order" element={<TrackOrder />} />
               <Route path="*" element={<NotFound />} />
