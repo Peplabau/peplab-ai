@@ -49,6 +49,7 @@ import {
   type InventorySummary,
 } from '@/lib/admin-analytics';
 import StockInventorySection from '@/components/admin/StockInventorySection';
+import { ensureOrderStockDeducted, restoreOrderStock } from '@/lib/order-stock';
 
 // Types
 interface Order {
@@ -82,6 +83,9 @@ interface Order {
   confirmation_email_sent?: boolean;
   /** Trustpilot review request sent (on deliver or bulk catch-up). */
   review_request_email_sent?: boolean;
+  /** True when inventory was reduced for this order (paid/shipped). */
+  stock_deducted?: boolean | null;
+  stock_deducted_at?: string | null;
   /** True when the order includes preorder line(s); also identifiable by PRE- order_number. */
   is_preorder?: boolean;
   order_source?: 'direct' | 'referral' | string | null;
@@ -1266,6 +1270,31 @@ function OrdersSection() {
       const { error } = await supabase.from('orders').update(updates).eq('id', orderId);
       if (error) throw error;
 
+      // Stock: deduct on shipped if not already done at paid (safety net). Restore on cancel.
+      if (newStatus === 'shipped' || newStatus === 'delivered') {
+        void ensureOrderStockDeducted(
+          orderId,
+          Array.isArray(orderBeforeUpdate?.items) ? orderBeforeUpdate!.items : null,
+          'shipped',
+        ).then((r) => {
+          if (!r.ok) console.warn('[stock] shipped deduct failed', r.error);
+          else if (r.linesChanged > 0) {
+            window.dispatchEvent(new Event('peplab:orders-updated'));
+          }
+        });
+      } else if (newStatus === 'cancelled') {
+        void restoreOrderStock(
+          orderId,
+          Array.isArray(orderBeforeUpdate?.items) ? orderBeforeUpdate!.items : null,
+          orderBeforeUpdate?.stock_deducted,
+        ).then((r) => {
+          if (!r.ok) console.warn('[stock] cancel restore failed', r.error);
+          else if (r.linesChanged > 0) {
+            window.dispatchEvent(new Event('peplab:orders-updated'));
+          }
+        });
+      }
+
       if (
         newStatus === 'delivered' &&
         orderBeforeUpdate?.customer_email &&
@@ -1403,6 +1432,19 @@ function OrdersSection() {
         void sendPaymentReceived(order.customer_email, {
           order_number: order.order_number,
           total: Number(order.total) || 0,
+        });
+      }
+
+      // Deduct inventory when payment confirmed (industry standard). Non-blocking.
+      if (paymentStatus === 'confirmed') {
+        void ensureOrderStockDeducted(
+          orderId,
+          Array.isArray(order?.items) ? order!.items : null,
+          'paid',
+        ).then((r) => {
+          if (!r.ok) console.warn('[stock] paid deduct failed', r.error);
+          else if (r.unmatched.length) console.warn('[stock] unmatched lines', r.unmatched);
+          if (r.linesChanged > 0) window.dispatchEvent(new Event('peplab:orders-updated'));
         });
       }
 
