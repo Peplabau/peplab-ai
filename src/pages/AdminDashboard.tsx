@@ -39,17 +39,6 @@ import { formatOrderNumberDisplay } from '@/utils/order-number';
 import { sendPaymentReceived, sendOrderShipped, sendReplacementTrackingEmail, sendOrderDeliveredReviewEmail } from '@/lib/email';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { SEO } from '@/components/SEO';
-import {
-  aggregateBestSellers,
-  summarizeInventory,
-  LOW_STOCK_THRESHOLD,
-  type BestSellerItem,
-  type BsTimeFilter,
-  type BsGroupBy,
-  type InventorySummary,
-} from '@/lib/admin-analytics';
-import StockInventorySection from '@/components/admin/StockInventorySection';
-import { ensureOrderStockDeducted, restoreOrderStock } from '@/lib/order-stock';
 
 // Types
 interface Order {
@@ -83,9 +72,6 @@ interface Order {
   confirmation_email_sent?: boolean;
   /** Trustpilot review request sent (on deliver or bulk catch-up). */
   review_request_email_sent?: boolean;
-  /** True when inventory was reduced for this order (paid/shipped). */
-  stock_deducted?: boolean | null;
-  stock_deducted_at?: string | null;
   /** True when the order includes preorder line(s); also identifiable by PRE- order_number. */
   is_preorder?: boolean;
   order_source?: 'direct' | 'referral' | string | null;
@@ -133,11 +119,107 @@ async function fetchAllOrdersFromDb(): Promise<Order[]> {
   );
 }
 
+async function fetchAllProfilesFromDb(): Promise<any[]> {
+  // Admin RPC bypasses profiles RLS (direct select only returns the logged-in user).
+  // Page with offset/limit so we are not stuck at PostgREST's ~1000 row cap.
+  try {
+    const pages = await fetchSupabasePages((from, to) =>
+      supabase.rpc('admin_get_profiles_page', {
+        p_offset: from,
+        p_limit: to - from + 1,
+      }),
+    );
+    if (pages.length > 0) return pages;
+  } catch (err) {
+    console.warn('admin_get_profiles_page failed, trying legacy admin_get_all_users:', err);
+  }
+
+  const { data, error } = await supabase.rpc('admin_get_all_users');
+  if (!error && Array.isArray(data) && data.length > 0) {
+    return data;
+  }
+
+  // Last resort (usually only current user under RLS)
+  return fetchSupabasePages((from, to) =>
+    supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(from, to),
+  );
+}
+
+async function fetchAllUserPointsBalances(): Promise<Record<string, number>> {
+  const balMap: Record<string, number> = {};
+
+  try {
+    const balRows = await fetchSupabasePages<{ user_id: string; balance: number | null }>((from, to) =>
+      supabase.rpc('admin_get_points_balances_page', {
+        p_offset: from,
+        p_limit: to - from + 1,
+      }),
+    );
+    balRows.forEach((r) => {
+      balMap[r.user_id] = Number(r.balance || 0);
+    });
+    if (Object.keys(balMap).length > 0) return balMap;
+  } catch (rpcErr) {
+    console.warn('admin_get_points_balances_page failed, falling back:', rpcErr);
+  }
+
+  try {
+    const balRows = await fetchSupabasePages<{ user_id: string; balance: number | null }>((from, to) =>
+      supabase
+        .from('user_points_balance')
+        .select('user_id, balance')
+        .order('user_id', { ascending: true })
+        .range(from, to),
+    );
+    balRows.forEach((r) => {
+      balMap[r.user_id] = Number(r.balance || 0);
+    });
+    return balMap;
+  } catch (balErr) {
+    console.warn('user_points_balance paginated load failed, falling back to user_points:', balErr);
+    const rawRows = await fetchSupabasePages<{ user_id: string; points: number | null }>((from, to) =>
+      supabase
+        .from('user_points')
+        .select('user_id, points')
+        .order('user_id', { ascending: true })
+        .range(from, to),
+    );
+    rawRows.forEach((r) => {
+      balMap[r.user_id] = (balMap[r.user_id] || 0) + (r.points || 0);
+    });
+    return balMap;
+  }
+}
+
 async function fetchOrdersCount(): Promise<number> {
   const { count, error } = await supabase
     .from('orders')
     .select('*', { count: 'exact', head: true });
   if (error) throw error;
+  return count ?? 0;
+}
+
+/** Admin Overview user count — must bypass profiles RLS (direct count returns 1). */
+async function fetchUsersCount(): Promise<number> {
+  const { data, error } = await supabase.rpc('admin_count_profiles');
+  if (!error && data != null) {
+    const n = Number(data);
+    if (Number.isFinite(n)) return n;
+  }
+
+  // Fallback: paginated admin profiles fetch (slower, but correct).
+  try {
+    const users = await fetchAllProfilesFromDb();
+    if (users.length > 1) return users.length;
+  } catch (_) {
+    /* ignore */
+  }
+
+  const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
   return count ?? 0;
 }
 
@@ -157,7 +239,7 @@ interface Product {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'stock' | 'orders' | 'products' | 'users' | 'reviews' | 'affiliates' | 'promo-codes' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'products' | 'users' | 'reviews' | 'affiliates' | 'promo-codes' | 'settings'>('overview');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState('');
@@ -291,7 +373,6 @@ export default function AdminDashboard() {
 
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'stock', label: 'Stock', icon: Box },
     { id: 'orders', label: 'Orders', icon: ShoppingCart },
     { id: 'products', label: 'Products', icon: Package },
     { id: 'users', label: 'Users', icon: Users },
@@ -422,8 +503,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {activeTab === 'overview' && <OverviewSection onOpenStock={() => setActiveTab('stock')} />}
-          {activeTab === 'stock' && <StockInventorySection />}
+          {activeTab === 'overview' && <OverviewSection />}
           {activeTab === 'orders' && <OrdersSection />}
           {activeTab === 'products' && <ProductsSection />}
           {activeTab === 'users' && <UsersSection />}
@@ -439,10 +519,63 @@ export default function AdminDashboard() {
   );
 }
 
+// ─── Best-sellers aggregation ──────────────────────────────────────────────
+interface BestSellerItem {
+  key: string;        // "name||dosage" composite
+  name: string;
+  dosage: string;
+  unitsSold: number;
+  revenue: number;
+}
+
+type BsTimeFilter = '7d' | '30d' | '90d' | 'all';
 type BsSortBy = 'units' | 'revenue';
 
+function aggregateBestSellers(
+  ordersWithItems: Array<{ items: any[]; created_at: string; status: string }>,
+  timeFilter: BsTimeFilter,
+): BestSellerItem[] {
+  const now = Date.now();
+  const cutoffs: Record<BsTimeFilter, number> = {
+    '7d': now - 7 * 86400_000,
+    '30d': now - 30 * 86400_000,
+    '90d': now - 90 * 86400_000,
+    all: 0,
+  };
+  const cutoff = cutoffs[timeFilter];
+
+  const map = new Map<string, BestSellerItem>();
+
+  for (const order of ordersWithItems) {
+    // Exclude cancelled orders from the tally.
+    if ((order.status || '').toLowerCase() === 'cancelled') continue;
+    if (cutoff > 0 && new Date(order.created_at).getTime() < cutoff) continue;
+
+    const items: any[] = Array.isArray(order.items) ? order.items : [];
+    for (const item of items) {
+      // Skip free gifts / $0 items from the revenue tally but still count units.
+      const name = String(item.name ?? '').trim();
+      const dosage = String(item.dosage ?? '').trim();
+      if (!name) continue;
+      const key = `${name}||${dosage}`;
+      const qty = Number(item.quantity) || 1;
+      const price = item.is_free ? 0 : Number(item.price) || 0;
+
+      const existing = map.get(key);
+      if (existing) {
+        existing.unitsSold += qty;
+        existing.revenue += price * qty;
+      } else {
+        map.set(key, { key, name, dosage, unitsSold: qty, revenue: price * qty });
+      }
+    }
+  }
+
+  return Array.from(map.values());
+}
+
 // Overview Section
-function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
+function OverviewSection() {
   const [stats, setStats] = useState({
     totalOrders: 0,
     pendingPayment: 0,
@@ -451,18 +584,10 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
     totalProducts: 0
   });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [allOrderItems, setAllOrderItems] = useState<Array<{
-    items: any[];
-    created_at: string;
-    status: string;
-    payment_status?: string | null;
-  }>>([]);
-  const [inventory, setInventory] = useState<InventorySummary | null>(null);
+  const [allOrderItems, setAllOrderItems] = useState<Array<{ items: any[]; created_at: string; status: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [bsTime, setBsTime] = useState<BsTimeFilter>('30d');
   const [bsSort, setBsSort] = useState<BsSortBy>('units');
-  const [bsGroupBy, setBsGroupBy] = useState<BsGroupBy>('variant');
-  const [stockListView, setStockListView] = useState<'low' | 'oos'>('low');
 
   useEffect(() => {
     loadStats();
@@ -474,48 +599,34 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
   }, []);
 
   const loadStats = async (bust = false) => {
-    if (bust) invalidateCache('admin:overview');
+    if (bust) invalidateCache('admin:overview:v2');
     setLoading(true);
     try {
-      const result = await cached('admin:overview', async () => {
+      const result = await cached('admin:overview:v2', async () => {
         const [
           orderStatusTotals,
           { data: recent },
           orderCount,
-          adminUsersResult,
+          userCount,
           { count: productCount },
           itemOrders,
-          { data: productStockRows },
         ] = await Promise.all([
           fetchSupabasePages((from, to) =>
             supabase.from('orders').select('status, total').order('id', { ascending: true }).range(from, to),
           ),
           supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5),
           fetchOrdersCount(),
-          // Same source as Users tab — direct profiles count is RLS-scoped and often returns 1 (your own row).
-          supabase.rpc('admin_get_all_users'),
+          fetchUsersCount(),
           supabase.from('products').select('*', { count: 'exact', head: true }),
           fetchSupabasePages((from, to) =>
             supabase
               .from('orders')
-              .select('items, created_at, status, payment_status')
+              .select('items, created_at, status')
               .neq('status', 'cancelled')
               .order('created_at', { ascending: false })
               .range(from, to),
           ),
-          supabase
-            .from('products')
-            .select('id, name, slug, category, is_active, product_dosages(*)'),
         ]);
-
-        let userCount = Array.isArray(adminUsersResult.data) ? adminUsersResult.data.length : 0;
-        if (adminUsersResult.error || !Array.isArray(adminUsersResult.data)) {
-          const { count: profilesCount } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true });
-          userCount = profilesCount || 0;
-        }
-
         return {
           orderStatusTotals,
           recent: recent || [],
@@ -523,7 +634,6 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
           userCount,
           productCount: productCount || 0,
           itemOrders,
-          productStockRows: productStockRows || [],
         };
       }, TTL_ADMIN_OVERVIEW);
 
@@ -535,15 +645,7 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
         totalProducts: result.productCount,
       });
       setRecentOrders(result.recent);
-      setAllOrderItems(
-        result.itemOrders as Array<{
-          items: any[];
-          created_at: string;
-          status: string;
-          payment_status?: string | null;
-        }>,
-      );
-      setInventory(summarizeInventory(result.productStockRows || []));
+      setAllOrderItems(result.itemOrders as Array<{ items: any[]; created_at: string; status: string }>);
     } catch (error) {
       console.error('Error loading stats:', error);
     } finally {
@@ -553,21 +655,16 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
 
   // Hooks must always be called unconditionally — these must come before any early return.
   const bestSellers = useMemo<BestSellerItem[]>(() => {
-    const all = aggregateBestSellers(allOrderItems, bsTime, bsGroupBy);
+    const all = aggregateBestSellers(allOrderItems, bsTime);
     return all.sort((a, b) =>
       bsSort === 'revenue' ? b.revenue - a.revenue : b.unitsSold - a.unitsSold,
     ).slice(0, 10);
-  }, [allOrderItems, bsTime, bsSort, bsGroupBy]);
+  }, [allOrderItems, bsTime, bsSort]);
 
   const bsMax = useMemo(
     () => (bestSellers.length ? (bsSort === 'revenue' ? bestSellers[0].revenue : bestSellers[0].unitsSold) : 1),
     [bestSellers, bsSort],
   );
-
-  const stockListRows = useMemo(() => {
-    if (!inventory) return [];
-    return stockListView === 'low' ? inventory.lowStockRows.slice(0, 12) : inventory.outOfStockRows.slice(0, 12);
-  }, [inventory, stockListView]);
 
   if (loading) {
     return (
@@ -580,12 +677,6 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
               <Skeleton className="h-3 w-24 rounded" />
             </div>
           ))}
-        </div>
-        <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(46,209,180,0.2)] space-y-3">
-          <Skeleton className="h-6 w-40 rounded" />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
-          </div>
         </div>
         <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(46,209,180,0.2)] space-y-3">
           <Skeleton className="h-6 w-56 rounded" />
@@ -638,86 +729,6 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
         <StatCard label="Products" value={stats.totalProducts.toString()} icon={Package} color="#2ED1B4" />
       </div>
 
-      {/* Stock snapshot — full ledger lives in Stock tab */}
-      {inventory && (
-        <div className="p-4 sm:p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-          <div className="flex flex-wrap items-start sm:items-center justify-between gap-3 mb-4">
-            <h3 className="text-base sm:text-lg font-semibold text-[#F4F6FA] flex items-center gap-2">
-              <Box className="w-5 h-5 text-[#2ED1B4]" />
-              Stock snapshot
-            </h3>
-            {onOpenStock && (
-              <button
-                type="button"
-                onClick={onOpenStock}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2ED1B4] text-[#070A12] hover:bg-[#25b89d]"
-              >
-                Open Stock Room →
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-            <StatCard label="Units on hand" value={inventory.unitsOnHand.toLocaleString()} icon={Package} color="#22C55E" />
-            <StatCard label="Inventory value" value={`$${Math.round(inventory.inventoryValue || 0).toLocaleString()}`} icon={DollarSign} color="#2ED1B4" />
-            <StatCard label="In stock" value={`${inventory.inStockVariants}/${inventory.totalVariants}`} icon={CheckCircle} color="#8B5CF6" />
-            <StatCard label="Out of stock" value={inventory.outOfStockVariants.toString()} icon={XCircle} color="#EF4444" />
-            <StatCard label="Low / alerts" value={inventory.lowStockVariants.toString()} icon={MinusCircle} color="#F59E0B" />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <button
-              type="button"
-              onClick={() => setStockListView('low')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                stockListView === 'low'
-                  ? 'bg-[rgba(245,158,11,0.2)] text-[#F59E0B]'
-                  : 'text-[#6B7280] hover:text-[#A9B3C7] bg-[rgba(244,246,250,0.04)]'
-              }`}
-            >
-              Low stock ({inventory.lowStockVariants})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStockListView('oos')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                stockListView === 'oos'
-                  ? 'bg-[rgba(239,68,68,0.2)] text-[#EF4444]'
-                  : 'text-[#6B7280] hover:text-[#A9B3C7] bg-[rgba(244,246,250,0.04)]'
-              }`}
-            >
-              Out of stock ({inventory.outOfStockVariants})
-            </button>
-          </div>
-
-          {stockListRows.length === 0 ? (
-            <p className="text-sm text-[#5A667E] py-3 text-center">
-              {stockListView === 'low' ? 'No low-stock variants right now.' : 'No out-of-stock variants.'}
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {stockListRows.slice(0, 8).map((row) => (
-                <li
-                  key={row.dosageId}
-                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[rgba(7,10,18,0.5)]"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#F4F6FA] truncate">{row.productName}</p>
-                    <p className="text-[11px] text-[#6B7280] font-mono">{row.dosageLabel}</p>
-                  </div>
-                  <p className={`text-sm font-bold shrink-0 ${row.inStock ? 'text-[#F59E0B]' : 'text-[#EF4444]'}`}>
-                    {row.inStock ? `${row.stockQuantity} left` : 'OOS'}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-3 text-[11px] text-[#5A667E]">
-            Full ledger, quick +/- qty, sales velocity, and CSV export are in the Stock tab. Low stock ≤ {LOW_STOCK_THRESHOLD}.
-          </p>
-        </div>
-      )}
-
       {/* Best Sellers */}
       <div className="p-4 sm:p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
         {/* Header row */}
@@ -729,31 +740,6 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
 
           {/* Controls */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-xl overflow-hidden border border-[rgba(244,246,250,0.08)]">
-              <button
-                type="button"
-                onClick={() => setBsGroupBy('variant')}
-                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  bsGroupBy === 'variant'
-                    ? 'bg-[rgba(46,209,180,0.2)] text-[#2ED1B4]'
-                    : 'text-[#6B7280] hover:text-[#A9B3C7]'
-                }`}
-              >
-                By dosage
-              </button>
-              <button
-                type="button"
-                onClick={() => setBsGroupBy('product')}
-                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  bsGroupBy === 'product'
-                    ? 'bg-[rgba(46,209,180,0.2)] text-[#2ED1B4]'
-                    : 'text-[#6B7280] hover:text-[#A9B3C7]'
-                }`}
-              >
-                By product
-              </button>
-            </div>
-
             {/* Time period */}
             <div className="flex rounded-xl overflow-hidden border border-[rgba(244,246,250,0.08)]">
               {(['7d', '30d', '90d', 'all'] as const).map((t) => (
@@ -805,7 +791,7 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
         {bestSellers.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-[#5A667E]">
             <FlaskConical className="w-8 h-8 opacity-40" />
-            <p className="text-sm">No paid sales data for this period yet.</p>
+            <p className="text-sm">No sales data for this period yet.</p>
           </div>
         ) : (
           <ol className="space-y-3">
@@ -839,9 +825,6 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
                         <span className="text-xs text-[#A9B3C7] whitespace-nowrap">
                           {item.unitsSold} {item.unitsSold === 1 ? 'unit' : 'units'}
                         </span>
-                        <span className="text-[11px] text-[#6B7280] whitespace-nowrap">
-                          {item.orderCount} {item.orderCount === 1 ? 'order' : 'orders'}
-                        </span>
                         <span className="text-sm font-bold whitespace-nowrap" style={{ color: rankColor }}>
                           ${item.revenue.toFixed(0)}
                         </span>
@@ -862,8 +845,8 @@ function OverviewSection({ onOpenStock }: { onOpenStock?: () => void }) {
         )}
 
         <p className="mt-5 text-[11px] text-[#5A667E]">
-          Counts paid / fulfilment orders only (processing, finalised, shipped, delivered, or payment confirmed).
-          Excludes unpaid, cancelled, refunded, and free-gift lines. Ranked by {bsGroupBy === 'product' ? 'product' : 'dosage variant'}.
+          Excludes cancelled orders and free-gift items from revenue.
+          Counts all confirmed, processing, shipped, and delivered orders.
         </p>
       </div>
 
@@ -1270,31 +1253,6 @@ function OrdersSection() {
       const { error } = await supabase.from('orders').update(updates).eq('id', orderId);
       if (error) throw error;
 
-      // Stock: deduct on shipped if not already done at paid (safety net). Restore on cancel.
-      if (newStatus === 'shipped' || newStatus === 'delivered') {
-        void ensureOrderStockDeducted(
-          orderId,
-          Array.isArray(orderBeforeUpdate?.items) ? orderBeforeUpdate!.items : null,
-          'shipped',
-        ).then((r) => {
-          if (!r.ok) console.warn('[stock] shipped deduct failed', r.error);
-          else if (r.linesChanged > 0) {
-            window.dispatchEvent(new Event('peplab:orders-updated'));
-          }
-        });
-      } else if (newStatus === 'cancelled') {
-        void restoreOrderStock(
-          orderId,
-          Array.isArray(orderBeforeUpdate?.items) ? orderBeforeUpdate!.items : null,
-          orderBeforeUpdate?.stock_deducted,
-        ).then((r) => {
-          if (!r.ok) console.warn('[stock] cancel restore failed', r.error);
-          else if (r.linesChanged > 0) {
-            window.dispatchEvent(new Event('peplab:orders-updated'));
-          }
-        });
-      }
-
       if (
         newStatus === 'delivered' &&
         orderBeforeUpdate?.customer_email &&
@@ -1432,19 +1390,6 @@ function OrdersSection() {
         void sendPaymentReceived(order.customer_email, {
           order_number: order.order_number,
           total: Number(order.total) || 0,
-        });
-      }
-
-      // Deduct inventory when payment confirmed (industry standard). Non-blocking.
-      if (paymentStatus === 'confirmed') {
-        void ensureOrderStockDeducted(
-          orderId,
-          Array.isArray(order?.items) ? order!.items : null,
-          'paid',
-        ).then((r) => {
-          if (!r.ok) console.warn('[stock] paid deduct failed', r.error);
-          else if (r.unmatched.length) console.warn('[stock] unmatched lines', r.unmatched);
-          if (r.linesChanged > 0) window.dispatchEvent(new Event('peplab:orders-updated'));
         });
       }
 
@@ -3617,9 +3562,6 @@ function ProductsSection() {
   const [deleting, setDeleting] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [waitlistFilter, setWaitlistFilter] = useState<'all' | 'waitlist_only'>('all');
-  const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'out_of_stock' | 'low_stock'>('all');
-  const [savingStockId, setSavingStockId] = useState<string | null>(null);
-  const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
   const [isReordering, setIsReordering] = useState(false);
   const [isSyncingDetails, setIsSyncingDetails] = useState(false);
   const [syncDetailsMessage, setSyncDetailsMessage] = useState<string | null>(null);
@@ -3662,42 +3604,10 @@ function ProductsSection() {
 
   const toggleStock = async (dosageId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase.from('product_dosages').update({ in_stock: !currentStatus }).eq('id', dosageId);
-      if (error) throw error;
-      invalidateCache('products:');
-      invalidateCache('admin:overview');
+      await supabase.from('product_dosages').update({ in_stock: !currentStatus }).eq('id', dosageId);
       await loadProducts(true);
     } catch (error) {
       console.error('Error updating stock:', error);
-    }
-  };
-
-  /**
-   * Update stock_quantity only. If qty hits 0 while marked in stock, auto-mark OOS
-   * so storefront stays consistent. Never auto-mark back in stock (preserves preorder control).
-   */
-  const saveStockQuantity = async (dosageId: string, rawQty: string, currentlyInStock: boolean) => {
-    const parsed = parseInt(rawQty, 10);
-    const qty = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-    setSavingStockId(dosageId);
-    try {
-      const patch: { stock_quantity: number; in_stock?: boolean } = { stock_quantity: qty };
-      if (qty === 0 && currentlyInStock) patch.in_stock = false;
-      const { error } = await supabase.from('product_dosages').update(patch).eq('id', dosageId);
-      if (error) throw error;
-      invalidateCache('products:');
-      invalidateCache('admin:overview');
-      setStockDrafts((prev) => {
-        const next = { ...prev };
-        delete next[dosageId];
-        return next;
-      });
-      await loadProducts(true);
-    } catch (error) {
-      console.error('Error updating stock quantity:', error);
-      alert('Failed to update stock quantity. Please try again.');
-    } finally {
-      setSavingStockId(null);
     }
   };
 
@@ -3753,8 +3663,6 @@ function ProductsSection() {
 
   const categories = ['all', ...Array.from(new Set(products.map(p => (p.category || '').toLowerCase().replace(/\s+/g, '-'))))];
 
-  const inventorySummary = useMemo(() => summarizeInventory(products), [products]);
-
   const productsInCategory = useMemo(() => {
     if (categoryFilter === 'all') return products;
     return products.filter(p => (p.category || '').toLowerCase().replace(/\s+/g, '-') === categoryFilter);
@@ -3766,27 +3674,11 @@ function ProductsSection() {
   );
 
   const filteredProducts = useMemo(() => {
-    let list = productsInCategory;
     if (waitlistFilter === 'waitlist_only') {
-      list = list.filter(p => (waitlistByProductId[p.id] ?? 0) > 0);
+      return productsInCategory.filter(p => (waitlistByProductId[p.id] ?? 0) > 0);
     }
-    if (stockFilter === 'in_stock') {
-      list = list.filter(p => (p.product_dosages || []).some((d: any) => d.in_stock));
-    } else if (stockFilter === 'out_of_stock') {
-      list = list.filter((p) => {
-        const dosages = p.product_dosages || [];
-        return dosages.length > 0 && dosages.every((d: any) => !d.in_stock);
-      });
-    } else if (stockFilter === 'low_stock') {
-      list = list.filter((p) =>
-        (p.product_dosages || []).some((d: any) => {
-          if (!d.in_stock) return false;
-          return (Number(d.stock_quantity) || 0) <= LOW_STOCK_THRESHOLD;
-        }),
-      );
-    }
-    return list;
-  }, [productsInCategory, waitlistFilter, waitlistByProductId, stockFilter]);
+    return productsInCategory;
+  }, [productsInCategory, waitlistFilter, waitlistByProductId]);
 
   const moveProduct = async (productId: string, direction: 'up' | 'down') => {
     setIsReordering(true);
@@ -3927,27 +3819,7 @@ function ProductsSection() {
         <p className="text-sm text-[#A9B3C7]">{syncDetailsMessage}</p>
       )}
 
-      {/* Stock summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-3 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-          <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">Units on hand</p>
-          <p className="text-xl font-bold text-[#22C55E] mt-1">{inventorySummary.unitsOnHand.toLocaleString()}</p>
-        </div>
-        <div className="p-3 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-          <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">In stock variants</p>
-          <p className="text-xl font-bold text-[#2ED1B4] mt-1">{inventorySummary.inStockVariants}<span className="text-sm text-[#6B7280] font-medium">/{inventorySummary.totalVariants}</span></p>
-        </div>
-        <div className="p-3 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-          <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">Out of stock</p>
-          <p className="text-xl font-bold text-[#EF4444] mt-1">{inventorySummary.outOfStockVariants}</p>
-        </div>
-        <div className="p-3 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-          <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">Low stock (≤{LOW_STOCK_THRESHOLD})</p>
-          <p className="text-xl font-bold text-[#F59E0B] mt-1">{inventorySummary.lowStockVariants}</p>
-        </div>
-      </div>
-
-      {/* Category + waitlist + stock filters */}
+      {/* Category + waitlist filters */}
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
           {categories.map(cat => (
@@ -3962,28 +3834,6 @@ function ProductsSection() {
               }`}
             >
               {cat === 'all' ? 'All' : cat.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-[#A9B3C7] uppercase tracking-wide">Stock</span>
-          {([
-            ['all', 'All'],
-            ['in_stock', `In stock (${inventorySummary.inStockVariants})`],
-            ['out_of_stock', `OOS (${inventorySummary.outOfStockVariants})`],
-            ['low_stock', `Low (≤${LOW_STOCK_THRESHOLD})`],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setStockFilter(key)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                stockFilter === key
-                  ? 'bg-[#2ED1B4] text-[#070A12]'
-                  : 'bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.1)]'
-              }`}
-            >
-              {label}
             </button>
           ))}
         </div>
@@ -4058,13 +3908,11 @@ function ProductsSection() {
             <p className="text-sm text-[#A9B3C7] mb-4">
               {waitlistFilter === 'waitlist_only'
                 ? 'Try “All products” or another category — or no one has joined a waitlist in this view yet.'
-                : stockFilter !== 'all'
-                  ? 'Try another stock filter or category.'
-                  : 'Try another category.'}
+                : 'Try another category.'}
             </p>
             <button
               type="button"
-              onClick={() => { setCategoryFilter('all'); setWaitlistFilter('all'); setStockFilter('all'); }}
+              onClick={() => { setCategoryFilter('all'); setWaitlistFilter('all'); }}
               className="px-4 py-2 rounded-xl bg-[rgba(244,246,250,0.08)] text-[#F4F6FA] text-sm hover:bg-[rgba(244,246,250,0.12)]"
             >
               Clear filters
@@ -4122,17 +3970,10 @@ function ProductsSection() {
                 </div>
                 <p className="text-xs text-[#A9B3C7] mt-1">{product.category}</p>
                 <p className="text-xs text-[#A9B3C7] mt-1">Displayed reviews: {product.review_count ?? 0}</p>
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <div className="flex items-center gap-2 mt-2">
                   <span className={`w-2 h-2 rounded-full ${product.product_dosages?.some((d: any) => d.in_stock) ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`} />
                   <span className="text-xs text-[#A9B3C7]">
-                    {product.product_dosages?.filter((d: any) => d.in_stock).length || 0}/{product.product_dosages?.length || 0} variants in stock
-                  </span>
-                  <span className="text-xs text-[#6B7280]">·</span>
-                  <span className="text-xs text-[#A9B3C7]">
-                    {(product.product_dosages || [])
-                      .filter((d: any) => d.in_stock)
-                      .reduce((sum: number, d: any) => sum + (Number(d.stock_quantity) || 0), 0)}{' '}
-                    units on hand
+                    {product.product_dosages?.filter((d: any) => d.in_stock).length || 0}/{product.product_dosages?.length || 0} in stock
                   </span>
                 </div>
                 {(waitlistByProductId[product.id] ?? 0) > 0 && (
@@ -4144,69 +3985,23 @@ function ProductsSection() {
             </div>
 
             <div className="space-y-2">
-              {product.product_dosages?.map((dosage: any) => {
-                const qty = Number(dosage.stock_quantity) || 0;
-                const draft = stockDrafts[dosage.id];
-                const displayQty = draft !== undefined ? draft : String(qty);
-                const isLow = dosage.in_stock && qty <= LOW_STOCK_THRESHOLD;
-                const isSaving = savingStockId === dosage.id;
-                return (
-                  <div key={dosage.id} className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-[rgba(7,10,18,0.5)]">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => toggleStock(dosage.id, dosage.in_stock)}
-                        title={dosage.in_stock ? 'Mark out of stock' : 'Mark in stock'}
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${dosage.in_stock ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`}
-                      >
-                        {dosage.in_stock ? <CheckCircle className="w-4 h-4 text-white" /> : <XCircle className="w-4 h-4 text-white" />}
-                      </button>
-                      <div className="min-w-0">
-                        <span className="text-sm text-[#F4F6FA]">{dosage.mg} {dosage.unit ?? 'MG'}</span>
-                        <span className={`ml-2 text-[10px] font-semibold uppercase ${dosage.in_stock ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
-                          {dosage.in_stock ? (isLow ? 'Low stock' : 'In stock') : 'Out of stock'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-                      <div className="flex items-center gap-1.5">
-                        <label className="text-[10px] uppercase text-[#6B7280] font-semibold" htmlFor={`stock-${dosage.id}`}>Qty</label>
-                        <input
-                          id={`stock-${dosage.id}`}
-                          type="number"
-                          min={0}
-                          step={1}
-                          disabled={isSaving}
-                          value={displayQty}
-                          onChange={(e) => setStockDrafts((prev) => ({ ...prev, [dosage.id]: e.target.value }))}
-                          onBlur={() => {
-                            if (draft === undefined) return;
-                            const next = String(parseInt(draft, 10) || 0);
-                            if (next === String(qty)) {
-                              setStockDrafts((prev) => {
-                                const n = { ...prev };
-                                delete n[dosage.id];
-                                return n;
-                              });
-                              return;
-                            }
-                            void saveStockQuantity(dosage.id, draft, !!dosage.in_stock);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              (e.target as HTMLInputElement).blur();
-                            }
-                          }}
-                          className={`w-16 px-2 py-1 rounded-lg text-sm text-center bg-[rgba(244,246,250,0.06)] border text-[#F4F6FA] focus:outline-none focus:border-[#2ED1B4] disabled:opacity-50 ${
-                            isLow ? 'border-[#F59E0B]/60' : 'border-[rgba(244,246,250,0.1)]'
-                          }`}
-                        />
-                      </div>
-                      <span className="text-sm text-[#2ED1B4] w-14 text-right">${dosage.original_price ?? dosage.originalPrice ?? dosage.price ?? '—'}</span>
-                    </div>
+              {product.product_dosages?.map((dosage: any) => (
+                <div key={dosage.id} className="flex items-center justify-between p-2 rounded-lg bg-[rgba(7,10,18,0.5)]">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => toggleStock(dosage.id, dosage.in_stock)}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${dosage.in_stock ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`}
+                    >
+                      {dosage.in_stock ? <CheckCircle className="w-4 h-4 text-white" /> : <XCircle className="w-4 h-4 text-white" />}
+                    </button>
+                    <span className="text-sm text-[#F4F6FA]">{dosage.mg} {dosage.unit ?? 'MG'}</span>
                   </div>
-                );
-              })}
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-[#A9B3C7]">Stock: {dosage.stock_quantity}</span>
+                    <span className="text-sm text-[#2ED1B4]">${dosage.originalPrice ?? dosage.price ?? '—'}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
@@ -4260,22 +4055,15 @@ function UsersSection() {
 
   const loadUsers = async (bust = false) => {
     const requestId = ++loadUsersRequestIdRef.current;
-    if (bust) invalidateCache('admin:users');
+    if (bust) invalidateCache('admin:users:v2');
     setLoading(true);
     try {
-      const result = await cached('admin:users', async () => {
-        const { data, error } = await supabase.rpc('admin_get_all_users');
-        const users = error
-          ? ((await supabase.from('profiles').select('*').order('created_at', { ascending: false })).data || [])
-          : (data || []);
-        const { data: balRows, error: balErr } = await supabase.from('user_points_balance').select('user_id, balance');
-        const balMap: Record<string, number> = {};
-        if (balErr) {
-          const { data: rawRows } = await supabase.from('user_points').select('user_id, points');
-          (rawRows || []).forEach((r: any) => { balMap[r.user_id] = (balMap[r.user_id] || 0) + (r.points || 0); });
-        } else {
-          (balRows || []).forEach((r: any) => { balMap[r.user_id] = Number(r.balance || 0); });
-        }
+      const result = await cached('admin:users:v2', async () => {
+        // Admin SECURITY DEFINER RPC + pagination (direct profiles select is RLS-limited to self).
+        const [users, balMap] = await Promise.all([
+          fetchAllProfilesFromDb(),
+          fetchAllUserPointsBalances(),
+        ]);
         return { users, balMap };
       }, TTL_ADMIN_USERS);
       if (requestId === loadUsersRequestIdRef.current) { setUsers(result.users); setUserBalances(result.balMap); }
@@ -4663,10 +4451,10 @@ function ReviewsAdminSection() {
     setLoading(true);
     try {
       const result = await cached('admin:reviews', async () => {
-        const [{ data: reviewsData }, { data: productsData }, { data: profilesData }] = await Promise.all([
+        const [{ data: reviewsData }, { data: productsData }, profilesData] = await Promise.all([
           supabase.from('reviews').select('*, products(name)').order('created_at', { ascending: false }),
           supabase.from('products').select('id, name, slug').order('name'),
-          supabase.from('profiles').select('id, full_name, email'),
+          fetchAllProfilesFromDb(),
         ]);
         const map: Record<string, string> = {};
         (profilesData || []).forEach((p: any) => { map[p.id] = p.full_name || p.email || 'User'; });
