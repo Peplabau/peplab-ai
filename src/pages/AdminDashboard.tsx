@@ -13,7 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cached, invalidateCache, setCache, TTL_ADMIN_OVERVIEW, TTL_ADMIN_ORDERS, TTL_ADMIN_PRODUCTS, TTL_ADMIN_USERS, TTL_ADMIN_REVIEWS } from '@/lib/cache';
 import { CONFIG } from '@/lib/config';
 import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS } from '@/lib/settings';
-import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, type PointsEvent } from '@/lib/supabase-db';
+import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, type PointsEvent } from '@/lib/supabase-db';
+import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-reward';
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
 import ResearchMarquee from '@/components/ResearchMarquee';
 import { DEFAULT_MORE_INFO_TEXT } from '@/lib/defaultMoreInfo';
@@ -4031,6 +4032,10 @@ function UsersSection() {
   const [userPointsHistory, setUserPointsHistory] = useState<PointsEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [resettingBirthdayUserId, setResettingBirthdayUserId] = useState<string | null>(null);
+  const [birthdayModal, setBirthdayModal] = useState<{ id: string; email?: string; date_of_birth?: string | null } | null>(null);
+  const [birthdayDraft, setBirthdayDraft] = useState('');
+  const [birthdaySaving, setBirthdaySaving] = useState(false);
+  const [birthdayError, setBirthdayError] = useState<string | null>(null);
   const loadUsersRequestIdRef = useRef(0);
 
   useEffect(() => {
@@ -4090,16 +4095,39 @@ function UsersSection() {
 
   const handleDeleteUser = async () => {
     if (!deleteUser) return;
+    if (deleteUser.is_admin) {
+      setDeleteError('Cannot delete another admin account.');
+      return;
+    }
     setDeleting(true); setDeleteError(null);
     try {
       const userId = deleteUser.id;
-      // Delete user_points events (the single points table now)
-      await supabase.from('user_points').delete().eq('user_id', userId);
-      const { error: errProfiles } = await supabase.from('profiles').delete().eq('id', userId);
-      if (errProfiles) throw errProfiles;
-      setDeleteUser(null); await loadUsers(true);
-    } catch (err: any) { setDeleteError(err?.message || 'Failed to delete user.'); }
-    finally { setDeleting(false); }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const adminId = session?.user?.id ?? 'unknown';
+
+      if (adminId !== 'unknown' && adminId === userId) {
+        setDeleteError('You cannot delete your own account.');
+        return;
+      }
+
+      const result = await adminDeleteUser(userId);
+      if (!result.ok) {
+        setDeleteError(result.error || 'Failed to delete user.');
+        return;
+      }
+
+      await logAdminAction(adminId, 'delete_user', 'user', String(userId), {
+        email: deleteUser.email ?? result.email ?? null,
+      });
+      setDeleteUser(null);
+      await loadUsers(true);
+    } catch (err: any) {
+      setDeleteError(err?.message || 'Failed to delete user.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handlePointsSubmit = async () => {
@@ -4150,6 +4178,46 @@ function UsersSection() {
   const handleUnbanUser = async (userId: string) => {
     try { await supabase.from('profiles').update({ is_banned: false }).eq('id', userId); await loadUsers(true); }
     catch (err: any) { alert('Failed to unban: ' + (err?.message || 'Unknown error')); }
+  };
+
+  const openBirthdayModal = (user: { id: string; email?: string; date_of_birth?: string | null }) => {
+    setBirthdayError(null);
+    setBirthdayDraft(user.date_of_birth ? String(user.date_of_birth).slice(0, 10) : '');
+    setBirthdayModal({ id: user.id, email: user.email, date_of_birth: user.date_of_birth });
+  };
+
+  const handleSaveBirthday = async () => {
+    if (!birthdayModal) return;
+    const normalized = normalizeBirthdayInput(birthdayDraft);
+    if (!normalized) {
+      setBirthdayError('Enter a valid date (YYYY-MM-DD).');
+      return;
+    }
+
+    setBirthdaySaving(true);
+    setBirthdayError(null);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const adminId = session?.user?.id ?? 'unknown';
+
+      const result = await adminUpdateUserBirthday(birthdayModal.id, normalized);
+      if (!result.ok) {
+        setBirthdayError(result.error || 'Could not update birthday.');
+        return;
+      }
+
+      await logAdminAction(adminId, 'update_user_birthday', 'user', String(birthdayModal.id), {
+        email: birthdayModal.email,
+        previous_date_of_birth: birthdayModal.date_of_birth ?? null,
+        new_date_of_birth: result.dateOfBirth,
+      });
+      setBirthdayModal(null);
+      await loadUsers(true);
+    } finally {
+      setBirthdaySaving(false);
+    }
   };
 
   const handleResetBirthday = async (user: { id: string; email?: string; date_of_birth?: string | null }) => {
@@ -4242,6 +4310,54 @@ function UsersSection() {
         </div>
       )}
 
+      {birthdayModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60"
+          onClick={() => { if (!birthdaySaving) setBirthdayModal(null); }}
+        >
+          <div
+            className="bg-[#111827] border border-[rgba(244,246,250,0.08)] rounded-2xl max-w-sm w-full p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-[#F4F6FA] font-medium mb-1 flex items-center gap-2">
+              <Cake className="w-4 h-4 text-[#F59E0B]" />
+              Edit birthday
+            </h3>
+            <p className="text-sm text-[#A9B3C7] mb-4">For: {birthdayModal.email || birthdayModal.id}</p>
+            <label className="block text-xs font-medium text-[#A9B3C7] mb-1.5">Date of birth</label>
+            <input
+              type="date"
+              value={birthdayDraft}
+              max={maxBirthdayInputDate()}
+              onChange={(e) => { setBirthdayDraft(e.target.value); setBirthdayError(null); }}
+              className="w-full px-3 py-2 rounded-lg bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] text-sm"
+            />
+            <p className="text-[11px] text-[#6B7280] mt-2">
+              Saves DOB only — does not award birthday points. User can still claim on their birthday if eligible.
+            </p>
+            {birthdayError && <p className="text-sm text-[#EF4444] mt-2">{birthdayError}</p>}
+            <div className="flex gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => setBirthdayModal(null)}
+                disabled={birthdaySaving}
+                className="flex-1 px-4 py-2 rounded-xl border border-[rgba(244,246,250,0.2)] text-[#A9B3C7] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveBirthday()}
+                disabled={birthdaySaving || !birthdayDraft}
+                className="flex-1 px-4 py-2 rounded-xl bg-[#F59E0B] text-[#070A12] font-semibold hover:bg-[#D97706] disabled:opacity-50"
+              >
+                {birthdaySaving ? 'Saving…' : 'Save DOB'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {banUser && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" onClick={() => setBanUser(null)}>
           <div className="bg-[#111827] border border-[rgba(244,246,250,0.08)] rounded-2xl max-w-sm w-full p-6 shadow-xl" onClick={e => e.stopPropagation()}>
@@ -4259,7 +4375,9 @@ function UsersSection() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" onClick={() => { setDeleteUser(null); setDeleteError(null); }}>
           <div className="bg-[#111827] border border-[rgba(244,246,250,0.08)] rounded-2xl max-w-sm w-full p-6 shadow-xl" onClick={e => e.stopPropagation()}>
             <p className="text-[#F4F6FA] font-medium mb-2">Delete user?</p>
-            <p className="text-sm text-[#A9B3C7] mb-4">&quot;{deleteUser.email}&quot; will be removed permanently.</p>
+            <p className="text-sm text-[#A9B3C7] mb-4">
+              &quot;{deleteUser.email}&quot; will be removed permanently (login + profile). Order history is kept when possible.
+            </p>
             {deleteError && <p className="text-sm text-[#EF4444] mb-3">{deleteError}</p>}
             <div className="flex gap-3">
               <button onClick={() => { setDeleteUser(null); setDeleteError(null); }} className="flex-1 px-4 py-2 rounded-xl border border-[rgba(244,246,250,0.2)] text-[#A9B3C7]">Cancel</button>
@@ -4285,8 +4403,10 @@ function UsersSection() {
                       {user.is_admin && <span className="px-1.5 py-0.5 rounded bg-[#8B5CF6] text-white text-[9px] font-bold">ADMIN</span>}
                     </div>
                     <p className="text-xs text-[#A9B3C7] truncate mt-0.5">{user.email}</p>
-                    {user.date_of_birth && (
-                      <p className="text-[10px] text-[#F59E0B] mt-1">DOB set: {String(user.date_of_birth).slice(0, 10)}</p>
+                    {user.date_of_birth ? (
+                      <p className="text-[10px] text-[#F59E0B] mt-1">DOB: {String(user.date_of_birth).slice(0, 10)}</p>
+                    ) : (
+                      <p className="text-[10px] text-[#6B7280] mt-1">No birthday set</p>
                     )}
                   </div>
                   <div className="text-right shrink-0">
@@ -4307,16 +4427,24 @@ function UsersSection() {
                   <button type="button" onClick={() => setPointsModal({ user, mode: 'deduct' })} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[#F59E0B] bg-[rgba(245,158,11,0.08)] hover:bg-[rgba(245,158,11,0.15)] text-xs font-medium transition-colors" title="Deduct points">
                     <MinusCircle className="w-3.5 h-3.5" /> Deduct
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => openBirthdayModal(user)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[#F59E0B] bg-[rgba(245,158,11,0.08)] hover:bg-[rgba(245,158,11,0.15)] text-xs font-medium transition-colors"
+                    title="Edit date of birth"
+                  >
+                    <Cake className="w-3.5 h-3.5" />
+                    {user.date_of_birth ? 'Edit DOB' : 'Set DOB'}
+                  </button>
                   {user.date_of_birth && (
                     <button
                       type="button"
                       onClick={() => void handleResetBirthday(user)}
                       disabled={resettingBirthdayUserId === user.id}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[#F59E0B] bg-[rgba(245,158,11,0.08)] hover:bg-[rgba(245,158,11,0.15)] text-xs font-medium transition-colors disabled:opacity-50"
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[#A9B3C7] bg-[rgba(244,246,250,0.06)] hover:bg-[rgba(244,246,250,0.1)] text-xs font-medium transition-colors disabled:opacity-50"
                       title="Clear date of birth so the user can set their own"
                     >
-                      <Cake className="w-3.5 h-3.5" />
-                      {resettingBirthdayUserId === user.id ? 'Clearing…' : 'Reset DOB'}
+                      {resettingBirthdayUserId === user.id ? 'Clearing…' : 'Clear DOB'}
                     </button>
                   )}
                   {user.email !== adminEmail ? (
@@ -4330,9 +4458,11 @@ function UsersSection() {
                           <Ban className="w-3.5 h-3.5" /> Ban
                         </button>
                       )}
-                      <button type="button" onClick={() => { setDeleteError(null); setDeleteUser(user); }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[#EF4444] bg-[rgba(239,68,68,0.08)] hover:bg-[rgba(239,68,68,0.15)] text-xs font-medium transition-colors ml-auto" title="Delete">
-                        <Trash2 className="w-3.5 h-3.5" /> Delete
-                      </button>
+                      {!user.is_admin && (
+                        <button type="button" onClick={() => { setDeleteError(null); setDeleteUser(user); }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[#EF4444] bg-[rgba(239,68,68,0.08)] hover:bg-[rgba(239,68,68,0.15)] text-xs font-medium transition-colors ml-auto" title="Delete">
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      )}
                     </>
                   ) : <span className="text-xs text-[#A9B3C7] px-2 ml-auto">(you)</span>}
                 </div>

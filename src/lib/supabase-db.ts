@@ -638,21 +638,107 @@ async function saveUserDateOfBirthFallback(dateOfBirth: string): Promise<SaveBir
   };
 }
 
+type AdminBirthdayRpcResult = {
+  ok?: boolean;
+  error?: string;
+  date_of_birth?: string | null;
+};
+
+async function callAdminUpdateUserBirthday(
+  userId: string,
+  dateOfBirth: string | null,
+): Promise<{ ok: boolean; dateOfBirth?: string | null; error?: string }> {
+  const { data, error } = await supabase.rpc('admin_update_user_birthday', {
+    p_user_id: userId,
+    p_date_of_birth: dateOfBirth,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message || 'Could not update birthday.' };
+  }
+
+  const result = data as AdminBirthdayRpcResult | null;
+  if (!result?.ok) {
+    const code = result?.error;
+    if (code === 'not_authorized') return { ok: false, error: 'Admin access required.' };
+    if (code === 'invalid_date') return { ok: false, error: 'Enter a valid date of birth (not in the future).' };
+    if (code === 'profile_not_found') return { ok: false, error: 'User profile not found.' };
+    return { ok: false, error: code || 'Could not update birthday.' };
+  }
+
+  return { ok: true, dateOfBirth: result.date_of_birth ?? dateOfBirth };
+}
+
 /** Admin: clear saved DOB so the member can enter their own birthday again. */
 export async function resetUserBirthday(userId: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ date_of_birth: null, last_birthday_reward_year: null })
-      .eq('id', userId);
-
-    if (error) {
-      return { ok: false, error: error.message || 'Could not reset birthday.' };
-    }
-    return { ok: true };
+    return await callAdminUpdateUserBirthday(userId, null);
   } catch (error) {
     console.error('[resetUserBirthday]', error);
     return { ok: false, error: 'Could not reset birthday.' };
+  }
+}
+
+/** Admin: set or change a member's date of birth (does not auto-claim birthday points). */
+export async function adminUpdateUserBirthday(
+  userId: string,
+  dateOfBirth: string,
+): Promise<{ ok: boolean; dateOfBirth?: string; error?: string }> {
+  try {
+    const { isValidBirthdayInput, normalizeBirthdayInput } = await import('@/utils/birthday-reward');
+    const normalized = normalizeBirthdayInput(dateOfBirth);
+    if (!normalized || !isValidBirthdayInput(normalized)) {
+      return { ok: false, error: 'Enter a valid date of birth (not in the future).' };
+    }
+
+    const result = await callAdminUpdateUserBirthday(userId, normalized);
+    if (!result.ok) return { ok: false, error: result.error };
+    return { ok: true, dateOfBirth: normalized };
+  } catch (error) {
+    console.error('[adminUpdateUserBirthday]', error);
+    return { ok: false, error: 'Could not update birthday.' };
+  }
+}
+
+/** Admin: permanently delete a member account (auth + profile + related app data). */
+export async function adminDeleteUser(
+  userId: string,
+): Promise<{ ok: boolean; email?: string | null; error?: string }> {
+  try {
+    const { data, error } = await supabase.rpc('admin_delete_user', {
+      p_user_id: userId,
+    });
+
+    if (error) {
+      return { ok: false, error: error.message || 'Could not delete user.' };
+    }
+
+    const result = data as {
+      ok?: boolean;
+      error?: string;
+      message?: string;
+      email?: string | null;
+    } | null;
+
+    if (!result?.ok) {
+      const code = result?.error;
+      if (code === 'not_authorized') return { ok: false, error: 'Admin access required.' };
+      if (code === 'cannot_delete_self') return { ok: false, error: 'You cannot delete your own account.' };
+      if (code === 'cannot_delete_admin') return { ok: false, error: 'Cannot delete another admin account.' };
+      if (code === 'profile_not_found') return { ok: false, error: 'User not found.' };
+      if (code === 'foreign_key_violation') {
+        return {
+          ok: false,
+          error: result.message || 'Cannot delete user because related records still reference them.',
+        };
+      }
+      return { ok: false, error: result?.message || code || 'Could not delete user.' };
+    }
+
+    return { ok: true, email: result.email ?? null };
+  } catch (error) {
+    console.error('[adminDeleteUser]', error);
+    return { ok: false, error: 'Could not delete user.' };
   }
 }
 
