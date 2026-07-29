@@ -1,5 +1,22 @@
-import type { Product } from '@/products';
+import type { Dosage, Product } from '@/products';
 import { formatDosageLabel, getDefaultStorefrontDosage } from '@/products';
+
+/** Live + upcoming lab batch lanes shown on the COA archive. */
+export type CoaBatchLaneStatus = 'active' | 'soon';
+
+export interface CoaBatchLane {
+  id: string;
+  status: CoaBatchLaneStatus;
+}
+
+/** Current publishing lanes — BN88LAB is live; additional labs come online soon. */
+export const COA_BATCH_LANES: readonly CoaBatchLane[] = [
+  { id: 'BN88LAB', status: 'active' },
+  { id: 'BB77LAB', status: 'soon' },
+  { id: 'BB66LAB', status: 'soon' },
+] as const;
+
+export const ACTIVE_COA_BATCH = COA_BATCH_LANES.find((b) => b.status === 'active')?.id ?? 'BN88LAB';
 
 /** Extract a display purity percentage from technical spec text, e.g. "≥99.0%" → "99.00%". */
 export function parsePurityPercent(purity?: string | null): string {
@@ -29,6 +46,33 @@ export function productHasCoaPdf(product: Pick<Product, 'coaUrl'>): boolean {
   return Boolean(product.coaUrl?.trim());
 }
 
+export type CoaMgStatus = 'available' | 'pending';
+
+export interface CoaDosageStatus {
+  label: string;
+  status: CoaMgStatus;
+}
+
+/** Per-vial COA availability. Product-level PDF currently covers all listed sizes. */
+export function getCoaDosageStatuses(
+  product: Pick<Product, 'coaUrl' | 'dosages'>,
+): CoaDosageStatus[] {
+  const hasPdf = productHasCoaPdf(product);
+  const dosages = [...(product.dosages ?? [])].sort((a, b) => dosageSortKey(a) - dosageSortKey(b));
+  if (dosages.length === 0) {
+    return [{ label: '—', status: hasPdf ? 'available' : 'pending' }];
+  }
+  return dosages.map((d) => ({
+    label: formatDosageLabel(d.mg, d.unit),
+    status: hasPdf ? 'available' : 'pending',
+  }));
+}
+
+function dosageSortKey(d: Dosage): number {
+  const n = typeof d.mg === 'number' ? d.mg : parseFloat(String(d.mg).replace(/[^\d.]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
 export interface CoaDisplayData {
   productName: string;
   /** Empty when no PDF has been uploaded yet. */
@@ -54,7 +98,7 @@ export function getCoaDisplayData(
     doseOverride ??
     (defaultDosage ? formatDosageLabel(defaultDosage.mg, defaultDosage.unit) : '—');
 
-  const batch = 'BN88LAB';
+  const batch = ACTIVE_COA_BATCH;
   const testedFromBatch = parseBatchTestDate(specs?.batchLot);
   const testedDate = testedFromBatch ?? 'See certificate';
 

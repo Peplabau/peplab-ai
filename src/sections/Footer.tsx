@@ -4,6 +4,7 @@ import {
   Beaker,
   Clock,
   CreditCard,
+  Mail,
   MapPin,
   Shield,
   Truck,
@@ -147,6 +148,13 @@ export default function Footer() {
               <li>
                 <Link to="/contact-info">Contact us</Link>
               </li>
+              {CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL ? (
+                <li>
+                  <a href={`mailto:${CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL}`}>
+                    {CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL}
+                  </a>
+                </li>
+              ) : null}
               <li>
                 <a href={telegramLink} target="_blank" rel="noopener noreferrer">
                   Telegram support
@@ -165,6 +173,20 @@ export default function Footer() {
           <div className="nl-footer-col">
             <h4 className="nl-footer-col-heading">Business details</h4>
             <ul className="nl-footer-contact-detail">
+              {(CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL) && (
+                <li>
+                  <Mail className="w-4 h-4 shrink-0 text-[#2ED1B4]" aria-hidden />
+                  <div>
+                    <span className="nl-footer-contact-label">Email</span>
+                    <a
+                      href={`mailto:${CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL}`}
+                      className="nl-footer-contact-text hover:text-[#2ED1B4] transition-colors"
+                    >
+                      {CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL}
+                    </a>
+                  </div>
+                </li>
+              )}
               <li>
                 <MapPin className="w-4 h-4 shrink-0 text-[#2ED1B4]" aria-hidden />
                 <div>

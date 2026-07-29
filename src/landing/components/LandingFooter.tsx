@@ -3,6 +3,7 @@ import {
   Beaker,
   Clock,
   CreditCard,
+  Mail,
   MapPin,
   Shield,
   Truck,
@@ -173,6 +174,11 @@ export default function LandingFooter({ hideCta = false }: LandingFooterProps) {
               <li>
                 <a href={shopUrl('/contact-info')}>Contact us</a>
               </li>
+              {CONFIG.CONTACT_EMAIL ? (
+                <li>
+                  <a href={`mailto:${CONFIG.CONTACT_EMAIL}`}>{CONFIG.CONTACT_EMAIL}</a>
+                </li>
+              ) : null}
               <li>
                 <a href={telegramLink} target="_blank" rel="noopener noreferrer">
                   Telegram support
@@ -191,6 +197,17 @@ export default function LandingFooter({ hideCta = false }: LandingFooterProps) {
           <div className="rg-footer-col">
             <h4 className="rg-footer-col-heading">Business details</h4>
             <ul className="rg-footer-contact-detail">
+              {CONFIG.CONTACT_EMAIL ? (
+                <li>
+                  <Mail className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
+                  <div>
+                    <span className="rg-footer-contact-label">Email</span>
+                    <a href={`mailto:${CONFIG.CONTACT_EMAIL}`} className="rg-footer-contact-text">
+                      {CONFIG.CONTACT_EMAIL}
+                    </a>
+                  </div>
+                </li>
+              ) : null}
               <li>
                 <MapPin className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
                 <div>

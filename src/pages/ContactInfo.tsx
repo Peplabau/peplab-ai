@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowLeft, MessageCircle, Clock, MapPin, ExternalLink, Send } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Clock, MapPin, ExternalLink, Send, Mail } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { CONFIG } from '@/lib/config';
@@ -183,6 +183,23 @@ export default function ContactInfo() {
                 <ExternalLink className="w-4 h-4 shrink-0" />
               </a>
             </div>
+
+            {CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL ? (
+              <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)] hover:border-[rgba(46,209,180,0.35)] transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-[rgba(46,209,180,0.12)] flex items-center justify-center mb-4">
+                  <Mail className="w-6 h-6 text-[#2ED1B4]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#F4F6FA] mb-2">Email</h3>
+                <p className="text-sm text-[#A9B3C7] mb-4">Written enquiries — we typically reply within 24–48 hours.</p>
+                <a
+                  href={`mailto:${CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL}`}
+                  className="inline-flex items-center gap-2 text-[#2ED1B4] hover:underline break-all"
+                >
+                  {CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL}
+                  <ExternalLink className="w-4 h-4 shrink-0" />
+                </a>
+              </div>
+            ) : null}
 
             <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)] hover:border-[rgba(139,92,246,0.3)] transition-colors">
               <div className="w-12 h-12 rounded-xl bg-[rgba(139,92,246,0.1)] flex items-center justify-center mb-4">

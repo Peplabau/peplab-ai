@@ -33,6 +33,7 @@ async function getEmailSupportLinks(): Promise<EmailSupportLinks> {
   return {
     telegramUrl: telegramVal?.url?.trim() || DEFAULT_SUPPORT_LINKS.telegram_link,
     whatsappUrl: whatsappVal?.url?.trim() || '',
+    email: CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL || '',
   };
 }
 

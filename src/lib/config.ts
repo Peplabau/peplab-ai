@@ -20,10 +20,9 @@ export const CONFIG = {
   // FROM_EMAIL is used server-side only (Supabase Edge Function → Resend "From:" header)
   // and by the dev-only Vite proxy path. Keep it out of the client UI.
   FROM_EMAIL: import.meta.env.VITE_FROM_EMAIL || '',
-  // Public contact email intentionally left blank — customer-facing pages now
-  // route enquiries through the Telegram / WhatsApp support page instead.
-  SUPPORT_EMAIL: '',
-  CONTACT_EMAIL: '',
+  // Public support inbox (shown on contact pages + transactional email footers).
+  SUPPORT_EMAIL: 'peplab@proton.me',
+  CONTACT_EMAIL: 'peplab@proton.me',
   /**
    * When false (default), transactional email uses branded HTML from code — not `email_templates` body.
    * Set VITE_EMAIL_USE_SUPABASE_HTML_TEMPLATES=true only if you maintain HTML in Supabase and want that instead.

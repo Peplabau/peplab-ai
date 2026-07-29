@@ -12,10 +12,11 @@ import CountUp from '@/components/CountUp';
 import CoaHplcChart from '@/components/CoaHplcChart';
 import OzcaniumAnalyticsName, { OZCANIUM_ANALYTICS_LAB_NAME } from '@/components/OzcaniumAnalyticsName';
 import type { CoaDisplayData } from '@/lib/coa-utils';
+import { ACTIVE_COA_BATCH } from '@/lib/coa-utils';
 import { CONFIG } from '@/lib/config';
 import { cn } from '@/lib/utils';
 
-const BATCH_NO = 'BN88LAB';
+const BATCH_NO = ACTIVE_COA_BATCH;
 
 interface CoaDialogProps {
   open: boolean;

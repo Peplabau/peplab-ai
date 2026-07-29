@@ -6,8 +6,7 @@ export const CONFIG = {
   SHARE_PREVIEW_IMAGE_PATH: '/chrome-seo.jpeg',
   FAVICON_PATH: '/favicon.png',
   SITE_DESCRIPTION: 'Premium Peptides Australia for research. Lab-tested, fast shipping, exceptional quality.',
-  // Contact email + phone intentionally omitted — support routed via Telegram / WhatsApp.
-  CONTACT_EMAIL: '',
+  CONTACT_EMAIL: 'peplab@proton.me',
   BUSINESS: {
     PHONE_TEL: '',
     PHONE_DISPLAY: '',

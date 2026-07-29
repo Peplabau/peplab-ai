@@ -42,19 +42,21 @@ type WrapOpts = {
   bodyHtml: string;
   /** Optional palette overrides (defaults to light transactional theme). */
   colors?: Partial<{ pageBg: string; panel: string; panel2: string }>;
-  /** Telegram / WhatsApp only — no email in customer-facing footers. */
+  /** Telegram / WhatsApp / email for customer-facing footers. */
   supportLinks?: EmailSupportLinks;
 };
 
 export type EmailSupportLinks = {
   telegramUrl?: string;
   whatsappUrl?: string;
+  email?: string;
 };
 
-/** Inline Telegram · WhatsApp links for email bodies and footers. */
+/** Inline Telegram · WhatsApp · email links for email bodies and footers. */
 export function emailSupportContactLinks(links?: EmailSupportLinks): string {
   const telegram = (links?.telegramUrl || CONFIG.SOCIAL.TELEGRAM || '').trim();
   const whatsapp = (links?.whatsappUrl || '').trim();
+  const email = (links?.email || CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL || '').trim();
   const linkStyle = `color:${C.teal};text-decoration:none;font-weight:600;`;
   const parts: string[] = [];
   if (telegram) {
@@ -63,10 +65,13 @@ export function emailSupportContactLinks(links?: EmailSupportLinks): string {
   if (whatsapp) {
     parts.push(`<a href="${escapeHtml(whatsapp)}" style="${linkStyle}">WhatsApp</a>`);
   }
+  if (email) {
+    parts.push(`<a href="mailto:${escapeHtml(email)}" style="${linkStyle}">${escapeHtml(email)}</a>`);
+  }
   return parts.join(' · ');
 }
 
-/** Tracking + need-help contact block (Telegram / WhatsApp only). */
+/** Tracking + need-help contact block. */
 export function emailSupportHelpBlock(links?: EmailSupportLinks): string {
   const contact = emailSupportContactLinks(links);
   if (!contact) return '';

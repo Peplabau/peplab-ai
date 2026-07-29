@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Send, ArrowLeft, MessageCircle, Clock, MapPin, ExternalLink } from 'lucide-react';
+import { Send, ArrowLeft, MessageCircle, Clock, MapPin, ExternalLink, Mail } from 'lucide-react';
 import { CONFIG } from '@/lib/config';
 import { SEO } from '@/components/SEO';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
@@ -26,8 +26,8 @@ export default function Contact() {
     };
   }, []);
 
-  // Contact submissions are routed through Telegram instead of email — the
-  // support email is intentionally not shown or transmitted from the browser.
+  // Form submissions open Telegram with a clipboard-ready message.
+  // Support email is also listed for direct contact.
   // We open the Telegram chat in a new tab; the user pastes the message they
   // just typed into that chat.
   const handleSubmit = async (e: React.FormEvent) => {
@@ -129,6 +129,22 @@ export default function Contact() {
                   Open Telegram chat
                 </a>
               </div>
+
+              {(CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL) && (
+                <div className="p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
+                  <div className="w-10 h-10 rounded-xl bg-[rgba(46,209,180,0.1)] flex items-center justify-center mb-3">
+                    <Mail className="w-5 h-5 text-[#2ED1B4]" />
+                  </div>
+                  <h3 className="text-sm font-bold text-[#F4F6FA] mb-1">Email</h3>
+                  <p className="text-xs text-[#A9B3C7] mb-2">For written enquiries — we typically reply within 24–48 hours.</p>
+                  <a
+                    href={`mailto:${CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL}`}
+                    className="text-sm text-[#2ED1B4] hover:underline break-all"
+                  >
+                    {CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL}
+                  </a>
+                </div>
+              )}
 
               <div className="p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
                 <div className="w-10 h-10 rounded-xl bg-[rgba(59,130,246,0.1)] flex items-center justify-center mb-3">

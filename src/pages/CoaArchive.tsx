@@ -3,8 +3,9 @@ import { FileText } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/sections/Footer';
-import CoaArchiveCard from '@/components/CoaArchiveCard';
 import CoaArchiveHero from '@/components/CoaArchiveHero';
+import CoaArchiveTable from '@/components/CoaArchiveTable';
+import CoaBatchLanes from '@/components/CoaBatchLanes';
 import CoaDialog from '@/components/CoaDialog';
 import { SEO } from '@/components/SEO';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,7 +28,11 @@ export default function CoaArchive() {
 
     loadProductsFromSupabase()
       .then((data) => {
-        if (!cancelled) setProducts(data.filter(productHasCoaPdf));
+        if (!cancelled) {
+          setProducts(
+            [...data].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+          );
+        }
       })
       .catch(() => {
         if (!cancelled) setError('Failed to load COA archive.');
@@ -40,6 +45,11 @@ export default function CoaArchive() {
       cancelled = true;
     };
   }, []);
+
+  const publishedCount = useMemo(
+    () => products.filter(productHasCoaPdf).length,
+    [products],
+  );
 
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -79,26 +89,24 @@ export default function CoaArchive() {
       <CartDrawer />
 
       <main className="relative z-10 pt-24 sm:pt-28 pb-16 lg:pb-24">
-        <div className="relative z-10 px-4 sm:px-6 lg:px-12">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <CoaArchiveHero
-            certificateCount={products.length}
+            certificateCount={publishedCount}
             loading={loading}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
           />
 
+          <CoaBatchLanes
+            activeCount={publishedCount}
+            loading={loading}
+            className="mb-6 lg:mb-8"
+          />
+
           {loading && (
-            <div className="coa-archive-grid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-5">
+            <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.55)] overflow-hidden p-4 space-y-3">
               {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl sm:rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[#111827] overflow-hidden"
-                >
-                  <Skeleton className="h-10 sm:h-12 w-full rounded-none" />
-                  <Skeleton className="w-full aspect-[5/6] sm:aspect-[3/4] rounded-none" />
-                  <Skeleton className="h-14 sm:h-16 w-full rounded-none" />
-                  <Skeleton className="hidden sm:block h-12 m-3 rounded-xl" />
-                </div>
+                <Skeleton key={i} className="h-12 w-full rounded-lg" />
               ))}
             </div>
           )}
@@ -119,8 +127,10 @@ export default function CoaArchive() {
           {!loading && !error && products.length === 0 && (
             <div className="text-center py-16 rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.5)]">
               <FileText className="w-10 h-10 mx-auto mb-4 text-[#6B7280]" />
-              <p className="text-[#A9B3C7] text-lg">No published COAs yet.</p>
-              <p className="text-sm text-[#6B7280] mt-2">Check back soon — new batch certificates are added regularly.</p>
+              <p className="text-[#A9B3C7] text-lg">No products in the archive yet.</p>
+              <p className="text-sm text-[#6B7280] mt-2">
+                Check back soon — new batch certificates are added regularly.
+              </p>
             </div>
           )}
 
@@ -138,11 +148,13 @@ export default function CoaArchive() {
           )}
 
           {!loading && !error && filteredProducts.length > 0 && (
-            <div className="coa-archive-grid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-5">
-              {filteredProducts.map((product) => (
-                <CoaArchiveCard key={product.id} product={product} onView={openCoa} />
-              ))}
-            </div>
+            <>
+              <p className="text-xs text-[#6B7280] mb-3">
+                Showing {filteredProducts.length} of {products.length} peptides · {publishedCount}{' '}
+                certificates published
+              </p>
+              <CoaArchiveTable products={filteredProducts} onView={openCoa} />
+            </>
           )}
         </div>
       </main>
