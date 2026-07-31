@@ -41,6 +41,12 @@ import { formatOrderNumberDisplay } from '@/utils/order-number';
 import { sendPaymentReceived, sendOrderShipped, sendReplacementTrackingEmail, sendOrderDeliveredReviewEmail } from '@/lib/email';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { SEO } from '@/components/SEO';
+import {
+  canonicalBestSellerProductKey,
+  formatAdminDosageDisplay,
+  normalizeAdminDosageKey,
+  preferAdminDisplayName,
+} from '@/lib/admin-analytics';
 
 // Types
 interface Order {
@@ -770,7 +776,7 @@ export default function AdminDashboard() {
 
 // ─── Best-sellers aggregation ──────────────────────────────────────────────
 interface BestSellerItem {
-  key: string;        // "name||dosage" composite
+  key: string;        // canonical product||dosage
   name: string;
   dosage: string;
   unitsSold: number;
@@ -802,20 +808,38 @@ function aggregateBestSellers(
 
     const items: any[] = Array.isArray(order.items) ? order.items : [];
     for (const item of items) {
-      // Skip free gifts / $0 items from the revenue tally but still count units.
+      // Skip free gifts from revenue; still omit them from ranking noise.
+      if (item?.is_free) continue;
+
       const name = String(item.name ?? '').trim();
       const dosage = String(item.dosage ?? '').trim();
-      if (!name) continue;
-      const key = `${name}||${dosage}`;
+      const productId = String(item.product_id ?? '').trim();
+      if (!name && !productId) continue;
+
+      // Canonical key merges: casing, 10MG/10 mg/10.0 mg, reta/retatrutide, MT-2/Melanotan II, etc.
+      const productKey = canonicalBestSellerProductKey(productId, name);
+      const dosageKey = normalizeAdminDosageKey(dosage);
+      if (!productKey) continue;
+      const key = `${productKey}||${dosageKey || 'default'}`;
+
       const qty = Number(item.quantity) || 1;
-      const price = item.is_free ? 0 : Number(item.price) || 0;
+      const price = Number(item.price) || 0;
+      const displayDosage = formatAdminDosageDisplay(dosage);
 
       const existing = map.get(key);
       if (existing) {
         existing.unitsSold += qty;
         existing.revenue += price * qty;
+        if (name) existing.name = preferAdminDisplayName(existing.name, name);
+        if (displayDosage) existing.dosage = displayDosage;
       } else {
-        map.set(key, { key, name, dosage, unitsSold: qty, revenue: price * qty });
+        map.set(key, {
+          key,
+          name: name || productId || 'Unknown',
+          dosage: displayDosage || dosage,
+          unitsSold: qty,
+          revenue: price * qty,
+        });
       }
     }
   }

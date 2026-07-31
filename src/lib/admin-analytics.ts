@@ -3,6 +3,8 @@
  * Read-only aggregations over existing orders / product_dosages — no checkout side effects.
  */
 
+import { resolveProductSlug } from '@/lib/product-slug-aliases';
+
 export const LOW_STOCK_THRESHOLD = 5;
 export const CRITICAL_STOCK_THRESHOLD = 2;
 
@@ -14,11 +16,137 @@ export const BEST_SELLER_COUNTED_STATUSES = new Set([
   'delivered',
 ]);
 
-export function normalizeAdminDosageKey(label: string): string {
-  return String(label ?? '')
-    .replace(/\s+/g, ' ')
+/**
+ * Historical / marketing display names → canonical storefront slug.
+ * Used when order lines lack product_id or used a renamed label.
+ */
+const PRODUCT_NAME_TO_SLUG: Record<string, string> = {
+  reta: 'reta',
+  retatrutide: 'reta',
+  semaglutide: 'semaglutide',
+  tirzepatide: 'tirzepatide',
+  'bac water': 'bac-water',
+  'bacteriostatic water': 'bac-water',
+  'tb 500': 'tb-500',
+  tb500: 'tb-500',
+  'tb-500': 'tb-500',
+  'bpc 157': 'bpc-157',
+  'bpc-157': 'bpc-157',
+  'bpc-157 + tb-500': 'bpc-5mg-tb-5mg',
+  'bpc-157+tb-500': 'bpc-5mg-tb-5mg',
+  'bpc + tb': 'bpc-5mg-tb-5mg',
+  'bpc-157 + tb500': 'bpc-5mg-tb-5mg',
+  epithalon: 'epitalon',
+  epitalon: 'epitalon',
+  'melanotan ii': 'mt-2',
+  'melanotan 2': 'mt-2',
+  'melanotan-ii': 'mt-2',
+  melanotan: 'mt-2',
+  'mt-2': 'mt-2',
+  mt2: 'mt-2',
+  'mt 2': 'mt-2',
+  glutathione: 'glutathione',
+  'gsh glutathione': 'glutathione',
+  'hgh 191aa (somatropin)': 'hgh-191aa',
+  'hgh 191aa': 'hgh-191aa',
+  hgh: 'hgh-191aa',
+  'cjc-1295 no dac + ipa': 'cjc-1295-no-dac-ipa-5mg',
+  'cjc-1295 no dac + ipamorelin': 'cjc-1295-no-dac-ipa-5mg',
+  'semax + selank': 'semax-selank',
+  nad: 'nad',
+  'nad+': 'nad',
+  'nad +': 'nad',
+};
+
+function normalizeProductNameLookup(name: string): string {
+  return String(name ?? '')
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[_/]+/g, ' ')
+    .replace(/\s*\+\s*/g, ' + ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * One stable product key for best-seller / inventory matching across:
+ * - slug aliases (retatrutide → reta)
+ * - renamed display labels (MELANOTAN 2 → mt-2)
+ * - missing product_id (fall back to name)
+ */
+export function canonicalBestSellerProductKey(
+  productId?: string | null,
+  name?: string | null,
+): string {
+  const id = String(productId ?? '').trim();
+  if (id) {
+    return resolveProductSlug(id).toLowerCase();
+  }
+
+  const lookup = normalizeProductNameLookup(name || '');
+  if (!lookup) return '';
+
+  if (PRODUCT_NAME_TO_SLUG[lookup]) return PRODUCT_NAME_TO_SLUG[lookup];
+
+  const compactPlus = lookup.replace(/\s*\+\s*/g, '+');
+  if (PRODUCT_NAME_TO_SLUG[compactPlus]) return PRODUCT_NAME_TO_SLUG[compactPlus];
+
+  // Slugify display name: "BPC-157" → "bpc-157", then resolve aliases.
+  const slugish = lookup
+    .replace(/\+/g, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return resolveProductSlug(slugish).toLowerCase() || lookup;
+}
+
+/**
+ * Collapse dosage label variants so these share one key:
+ * "10MG", "10 mg", "10.0 mg", "10 mg Vial"
+ */
+export function normalizeAdminDosageKey(label: string): string {
+  let s = String(label ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/milligrams?/g, 'mg')
+    .replace(/micrograms?|µg|μg|ug/g, 'mcg')
+    .replace(/vials?/g, '');
+
+  const match = s.match(/^(\d+(?:\.\d+)?)([a-z%]+)?$/);
+  if (!match) return s;
+
+  const num = String(parseFloat(match[1]));
+  const unit = match[2] || '';
+  return `${num}${unit}`;
+}
+
+/** Pretty dosage for admin UI: "10MG" → "10 mg". */
+export function formatAdminDosageDisplay(dosage: string): string {
+  const raw = String(dosage ?? '').trim();
+  if (!raw) return '';
+  const key = normalizeAdminDosageKey(raw);
+  const match = key.match(/^(\d+(?:\.\d+)?)([a-z%]+)?$/i);
+  if (!match) return raw.replace(/\s+/g, ' ');
+  const num = match[1];
+  const unit = (match[2] || '').toUpperCase();
+  if (unit === 'MG') return `${num} mg`;
+  if (unit === 'ML') return `${num} mL`;
+  if (unit === 'MCG') return `${num} mcg`;
+  if (unit === 'IU') return `${num} IU`;
+  if (unit === 'L') return `${num} L`;
+  if (unit === 'PCS') return `${num} pcs`;
+  return unit ? `${num} ${unit}` : num;
+}
+
+/** Prefer mixed-case storefront names over ALL CAPS historical labels. */
+export function preferAdminDisplayName(current: string, incoming: string): string {
+  const score = (s: string) => {
+    if (!s) return -1;
+    if (s === s.toUpperCase()) return 0;
+    if (s === s.toLowerCase()) return 1;
+    return 2;
+  };
+  return score(incoming) > score(current) ? incoming : current;
 }
 
 export function orderCountsTowardBestSellers(order: {
@@ -86,16 +214,19 @@ export function aggregateBestSellers(
       if (!name && !productId) continue;
 
       const dosageKey = normalizeAdminDosageKey(dosage);
-      const productKey = (productId || normalizeAdminDosageKey(name)).toLowerCase();
+      const productKey = canonicalBestSellerProductKey(productId, name);
+      if (!productKey) continue;
+
       const key =
         groupBy === 'product'
           ? `p:${productKey}`
-          : `v:${productKey}||${dosageKey || normalizeAdminDosageKey(name)}`;
+          : `v:${productKey}||${dosageKey || 'default'}`;
 
       const qty = Number(item?.quantity);
       const safeQty = Number.isFinite(qty) && qty > 0 ? qty : 1;
       const price = Number(item?.price);
       const safePrice = Number.isFinite(price) ? price : 0;
+      const displayDosage = formatAdminDosageDisplay(dosage);
 
       const existing = map.get(key);
       if (existing) {
@@ -105,14 +236,15 @@ export function aggregateBestSellers(
           existing.orderCount += 1;
           seenInOrder.add(key);
         }
-        if (!existing.name && name) existing.name = name;
-        if (groupBy === 'variant' && !existing.dosage && dosage) existing.dosage = dosage;
+        if (name) existing.name = preferAdminDisplayName(existing.name, name);
+        if (groupBy === 'variant' && displayDosage) existing.dosage = displayDosage;
+        if (!existing.productId && productId) existing.productId = productKey;
       } else {
         map.set(key, {
           key,
-          productId,
+          productId: productKey,
           name: name || productId || 'Unknown',
-          dosage: groupBy === 'product' ? '' : dosage,
+          dosage: groupBy === 'product' ? '' : displayDosage || dosage,
           unitsSold: safeQty,
           revenue: safePrice * safeQty,
           orderCount: 1,
