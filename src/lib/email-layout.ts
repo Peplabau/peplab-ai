@@ -71,13 +71,13 @@ export function emailSupportContactLinks(links?: EmailSupportLinks): string {
   return parts.join(' · ');
 }
 
-/** Tracking + need-help contact block. */
-export function emailSupportHelpBlock(links?: EmailSupportLinks): string {
-  const contact = emailSupportContactLinks(links);
-  if (!contact) return '';
+/**
+ * Order-email note about tracking timing.
+ * Contact links live once in the email footer — do not repeat them here.
+ */
+export function emailSupportHelpBlock(_links?: EmailSupportLinks): string {
   return `
-    <p style="margin:18px 0 0;text-align:center;font-size:14px;color:${C.muted};line-height:1.65;">If you don't receive a tracking number within <strong style="color:${C.text};">24 hours</strong>, please contact us: ${contact}</p>
-    <p style="margin:18px 0 0;text-align:center;font-size:13px;color:${C.muted};">Need help? ${contact}</p>
+    <p style="margin:18px 0 0;text-align:center;font-size:14px;color:${C.muted};line-height:1.65;">If you don&apos;t receive a tracking number within <strong style="color:${C.text};">24 hours</strong>, please get in touch using the contact options below.</p>
   `;
 }
 
@@ -88,7 +88,7 @@ export function wrapPeplabEmail(opts: WrapOpts): string {
   const pre = escapeHtml(opts.preheader ?? '').slice(0, 140);
   const headline = escapeHtml(opts.headline);
   const subline = opts.subline ? escapeHtml(opts.subline) : '';
-  const site = escapeHtml((MAIN_APP_ORIGIN || CONFIG.SITE_URL).replace(/\/$/, ''));
+  const site = escapeHtml((CONFIG.SITE_URL || MAIN_APP_ORIGIN).replace(/\/$/, ''));
   const supportContact = emailSupportContactLinks(opts.supportLinks);
   const pageBg = opts.colors?.pageBg ?? C.pageBg;
   const panel = opts.colors?.panel ?? C.panel;
@@ -129,8 +129,8 @@ export function wrapPeplabEmail(opts: WrapOpts): string {
             <td align="center" style="padding:20px 24px 24px;border-top:1px solid ${C.borderSub};background:${panel2};">
               <p style="margin:0 0 8px;font-size:12px;color:${C.muted};text-align:center;line-height:1.5;">
                 ${supportContact
-                  ? `Questions? Reach us on ${supportContact}`
-                  : 'Questions? Visit us online'}
+                  ? `Need help? ${supportContact}`
+                  : 'Need help? Visit us online'}
               </p>
               <p style="margin:0;font-size:11px;color:${C.muted};opacity:0.85;text-align:center;">
                 <a href="${site}" style="color:${C.muted};text-decoration:underline;">${site}</a>

@@ -306,7 +306,7 @@ function CertificatePanel({ pathRef }: { pathRef: RefObject<SVGPathElement | nul
       </div>
       <a href={coaArchiveUrl()} className="rg-hplc-archive">
         <span className="rg-hplc-archive-label">COA archive</span>
-        <span className="rg-hplc-archive-url">peplab.ai/coa</span>
+        <span className="rg-hplc-archive-url">peplab.com.au/coa</span>
         <span className="rg-hplc-archive-cta">
           View full COA <ArrowRight className="w-3.5 h-3.5" />
         </span>

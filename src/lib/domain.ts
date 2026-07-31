@@ -3,25 +3,23 @@
  *
  * FULL SEO MODE (default / production):
  *   peplab.com.au  → Full shop, indexable. Google canonical domain
- *                    (VITE_SITE_URL). Do NOT redirect to peplab.ai.
- *   peplab.ai      → Same shop for users + email CTAs
- *                    (VITE_MAIN_APP_ORIGIN). Canonical tags still point
- *                    at peplab.com.au so ranking consolidates there.
+ *                    (VITE_SITE_URL / VITE_MAIN_APP_ORIGIN).
+ *   peplab.ai      → Optional alias of the same shop (legacy).
  *
  * Optional login-only shell (auth pages + noindex) only when you explicitly
  * set VITE_LOGIN_ONLY_HOSTS (e.g. staging.peplab.com.au). Leave EMPTY for SEO.
  *
  * Env:
  *   VITE_SITE_URL           = https://peplab.com.au
- *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai
+ *   VITE_MAIN_APP_ORIGIN    = https://peplab.com.au
  *   VITE_LOGIN_ONLY_HOSTS   = (empty in Production)
  */
 
 /** Hosts that only render the login/auth flow. Empty = full shop everywhere (SEO). */
 const DEFAULT_LOGIN_ONLY_HOSTS = '';
 
-/** Full origin (protocol + host) of the main app where the shop actually lives. */
-const DEFAULT_MAIN_APP_ORIGIN = 'https://peplab.ai';
+/** Full origin (protocol + host) of the main storefront. */
+const DEFAULT_MAIN_APP_ORIGIN = 'https://peplab.com.au';
 
 /** Marker in the URL hash that identifies a cross-domain login handoff. */
 export const CROSS_DOMAIN_LOGIN_HASH_TYPE = 'cross-domain-login';
@@ -75,7 +73,7 @@ export function isLoginOnlyDomain(): boolean {
   return LOGIN_ONLY_HOSTS.includes(hostname) || LOGIN_ONLY_HOSTS.includes(host);
 }
 
-/** Build an absolute URL on the main app (peplab.ai). */
+/** Build an absolute URL on the main storefront. */
 export function mainAppUrl(pathAndQuery: string = '/'): string {
   const path = pathAndQuery.startsWith('/') ? pathAndQuery : `/${pathAndQuery}`;
   return `${MAIN_APP_ORIGIN}${path}`;
@@ -89,7 +87,7 @@ export function mainAppUrl(pathAndQuery: string = '/'): string {
  * they never appear in HTTP logs, referer headers, or Vercel edge logs —
  * which is why we prefer them over the query string for token material.
  *
- * The peplab.ai side reads this hash in `main.tsx` before React mounts,
+ * The main app reads this hash in `main.tsx` before React mounts,
  * calls `supabase.auth.setSession(...)`, wipes the hash, and navigates to
  * `next`.
  */

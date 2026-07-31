@@ -1,4 +1,4 @@
-/** Main storefront homepage (peplab.ai). */
+/** Main storefront homepage (peplab.com.au). */
 export const HOME_PATH = '/';
 
 /** Canonical shop / catalogue URL. */
@@ -21,4 +21,4 @@ export const LANDING_SITE_URL =
   import.meta.env.VITE_LANDING_SITE_URL ||
   (typeof window !== 'undefined'
     ? `${window.location.origin}${LANDING_PATH}`
-    : 'https://peplab.ai/landing');
+    : 'https://peplab.com.au/landing');

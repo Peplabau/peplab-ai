@@ -63,12 +63,14 @@ const shippingMethods: ShippingMethod[] = [
   { id: 'standard', name: 'Standard Shipping', description: 'Reliable tracked delivery', price: 10, estimatedDays: '5-8 business days' }
 ];
 
+/** Address lines for order-confirmation email — phone is passed separately. */
 function formatShippingForEmail(
-  a: { firstName: string; lastName: string; address: string; apartment: string; suburb: string; state: string; postcode: string; phone: string }
+  a: { firstName: string; lastName: string; address: string; apartment: string; suburb: string; state: string; postcode: string }
 ): string {
   const name = [a.firstName, a.lastName].filter(Boolean).join(' ').trim();
-  const line3 = [a.suburb, a.state, a.postcode].filter(Boolean).join(' ').trim();
-  return [name, a.address, a.apartment, line3, a.phone].filter(Boolean).join(', ');
+  const street = [a.address, a.apartment].filter(Boolean).join(', ').trim();
+  const locality = [a.suburb, a.state, a.postcode].filter(Boolean).join(' ').trim();
+  return [name, street, locality].filter(Boolean).join('\n');
 }
 
 export default function Checkout() {
@@ -448,6 +450,7 @@ export default function Checkout() {
             total: finalOrderTotal,
             items: itemsForEmail,
             shipping_address: shippingForEmail,
+            customer_phone: shippingAddress.phone.trim() || undefined,
           },
           bankDetails,
         );

@@ -5,15 +5,14 @@ import { supabase } from '@/lib/supabase'
 import { CROSS_DOMAIN_LOGIN_HASH_TYPE, applyLoginGatewayDocumentBranding } from '@/lib/domain'
 
 /**
- * Consume a cross-domain login handoff (from peplab.com.au → peplab.ai)
- * *before* the React tree mounts. Doing it here avoids a flash of the
- * un-authed shop while `supabase.auth.setSession(...)` completes.
+ * Consume a cross-domain login handoff *before* the React tree mounts.
+ * Doing it here avoids a flash of the un-authed shop while
+ * `supabase.auth.setSession(...)` completes.
  *
  * The URL looks like:
- *   https://peplab.ai/#access_token=…&refresh_token=…&type=cross-domain-login&next=/dashboard
+ *   https://peplab.com.au/#access_token=…&refresh_token=…&type=cross-domain-login&next=/dashboard
  *
- * We only ever accept this handoff on the *target* domain, so a malicious
- * link served on peplab.com.au can't hijack a session there.
+ * We only ever accept this handoff on the *target* domain.
  */
 async function consumeCrossDomainLoginHandoff(): Promise<void> {
   const rawHash = window.location.hash;

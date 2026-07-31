@@ -49,9 +49,8 @@ export default function Login() {
   const redirectAfterLogin = useCallback(async () => {
     const destination = await resolvePostLoginPath(searchParams.get('redirect'));
 
-    // On peplab.com.au (login-only host) we can't leave the user here — the
-    // shop lives on peplab.ai. Hand the freshly-issued Supabase tokens off
-    // to the main app via a URL hash fragment. See `src/lib/domain.ts`.
+    // On a login-only host we can't leave the user here — hand tokens off
+    // to the main storefront via a URL hash fragment. See `src/lib/domain.ts`.
     if (isLoginOnlyDomain()) {
       const {
         data: { session },
@@ -66,7 +65,7 @@ export default function Login() {
         );
         return;
       }
-      // Fallback: session unexpectedly missing — send them to peplab.ai's
+      // Fallback: session unexpectedly missing — send them to the main app's
       // login (they'll have to sign in again there) rather than looping here.
       window.location.replace(mainAppUrl(`/login?redirect=${encodeURIComponent(destination)}`));
       return;

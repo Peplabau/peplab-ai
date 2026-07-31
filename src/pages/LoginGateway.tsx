@@ -2,7 +2,7 @@
  * LoginGateway — entry pages on the login-only host (peplab.com.au / staging.*).
  *
  * Sign-in for returning members; sign-up with referral verification for new members.
- * After auth, tokens are handed off to peplab.ai so the user lands logged in.
+ * After auth, tokens are handed off to the main storefront so the user lands logged in.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';

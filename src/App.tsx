@@ -155,7 +155,7 @@ function HomePage() {
   );
 }
 
-// The homepage / shop is always publicly viewable on peplab.ai.
+// The homepage / shop is always publicly viewable on the storefront.
 //
 // The `landing_page_settings.enabled` toggle in the admin panel used to gate
 // this route (redirecting anonymous visitors to /login when disabled). We
@@ -360,14 +360,13 @@ function ScrollToTop() {
  * Login-only shell mounted on peplab.com.au (and any host in
  * `VITE_LOGIN_ONLY_HOSTS`).
  *
- * peplab.com.au is under threat of takedown — we deliberately expose the
- * smallest possible surface (auth flow only) and hand successful sessions
- * off to peplab.ai. Every unknown route hard-redirects to /login so no
- * shop content is ever rendered on that host.
+ * Login-only hosts expose the smallest possible surface (auth flow only)
+ * and hand successful sessions off to VITE_MAIN_APP_ORIGIN. Every unknown
+ * route hard-redirects to /login so no shop content is ever rendered there.
  *
  * The `/login` and `/signup` routes render `LoginGateway` — sign-in for
  * returning members and referral-gated sign-up on this host only. After auth,
- * users are handed off to peplab.ai already logged in.
+ * users are handed off to the main storefront already logged in.
  */
 function LoginOnlyApp() {
   return (

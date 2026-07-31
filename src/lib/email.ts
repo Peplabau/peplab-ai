@@ -11,7 +11,6 @@ import {
   emailDetailRow,
   emailOrderItemsTable,
   emailSupportHelpBlock,
-  emailSupportContactLinks,
   escapeHtml,
   EMAIL_THEME,
   type EmailSupportLinks,
@@ -20,9 +19,9 @@ import {
 
 const T = EMAIL_THEME;
 
-/** Shop origin for clickable email links (peplab.ai). SEO SITE_URL may be peplab.com.au. */
+/** Shop origin for clickable email links — prefer canonical SITE_URL. */
 function shopOrigin(): string {
-  return (MAIN_APP_ORIGIN || CONFIG.SITE_URL || 'https://peplab.ai').replace(/\/$/, '');
+  return (CONFIG.SITE_URL || MAIN_APP_ORIGIN || 'https://peplab.com.au').replace(/\/$/, '');
 }
 
 async function getEmailSupportLinks(): Promise<EmailSupportLinks> {
@@ -32,7 +31,7 @@ async function getEmailSupportLinks(): Promise<EmailSupportLinks> {
   ]);
   return {
     telegramUrl: telegramVal?.url?.trim() || DEFAULT_SUPPORT_LINKS.telegram_link,
-    whatsappUrl: whatsappVal?.url?.trim() || '',
+    whatsappUrl: whatsappVal?.url?.trim() || DEFAULT_SUPPORT_LINKS.whatsapp_link,
     email: CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL || '',
   };
 }
@@ -172,6 +171,7 @@ export const sendOrderConfirmation = async (
     total: number;
     items: any[];
     shipping_address: string;
+    customer_phone?: string;
   },
   /** Same source as checkout success screen — `site_settings.bank_details`. Pass through so email matches UI; otherwise fetched from DB. */
   bankDetailsOverride?: BankDetails,
@@ -194,7 +194,11 @@ export const sendOrderConfirmation = async (
 
   const on = escapeHtml(displayOrderNo);
   const tot = escapeHtml(orderData.total.toFixed(2));
-  const ship = escapeHtml(orderData.shipping_address || '—');
+  const ship = escapeHtml(orderData.shipping_address || '—').replace(/\n/g, '<br>');
+  const phone = (orderData.customer_phone || '').trim();
+  const phoneHtml = phone
+    ? `<br><span style="color:${T.muted};">Phone: ${escapeHtml(phone)}</span>`
+    : '';
 
   const defaultBody = `
     <p style="margin:0 0 20px;text-align:center;font-size:15px;color:${T.text};line-height:1.55;">We've received your order and reserved your items. Transfer the <strong style="color:${T.text};">exact</strong> amount below using the bank details in this email.</p>
@@ -206,7 +210,7 @@ export const sendOrderConfirmation = async (
     )}
     ${itemRows.length ? emailOrderItemsTable(itemRows) : ''}
     <p style="margin:18px 0 6px;text-align:center;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.muted};">Ship to</p>
-    <p style="margin:0 0 22px;text-align:center;font-size:14px;color:${T.text};line-height:1.55;">${ship}</p>
+    <p style="margin:0 0 22px;text-align:center;font-size:14px;color:${T.text};line-height:1.55;">${ship}${phoneHtml}</p>
     <p style="margin:0 0 10px;text-align:center;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.muted};">Bank transfer</p>
     ${emailDetailRow('PAYID (easiest)', bankResolved.payid)}
     ${emailDetailRow('BSB', bankResolved.bsb)}
@@ -327,7 +331,10 @@ export const sendOrderShipped = async (
   orderData: { order_number: string; tracking_number: string; tracking_carrier?: string }
 ): Promise<boolean> => {
   const displayOrderNo = formatOrderNumberDisplay(orderData.order_number);
-  const template = await getEmailTemplate('order_shipped');
+  const [template, supportLinks] = await Promise.all([
+    getEmailTemplate('order_shipped'),
+    getEmailSupportLinks(),
+  ]);
   const trackingUrl = `https://auspost.com.au/mypost/track/#/details/${encodeURIComponent(orderData.tracking_number)}`;
   const carrier = orderData.tracking_carrier || 'Australia Post';
   const on = escapeHtml(displayOrderNo);
@@ -354,6 +361,7 @@ export const sendOrderShipped = async (
         headline: 'Shipped',
         subline: 'Use your tracking number to follow delivery.',
         bodyHtml: defaultBody,
+        supportLinks,
       }))
     .replace(/{order_number}/g, displayOrderNo)
     .replace(/{tracking_number}/g, orderData.tracking_number)
@@ -384,13 +392,12 @@ export const sendOrderDeliveredReviewEmail = async (
   const firstName = (orderData.customer_first_name || '').trim();
   const greeting = firstName ? `Hi, ${escapeHtml(firstName)}` : 'Hi';
   const reviewUrl = CONFIG.TRUSTPILOT.REVIEW_URL;
-  const contactLinks = emailSupportContactLinks(supportLinks);
 
   const defaultBody = `
     <p style="margin:0 0 18px;text-align:left;font-size:15px;color:${T.text};line-height:1.65;">${greeting},</p>
     <p style="margin:0 0 16px;text-align:left;font-size:15px;color:${T.muted};line-height:1.65;">If you've had a great experience with PEPLAB, we'd really appreciate it if you could leave us a quick review on Trustpilot.</p>
     <p style="margin:0 0 16px;text-align:left;font-size:15px;color:${T.muted};line-height:1.65;">With so many scam websites online, genuine reviews from real customers help others shop with confidence and know they're buying from a business they can trust.</p>
-    <p style="margin:0 0 16px;text-align:left;font-size:15px;color:${T.muted};line-height:1.65;">If you're not completely satisfied or have experienced any issues, please ${contactLinks ? `reach us on ${contactLinks}` : 'contact us'} first. Your satisfaction is our top priority, and we're committed to making things right.</p>
+    <p style="margin:0 0 16px;text-align:left;font-size:15px;color:${T.muted};line-height:1.65;">If you're not completely satisfied or have experienced any issues, please contact us first using the options at the bottom of this email. Your satisfaction is our top priority, and we're committed to making things right.</p>
     <p style="margin:0 0 22px;text-align:left;font-size:15px;color:${T.muted};line-height:1.65;">Thank you for your support. We truly appreciate every review!</p>
     ${emailCtaRow(reviewUrl, 'Leave a review on Trustpilot')}
     <p style="margin:24px 0 0;text-align:left;font-size:15px;color:${T.muted};line-height:1.65;">Kind regards,<br><strong style="color:${T.text};">The PEPLAB Team</strong></p>
@@ -418,6 +425,7 @@ export const sendReplacementTrackingEmail = async (
   orderData: { order_number: string; tracking_number: string; tracking_carrier?: string },
 ): Promise<boolean> => {
   const displayOrderNo = formatOrderNumberDisplay(orderData.order_number);
+  const supportLinks = await getEmailSupportLinks();
   const trackingUrl = `https://auspost.com.au/mypost/track/#/details/${encodeURIComponent(orderData.tracking_number)}`;
   const carrier = orderData.tracking_carrier || 'Australia Post';
   const on = escapeHtml(displayOrderNo);
@@ -442,6 +450,7 @@ export const sendReplacementTrackingEmail = async (
     headline: 'Replacement shipped',
     subline: 'Use your new tracking number to follow delivery.',
     bodyHtml: defaultBody,
+    supportLinks,
   });
 
   const subject = `Replacement Shipment Tracking - ${displayOrderNo}`;
@@ -484,6 +493,7 @@ export const sendOrderTrackingUpdate = async (
   },
 ): Promise<{ ok: boolean; error?: string }> => {
   const displayOrderNo = formatOrderNumberDisplay(order.order_number);
+  const supportLinks = await getEmailSupportLinks();
   const statusKey = (order.status || '').toLowerCase();
   const statusLabel = ORDER_STATUS_LABELS[statusKey] || order.status || 'In Progress';
   const statusDesc =
@@ -537,6 +547,7 @@ export const sendOrderTrackingUpdate = async (
         headline: 'Order update',
         subline: 'Here’s the latest on your PEPLAB order.',
         bodyHtml: defaultBody,
+        supportLinks,
       }))
     .replace(/{order_number}/g, displayOrderNo)
     .replace(/{status}/g, statusLabel)
@@ -559,7 +570,10 @@ const WELCOME_EMAIL_IMAGE_CID = 'peplab-welcome-hero';
 
 export const sendSignUpWelcome = async (to: string, name: string): Promise<boolean> => {
   const displayName = (name || '').trim() || 'there';
-  const template = await getEmailTemplate('signup_welcome');
+  const [template, supportLinks] = await Promise.all([
+    getEmailTemplate('signup_welcome'),
+    getEmailSupportLinks(),
+  ]);
   const site = shopOrigin();
   const path = CONFIG.WELCOME_EMAIL_IMAGE_PATH.startsWith('/')
     ? CONFIG.WELCOME_EMAIL_IMAGE_PATH
@@ -595,6 +609,7 @@ export const sendSignUpWelcome = async (to: string, name: string): Promise<boole
         headline: 'Welcome aboard',
         subline: 'Premium peptides, rewards, and support — all in one place.',
         bodyHtml: defaultBody,
+        supportLinks,
       }))
     .replace(/{name}/g, displayName)
     .replace(/{site_url}/g, site)
@@ -624,7 +639,10 @@ export const sendPasswordReset = async (
   to: string,
   resetUrl: string
 ): Promise<boolean> => {
-  const template = await getEmailTemplate('password_reset');
+  const [template, supportLinks] = await Promise.all([
+    getEmailTemplate('password_reset'),
+    getEmailSupportLinks(),
+  ]);
 
   const defaultBody = `
     <p style="margin:0 0 14px;text-align:center;font-size:15px;color:${T.muted};line-height:1.6;">We received a request to reset the password for your PEPLAB account.</p>
@@ -640,6 +658,7 @@ export const sendPasswordReset = async (
     headline: 'Password reset',
     subline: 'Use the button below to choose a new password.',
     bodyHtml: defaultBody,
+    supportLinks,
   })).replace(/{reset_url}/g, resetUrl);
   
   const result = await sendEmail({
@@ -656,6 +675,7 @@ export const sendAffiliateDiscountEmail = async (
   to: string,
   data: { order_number: string; code: string; discount_percent: number; discount_amount: number; total: number }
 ): Promise<boolean> => {
+  const supportLinks = await getEmailSupportLinks();
   const on = escapeHtml(formatOrderNumberDisplay(data.order_number));
   const code = escapeHtml(data.code);
   const defaultBody = `
@@ -674,6 +694,7 @@ export const sendAffiliateDiscountEmail = async (
     headline: 'Discount applied',
     subline: 'Your promo code was applied successfully.',
     bodyHtml: defaultBody,
+    supportLinks,
   });
 
   const result = await sendEmail({
@@ -689,6 +710,7 @@ export const sendPromoterCommissionEmail = async (
   to: string,
   data: { promoter_name: string; order_number: string; commission: number; total_credit: number }
 ): Promise<boolean> => {
+  const supportLinks = await getEmailSupportLinks();
   const name = escapeHtml(data.promoter_name);
   const on = escapeHtml(formatOrderNumberDisplay(data.order_number));
   const dashboardUrl = `${shopOrigin()}/promoter`;
@@ -710,6 +732,7 @@ export const sendPromoterCommissionEmail = async (
     headline: 'You earned a commission',
     subline: 'Someone used your referral code.',
     bodyHtml: defaultBody,
+    supportLinks,
   });
 
   const result = await sendEmail({
@@ -741,7 +764,6 @@ export const sendAbandonedCart = async (
     <p style="margin:0 0 20px;text-align:center;font-size:15px;color:${T.text};line-height:1.55;">Complete checkout to secure yours.</p>
     ${emailOrderItemsTable(rows)}
     ${emailCtaRow(checkout, 'Complete checkout', '#FFFFFF', 'green')}
-    <p style="margin:18px 0 0;text-align:center;font-size:13px;color:${T.muted};">Need help? ${emailSupportContactLinks(supportLinks)}</p>
   `;
 
   const html = wrapPeplabEmail({
