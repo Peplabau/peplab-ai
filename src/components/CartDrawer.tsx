@@ -6,6 +6,7 @@ import { loadEssentialProductsFromSupabase } from '@/lib/supabase-db';
 import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS } from '@/lib/settings';
 import { getMarketingBundleOffLabel, getStorefrontPrice, productExcludesVolumeBundle } from '@/utils/pricing';
 import { getOptimizedProductImageUrl } from '@/lib/product-image';
+import { CONFIG } from '@/lib/config';
 
 export default function CartDrawer() {
   const {
@@ -425,7 +426,7 @@ export default function CartDrawer() {
                     <p className="text-[9px] sm:text-[10px] text-[#A9B3C7]">
                       $50 delivery service in NSW Sydney area.{' '}
                       <a 
-                        href="https://t.me/peplab" 
+                        href={CONFIG.SOCIAL.TELEGRAM} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="text-[#2ED1B4] hover:underline"

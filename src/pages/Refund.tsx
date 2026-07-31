@@ -259,7 +259,7 @@ export default function Refund() {
             <div className="p-4 rounded-xl bg-[rgba(46,209,180,0.1)] border border-[rgba(46,209,180,0.2)]">
               <p className="text-white font-medium">PEPLAB</p>
               <p className="text-gray-400">Support: <a href="/contact-info" className="text-[#2ED1B4] hover:underline">Telegram &amp; WhatsApp support</a></p>
-              <p className="text-gray-400">Telegram: <a href="https://t.me/peplabau" target="_blank" rel="noopener noreferrer" className="text-[#2ED1B4] hover:underline">@peplabau</a></p>
+              <p className="text-gray-400">Telegram: <a href="https://t.me/PeplabSupport" target="_blank" rel="noopener noreferrer" className="text-[#2ED1B4] hover:underline">@PeplabSupport</a></p>
             </div>
           </section>
         </div>

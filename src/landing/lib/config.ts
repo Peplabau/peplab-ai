@@ -8,12 +8,12 @@ export const CONFIG = {
   SITE_DESCRIPTION: 'Premium Peptides Australia for research. Lab-tested, fast shipping, exceptional quality.',
   CONTACT_EMAIL: 'peplab@proton.me',
   BUSINESS: {
-    PHONE_TEL: '',
-    PHONE_DISPLAY: '',
+    PHONE_TEL: '+61435717401',
+    PHONE_DISPLAY: '+61 435 717 401',
     ADDRESS_LINES: ['30 Shepherd Street Liverpool NSW 2170, Australia'] as const,
     BUSINESS_HOURS: 'Mon-Fri, 9:00 AM - 5:00 PM AEST',
   },
   SOCIAL: {
-    TELEGRAM: 'https://t.me/peplabau',
+    TELEGRAM: 'https://t.me/PeplabSupport',
   },
 } as const;

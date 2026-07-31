@@ -9,7 +9,7 @@ function telegramHandleFromUrl(input: string): string {
   const s = input.trim();
   const m = s.match(/(?:t\.me\/)([^/?#]+)/i);
   const fromPath = m?.[1];
-  return (fromPath || s.replace(/^@/, '')).replace(/\/$/, '') || 'PepLabAu';
+  return (fromPath || s.replace(/^@/, '')).replace(/\/$/, '') || 'PeplabSupport';
 }
 
 type QrAccent = 'telegram' | 'whatsapp';
@@ -96,17 +96,25 @@ function ContactQrTile({
 
 export default function ContactInfo() {
   const [telegramLink, setTelegramLink] = useState(DEFAULT_SUPPORT_LINKS.telegram_link);
-  const [whatsappLink, setWhatsappLink] = useState('');
+  const [whatsappLink, setWhatsappLink] = useState(DEFAULT_SUPPORT_LINKS.whatsapp_link);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const telegramVal = await getSiteSetting<{ url: string }>('telegram_link', { url: DEFAULT_SUPPORT_LINKS.telegram_link });
-        const whatsappVal = await getSiteSetting<{ url: string }>('whatsapp_link', { url: '' });
+        const telegramVal = await getSiteSetting<{ url: string }>('telegram_link', {
+          url: DEFAULT_SUPPORT_LINKS.telegram_link,
+        });
+        const whatsappVal = await getSiteSetting<{ url: string }>('whatsapp_link', {
+          url: DEFAULT_SUPPORT_LINKS.whatsapp_link,
+        });
         if (cancelled) return;
         setTelegramLink(telegramVal?.url || DEFAULT_SUPPORT_LINKS.telegram_link);
-        setWhatsappLink(typeof whatsappVal?.url === 'string' ? whatsappVal.url : '');
+        setWhatsappLink(
+          typeof whatsappVal?.url === 'string' && whatsappVal.url.trim()
+            ? whatsappVal.url
+            : DEFAULT_SUPPORT_LINKS.whatsapp_link,
+        );
       } catch {
         /* keep defaults */
       }

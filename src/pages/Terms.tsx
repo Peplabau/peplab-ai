@@ -519,12 +519,12 @@ export default function Terms() {
               <p className="text-gray-400">
                 Telegram:{' '}
                 <a
-                  href="https://t.me/peplabau"
+                  href="https://t.me/PeplabSupport"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#2ED1B4] hover:underline"
                 >
-                  @peplabau
+                  @PeplabSupport
                 </a>
               </p>
             </div>

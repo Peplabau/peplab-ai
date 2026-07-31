@@ -13,14 +13,34 @@ export default function Contact() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
-  const [telegramLink, setTelegramLink] = useState<string>(CONFIG.SOCIAL.TELEGRAM);
+  const [telegramLink, setTelegramLink] = useState<string>(
+    DEFAULT_SUPPORT_LINKS.telegram_link || CONFIG.SOCIAL.TELEGRAM,
+  );
+  const [whatsappLink, setWhatsappLink] = useState<string>(DEFAULT_SUPPORT_LINKS.whatsapp_link);
 
   useEffect(() => {
     let cancelled = false;
-    getSiteSetting('support_links', DEFAULT_SUPPORT_LINKS).then((links) => {
-      if (cancelled) return;
-      if (links?.telegram_url) setTelegramLink(links.telegram_url);
-    });
+    (async () => {
+      try {
+        const [telegramVal, whatsappVal] = await Promise.all([
+          getSiteSetting<{ url: string }>('telegram_link', {
+            url: DEFAULT_SUPPORT_LINKS.telegram_link,
+          }),
+          getSiteSetting<{ url: string }>('whatsapp_link', {
+            url: DEFAULT_SUPPORT_LINKS.whatsapp_link,
+          }),
+        ]);
+        if (cancelled) return;
+        setTelegramLink(telegramVal?.url || DEFAULT_SUPPORT_LINKS.telegram_link);
+        setWhatsappLink(
+          typeof whatsappVal?.url === 'string' && whatsappVal.url.trim()
+            ? whatsappVal.url
+            : DEFAULT_SUPPORT_LINKS.whatsapp_link,
+        );
+      } catch {
+        /* keep defaults */
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -126,9 +146,35 @@ export default function Contact() {
                   rel="noopener noreferrer"
                   className="text-sm text-[#0088CC] hover:underline break-all"
                 >
-                  Open Telegram chat
+                  @PeplabSupport
                 </a>
               </div>
+
+              {whatsappLink ? (
+                <div className="p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
+                  <div className="w-10 h-10 rounded-xl bg-[rgba(34,197,94,0.1)] flex items-center justify-center mb-3">
+                    <MessageCircle className="w-5 h-5 text-[#22C55E]" />
+                  </div>
+                  <h3 className="text-sm font-bold text-[#F4F6FA] mb-1">WhatsApp / Phone</h3>
+                  <p className="text-xs text-[#A9B3C7] mb-2">Chat or call — {CONFIG.BUSINESS.PHONE_DISPLAY || '+61 435 717 401'}</p>
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-[#22C55E] hover:underline break-all"
+                  >
+                    Open WhatsApp
+                  </a>
+                  {CONFIG.BUSINESS.PHONE_TEL ? (
+                    <a
+                      href={`tel:${CONFIG.BUSINESS.PHONE_TEL}`}
+                      className="mt-2 block text-sm text-[#A9B3C7] hover:text-[#F4F6FA] break-all"
+                    >
+                      {CONFIG.BUSINESS.PHONE_DISPLAY || CONFIG.BUSINESS.PHONE_TEL}
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
 
               {(CONFIG.SUPPORT_EMAIL || CONFIG.CONTACT_EMAIL) && (
                 <div className="p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">

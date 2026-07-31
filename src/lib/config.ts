@@ -70,15 +70,15 @@ export const CONFIG = {
     // ABN + phone number intentionally omitted from the client bundle for
     // privacy. They remain on official documentation only.
     ABN: '',
-    PHONE_DISPLAY: '',
-    PHONE_TEL: '',
+    PHONE_DISPLAY: '+61 435 717 401',
+    PHONE_TEL: '+61435717401',
     ADDRESS_LINES: ['30 Shepherd Street Liverpool NSW 2170, Australia'] as const,
     BUSINESS_HOURS: 'Mon-Fri, 9:00 AM - 5:00 PM AEST',
   },
 
   // Social Links
   SOCIAL: {
-    TELEGRAM: 'https://t.me/peplabau',
+    TELEGRAM: 'https://t.me/PeplabSupport',
   },
 
   /** Trustpilot — review link is only shown to verified purchasers (dashboard + order emails). */

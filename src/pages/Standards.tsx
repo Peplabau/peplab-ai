@@ -138,12 +138,12 @@ export default function Standards() {
                       <span>
                         Live chat support via Telegram ({' '}
                         <a 
-                          href="https://t.me/PepLabAu" 
+                          href="https://t.me/PeplabSupport" 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-[#2ED1B4] hover:underline"
                         >
-                          @PepLabAu
+                          @PeplabSupport
                         </a>
                         {' '} ) and email ensures quick and reliable assistance.
                       </span>

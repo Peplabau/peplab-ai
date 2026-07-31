@@ -13,6 +13,6 @@ export const DEFAULT_DISCOUNT_SETTINGS: DiscountSettings = {
 };
 
 export const DEFAULT_SUPPORT_LINKS = {
-  telegram_link: 'https://t.me/peplabau',
-  whatsapp_link: '',
+  telegram_link: 'https://t.me/PeplabSupport',
+  whatsapp_link: 'https://wa.me/61435717401',
 };

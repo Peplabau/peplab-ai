@@ -81,8 +81,8 @@ export const DEFAULT_FREE_GIFT_SETTINGS: FreeGiftSettings = {
 };
 
 export const DEFAULT_SUPPORT_LINKS: SupportLinks = {
-  telegram_link: 'https://t.me/PepLabAu',
-  whatsapp_link: '',
+  telegram_link: 'https://t.me/PeplabSupport',
+  whatsapp_link: 'https://wa.me/61435717401',
 };
 
 export const DEFAULT_LANDING_PAGE_SETTINGS: LandingPageSettings = {
