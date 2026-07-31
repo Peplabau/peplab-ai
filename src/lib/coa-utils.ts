@@ -46,6 +46,40 @@ export function productHasCoaPdf(product: Pick<Product, 'coaUrl'>): boolean {
   return Boolean(product.coaUrl?.trim());
 }
 
+/** Consumables / solvents that are not HPLC-tested peptides — hide from COA archive. */
+const COA_ARCHIVE_EXCLUDED_IDS = new Set([
+  'bac-water',
+  'acetic-water',
+  'bacteriostatic-water',
+  'syringes-1ml-31g',
+  '1ml-31g-6mm-syringes',
+  'sharps-container',
+  'nasal-spray-10ml',
+]);
+
+/**
+ * True for peptides that belong on the COA archive.
+ * Excludes syringes, BAC/acetic water, sharps, and Essentials-category consumables.
+ */
+export function isCoaArchiveProduct(
+  product: Pick<Product, 'id' | 'name' | 'category' | 'type'>,
+): boolean {
+  const id = product.id.toLowerCase();
+  const name = product.name.toLowerCase();
+
+  if (product.category === 'essentials' || product.type === 'essentials') return false;
+  if (COA_ARCHIVE_EXCLUDED_IDS.has(id)) return false;
+
+  if (id.includes('syringe') || name.includes('syringe')) return false;
+  if (id.includes('sharps') || name.includes('sharps')) return false;
+  if (id.includes('bac-water') || id.includes('bacwater') || name.includes('bac water')) return false;
+  if (name.includes('bacteriostatic')) return false;
+  if (id.includes('acetic') || name.includes('acetic')) return false;
+  if (id.includes('nasal-spray') || name.includes('nasal spray')) return false;
+
+  return true;
+}
+
 export type CoaMgStatus = 'available' | 'pending';
 
 export interface CoaDosageStatus {

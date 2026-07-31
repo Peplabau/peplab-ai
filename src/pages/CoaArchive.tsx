@@ -10,7 +10,12 @@ import CoaDialog from '@/components/CoaDialog';
 import { SEO } from '@/components/SEO';
 import { Skeleton } from '@/components/ui/skeleton';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
-import { getCoaDisplayData, productHasCoaPdf, type CoaDisplayData } from '@/lib/coa-utils';
+import {
+  getCoaDisplayData,
+  isCoaArchiveProduct,
+  productHasCoaPdf,
+  type CoaDisplayData,
+} from '@/lib/coa-utils';
 import type { Product } from '@/products';
 
 export default function CoaArchive() {
@@ -30,7 +35,9 @@ export default function CoaArchive() {
       .then((data) => {
         if (!cancelled) {
           setProducts(
-            [...data].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+            data
+              .filter(isCoaArchiveProduct)
+              .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
           );
         }
       })

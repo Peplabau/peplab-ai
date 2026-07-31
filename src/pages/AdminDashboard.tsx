@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Package, ShoppingCart, Truck, Shield, LogOut,
   Search, Plus, CheckCircle, XCircle, Eye, DollarSign,
@@ -6,11 +7,11 @@ import {
   CreditCard, Box, Send, Ban, Save, Tag, Gift, X, Pencil, Trash2,
   ChevronUp, ChevronDown, Star, MessageSquare, Upload, Image as ImageIcon,
   Printer, ArrowUp, ArrowDown, MinusCircle, PlusCircle, Link2, Copy, Check,
-  TrendingUp, BarChart2, FlaskConical, Cake
+  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle
 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cached, invalidateCache, setCache, TTL_ADMIN_OVERVIEW, TTL_ADMIN_ORDERS, TTL_ADMIN_PRODUCTS, TTL_ADMIN_USERS, TTL_ADMIN_REVIEWS } from '@/lib/cache';
+import { cached, invalidateCache, setCache, TTL_ADMIN_OVERVIEW, TTL_ADMIN_ORDERS, TTL_ADMIN_PRODUCTS } from '@/lib/cache';
 import { CONFIG } from '@/lib/config';
 import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS } from '@/lib/settings';
 import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, type PointsEvent } from '@/lib/supabase-db';
@@ -110,19 +111,125 @@ async function fetchSupabasePages<T>(
   return all;
 }
 
-async function fetchAllOrdersFromDb(): Promise<Order[]> {
+/** Page size for admin Orders infinite scroll — keeps first paint fast. */
+const ADMIN_ORDERS_PAGE_SIZE = 40;
+
+type OrdersListFilters = {
+  status: string;
+  search: string;
+  preorder: 'all' | 'preorder_only';
+  source: 'all' | 'direct' | 'referral';
+};
+
+type OrderListStatRow = {
+  status: string;
+  total?: number | string | null;
+  is_preorder?: boolean | null;
+  order_number?: string | null;
+  order_source?: string | null;
+  affiliate_code?: string | null;
+  customer_email?: string | null;
+  review_request_email_sent?: boolean | null;
+};
+
+function escapeIlikePattern(value: string): string {
+  return value.replace(/[%_,]/g, '').trim();
+}
+
+async function fetchOrdersPage(
+  offset: number,
+  filters: OrdersListFilters,
+): Promise<{ orders: Order[]; hasMore: boolean }> {
+  let query = supabase
+    .from('orders')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .range(offset, offset + ADMIN_ORDERS_PAGE_SIZE - 1);
+
+  if (filters.status !== 'all') {
+    query = query.eq('status', filters.status);
+  }
+
+  if (filters.preorder === 'preorder_only') {
+    query = query.or('is_preorder.eq.true,order_number.ilike.PRE-%');
+  }
+
+  if (filters.source === 'referral') {
+    query = query.or('order_source.eq.referral,affiliate_code.not.is.null');
+  } else if (filters.source === 'direct') {
+    query = query
+      .or('affiliate_code.is.null,affiliate_code.eq.')
+      .not('order_source', 'ilike', 'referral');
+  }
+
+  const search = escapeIlikePattern(filters.search);
+  if (search) {
+    const pattern = `%${search}%`;
+    query = query.or(
+      [
+        `order_number.ilike.${pattern}`,
+        `customer_email.ilike.${pattern}`,
+        `customer_first_name.ilike.${pattern}`,
+        `customer_last_name.ilike.${pattern}`,
+        `affiliate_code.ilike.${pattern}`,
+        `referral_promoter_name.ilike.${pattern}`,
+      ].join(','),
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  const orders = (data || []) as Order[];
+  return { orders, hasMore: orders.length >= ADMIN_ORDERS_PAGE_SIZE };
+}
+
+/** Lightweight rows for Orders tab stat cards (avoids select * on every order). */
+async function fetchOrderListStats(): Promise<OrderListStatRow[]> {
   return fetchSupabasePages((from, to) =>
     supabase
       .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .select(
+        'status, total, is_preorder, order_number, order_source, affiliate_code, customer_email, review_request_email_sent',
+      )
+      .order('id', { ascending: true })
       .range(from, to),
   );
 }
 
-async function fetchAllProfilesFromDb(): Promise<any[]> {
+/** Page size for admin Users / Reviews infinite scroll. */
+const ADMIN_USERS_PAGE_SIZE = 40;
+const ADMIN_REVIEWS_PAGE_SIZE = 40;
+
+async function fetchProfilesPage(
+  offset: number,
+  limit = ADMIN_USERS_PAGE_SIZE,
+): Promise<{ users: any[]; hasMore: boolean }> {
   // Admin RPC bypasses profiles RLS (direct select only returns the logged-in user).
-  // Page with offset/limit so we are not stuck at PostgREST's ~1000 row cap.
+  try {
+    const { data, error } = await supabase.rpc('admin_get_profiles_page', {
+      p_offset: offset,
+      p_limit: limit,
+    });
+    if (!error && Array.isArray(data)) {
+      return { users: data, hasMore: data.length >= limit };
+    }
+  } catch (err) {
+    console.warn('admin_get_profiles_page failed, falling back:', err);
+  }
+
+  // Last resort (usually only current user under RLS)
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw error;
+  const users = data || [];
+  return { users, hasMore: users.length >= limit };
+}
+
+async function fetchAllProfilesFromDb(): Promise<any[]> {
+  // Used for overview counts / review author map fallbacks when needed.
   try {
     const pages = await fetchSupabasePages((from, to) =>
       supabase.rpc('admin_get_profiles_page', {
@@ -140,7 +247,6 @@ async function fetchAllProfilesFromDb(): Promise<any[]> {
     return data;
   }
 
-  // Last resort (usually only current user under RLS)
   return fetchSupabasePages((from, to) =>
     supabase
       .from('profiles')
@@ -148,6 +254,97 @@ async function fetchAllProfilesFromDb(): Promise<any[]> {
       .order('created_at', { ascending: false })
       .range(from, to),
   );
+}
+
+async function fetchBalancesForUserIds(userIds: string[]): Promise<Record<string, number>> {
+  const balMap: Record<string, number> = {};
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (ids.length === 0) return balMap;
+
+  const chunkSize = 100;
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    try {
+      const { data, error } = await supabase
+        .from('user_points_balance')
+        .select('user_id, balance')
+        .in('user_id', chunk);
+      if (!error && data) {
+        data.forEach((r) => {
+          balMap[r.user_id] = Number(r.balance || 0);
+        });
+        continue;
+      }
+    } catch {
+      /* fall through */
+    }
+
+    const { data: rawRows } = await supabase
+      .from('user_points')
+      .select('user_id, points')
+      .in('user_id', chunk);
+    (rawRows || []).forEach((r: { user_id: string; points: number | null }) => {
+      balMap[r.user_id] = (balMap[r.user_id] || 0) + (r.points || 0);
+    });
+  }
+  return balMap;
+}
+
+async function fetchReviewsPage(
+  offset: number,
+  limit = ADMIN_REVIEWS_PAGE_SIZE,
+): Promise<{ reviews: any[]; hasMore: boolean }> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*, products(name)')
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw error;
+  const reviews = data || [];
+  return { reviews, hasMore: reviews.length >= limit };
+}
+
+/** Session cache so Reviews doesn't re-download every profile for author names. */
+let reviewAuthorNameCache: Record<string, string> | null = null;
+
+async function fetchReviewAuthorNames(userIds: string[]): Promise<Record<string, string>> {
+  const map: Record<string, string> = {};
+  const ids = [...new Set(userIds.filter(Boolean))];
+  if (ids.length === 0) return map;
+
+  const chunkSize = 100;
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .in('id', chunk);
+    if (!error && data) {
+      data.forEach((p: any) => {
+        map[p.id] = p.full_name || p.email || 'User';
+      });
+    }
+  }
+
+  const missing = ids.filter((id) => !map[id]);
+  if (missing.length === 0) return map;
+
+  if (!reviewAuthorNameCache) {
+    try {
+      const all = await fetchAllProfilesFromDb();
+      reviewAuthorNameCache = {};
+      all.forEach((p: any) => {
+        reviewAuthorNameCache![p.id] = p.full_name || p.email || 'User';
+      });
+    } catch {
+      reviewAuthorNameCache = {};
+    }
+  }
+
+  missing.forEach((id) => {
+    map[id] = reviewAuthorNameCache?.[id] || 'Anonymous';
+  });
+  return map;
 }
 
 async function fetchAllUserPointsBalances(): Promise<Record<string, number>> {
@@ -239,11 +436,62 @@ interface Product {
   display_order?: number | null;
 }
 
+type AdminTabId =
+  | 'overview'
+  | 'orders'
+  | 'products'
+  | 'users'
+  | 'reviews'
+  | 'affiliates'
+  | 'promo-codes'
+  | 'settings';
+
+const ADMIN_TAB_IDS = new Set<AdminTabId>([
+  'overview',
+  'orders',
+  'products',
+  'users',
+  'reviews',
+  'affiliates',
+  'promo-codes',
+  'settings',
+]);
+
+function parseAdminTabParam(value: string | null): AdminTabId {
+  if (value && ADMIN_TAB_IDS.has(value as AdminTabId)) return value as AdminTabId;
+  return 'overview';
+}
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'products' | 'users' | 'reviews' | 'affiliates' | 'promo-codes' | 'settings'>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTabState] = useState<AdminTabId>(() =>
+    parseAdminTabParam(searchParams.get('tab')),
+  );
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState('');
+
+  const setActiveTab = useCallback(
+    (tab: AdminTabId) => {
+      setActiveTabState(tab);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (tab === 'overview') next.delete('tab');
+          else next.set('tab', tab);
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  // Keep tab in sync if the URL changes (back/forward / hard reload).
+  useEffect(() => {
+    const fromUrl = parseAdminTabParam(searchParams.get('tab'));
+    setActiveTabState((prev) => (prev === fromUrl ? prev : fromUrl));
+  }, [searchParams]);
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -407,7 +655,7 @@ export default function AdminDashboard() {
           {navItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as any)}
+              onClick={() => setActiveTab(item.id as AdminTabId)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
                 activeTab === item.id
                   ? 'bg-[rgba(46,209,180,0.15)] text-[#2ED1B4]'
@@ -469,7 +717,7 @@ export default function AdminDashboard() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as any)}
+                onClick={() => setActiveTab(item.id as AdminTabId)}
                 className={`flex flex-col items-center gap-1 px-2 py-2 rounded-xl min-w-[52px] transition-all active:scale-95 ${
                   isActive
                     ? 'bg-[rgba(46,209,180,0.12)] text-[#2ED1B4]'
@@ -575,6 +823,26 @@ function aggregateBestSellers(
   return Array.from(map.values());
 }
 
+const LOW_STOCK_THRESHOLD = 10;
+
+type StockFilter = 'needs' | 'all' | 'out';
+
+interface StockWatchRow {
+  key: string;
+  productName: string;
+  dosageLabel: string;
+  inStock: boolean;
+  stockQuantity: number;
+  level: 'out' | 'low' | 'ok';
+}
+
+function dosageDisplayLabel(d: { mg?: unknown; unit?: string | null }): string {
+  const mg = d.mg;
+  const unit = (d.unit || 'MG').toString().trim();
+  if (mg == null || mg === '') return '—';
+  return `${mg}${unit ? ` ${unit}` : ''}`.trim();
+}
+
 // Overview Section
 function OverviewSection() {
   const [stats, setStats] = useState({
@@ -586,9 +854,15 @@ function OverviewSection() {
   });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [allOrderItems, setAllOrderItems] = useState<Array<{ items: any[]; created_at: string; status: string }>>([]);
+  const [stockRows, setStockRows] = useState<StockWatchRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [bsTime, setBsTime] = useState<BsTimeFilter>('30d');
   const [bsSort, setBsSort] = useState<BsSortBy>('units');
+  const [stockFilter, setStockFilter] = useState<StockFilter>('needs');
+  const [stockExpanded, setStockExpanded] = useState(false);
+  const [sellersExpanded, setSellersExpanded] = useState(false);
+
+  const PREVIEW_ROWS = 12;
 
   useEffect(() => {
     loadStats();
@@ -600,10 +874,10 @@ function OverviewSection() {
   }, []);
 
   const loadStats = async (bust = false) => {
-    if (bust) invalidateCache('admin:overview:v2');
+    if (bust) invalidateCache('admin:overview:v3');
     setLoading(true);
     try {
-      const result = await cached('admin:overview:v2', async () => {
+      const result = await cached('admin:overview:v3', async () => {
         const [
           orderStatusTotals,
           { data: recent },
@@ -611,6 +885,7 @@ function OverviewSection() {
           userCount,
           { count: productCount },
           itemOrders,
+          { data: productsWithStock },
         ] = await Promise.all([
           fetchSupabasePages((from, to) =>
             supabase.from('orders').select('status, total').order('id', { ascending: true }).range(from, to),
@@ -627,6 +902,10 @@ function OverviewSection() {
               .order('created_at', { ascending: false })
               .range(from, to),
           ),
+          supabase
+            .from('products')
+            .select('id, name, slug, product_dosages(id, mg, unit, in_stock, stock_quantity)')
+            .order('name', { ascending: true }),
         ]);
         return {
           orderStatusTotals,
@@ -635,6 +914,7 @@ function OverviewSection() {
           userCount,
           productCount: productCount || 0,
           itemOrders,
+          productsWithStock: productsWithStock || [],
         };
       }, TTL_ADMIN_OVERVIEW);
 
@@ -647,6 +927,61 @@ function OverviewSection() {
       });
       setRecentOrders(result.recent);
       setAllOrderItems(result.itemOrders as Array<{ items: any[]; created_at: string; status: string }>);
+
+      const rows: StockWatchRow[] = [];
+      for (const product of result.productsWithStock as Array<{
+        id: string;
+        name: string;
+        slug?: string;
+        product_dosages?: Array<{
+          id: string;
+          mg?: unknown;
+          unit?: string | null;
+          in_stock?: boolean | null;
+          stock_quantity?: number | null;
+        }>;
+      }>) {
+        const dosages = product.product_dosages ?? [];
+        if (dosages.length === 0) {
+          rows.push({
+            key: `${product.id}-none`,
+            productName: product.name,
+            dosageLabel: 'No sizes',
+            inStock: false,
+            stockQuantity: 0,
+            level: 'out',
+          });
+          continue;
+        }
+        for (const d of dosages) {
+          const rawQty = d.stock_quantity;
+          const qty =
+            rawQty == null || Number.isNaN(Number(rawQty)) ? null : Number(rawQty);
+          const markedInStock = d.in_stock !== false;
+          const level: StockWatchRow['level'] =
+            !markedInStock || qty === 0
+              ? 'out'
+              : qty != null && qty <= LOW_STOCK_THRESHOLD
+                ? 'low'
+                : 'ok';
+          rows.push({
+            key: d.id || `${product.id}-${dosageDisplayLabel(d)}`,
+            productName: product.name,
+            dosageLabel: dosageDisplayLabel(d),
+            inStock: markedInStock && qty !== 0,
+            stockQuantity: qty ?? 0,
+            level,
+          });
+        }
+      }
+      const levelRank = { out: 0, low: 1, ok: 2 } as const;
+      rows.sort((a, b) => {
+        const byLevel = levelRank[a.level] - levelRank[b.level];
+        if (byLevel !== 0) return byLevel;
+        if (a.stockQuantity !== b.stockQuantity) return a.stockQuantity - b.stockQuantity;
+        return a.productName.localeCompare(b.productName, undefined, { sensitivity: 'base' });
+      });
+      setStockRows(rows);
     } catch (error) {
       console.error('Error loading stats:', error);
     } finally {
@@ -659,7 +994,7 @@ function OverviewSection() {
     const all = aggregateBestSellers(allOrderItems, bsTime);
     return all.sort((a, b) =>
       bsSort === 'revenue' ? b.revenue - a.revenue : b.unitsSold - a.unitsSold,
-    ).slice(0, 10);
+    );
   }, [allOrderItems, bsTime, bsSort]);
 
   const bsMax = useMemo(
@@ -667,10 +1002,37 @@ function OverviewSection() {
     [bestSellers, bsSort],
   );
 
+  const filteredStockRows = useMemo(() => {
+    if (stockFilter === 'all') return stockRows;
+    if (stockFilter === 'out') return stockRows.filter((r) => r.level === 'out');
+    return stockRows.filter((r) => r.level === 'out' || r.level === 'low');
+  }, [stockRows, stockFilter]);
+
+  const stockCounts = useMemo(() => {
+    let out = 0;
+    let low = 0;
+    for (const r of stockRows) {
+      if (r.level === 'out') out += 1;
+      else if (r.level === 'low') low += 1;
+    }
+    return { out, low, ok: stockRows.length - out - low, total: stockRows.length, needs: out + low };
+  }, [stockRows]);
+
+  useEffect(() => {
+    setStockExpanded(false);
+  }, [stockFilter]);
+
+  useEffect(() => {
+    setSellersExpanded(false);
+  }, [bsTime, bsSort]);
+
+  const visibleBestSellers = sellersExpanded ? bestSellers : bestSellers.slice(0, PREVIEW_ROWS);
+  const visibleStockRows = stockExpanded ? filteredStockRows : filteredStockRows.slice(0, PREVIEW_ROWS);
+
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="space-y-5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)] space-y-3">
               <Skeleton className="h-5 w-5 rounded" />
@@ -679,39 +1041,16 @@ function OverviewSection() {
             </div>
           ))}
         </div>
-        <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(46,209,180,0.2)] space-y-3">
-          <Skeleton className="h-6 w-56 rounded" />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
-          </div>
-        </div>
-        <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)] space-y-3">
-          <Skeleton className="h-6 w-40 rounded" />
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <Skeleton className="h-7 w-7 rounded-lg shrink-0" />
-              <div className="flex-1 space-y-1.5">
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-32 rounded" />
-                  <Skeleton className="h-4 w-16 rounded" />
-                </div>
-                <Skeleton className="h-1.5 w-full rounded-full" />
+        <Skeleton className="h-12 w-full rounded-2xl" />
+        <div className="p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(245,158,11,0.25)] space-y-3">
+          <Skeleton className="h-6 w-48 rounded" />
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between gap-3">
+              <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-4 w-36 rounded" />
+                <Skeleton className="h-3 w-20 rounded" />
               </div>
-            </div>
-          ))}
-        </div>
-        <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)] space-y-3">
-          <Skeleton className="h-6 w-36 rounded" />
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-[rgba(7,10,18,0.5)]">
-              <div className="space-y-1.5">
-                <Skeleton className="h-4 w-24 rounded" />
-                <Skeleton className="h-3 w-36 rounded" />
-              </div>
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-6 w-20 rounded" />
-                <Skeleton className="h-5 w-14 rounded" />
-              </div>
+              <Skeleton className="h-6 w-16 rounded" />
             </div>
           ))}
         </div>
@@ -720,9 +1059,9 @@ function OverviewSection() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard label="Total Orders" value={stats.totalOrders.toString()} icon={ShoppingCart} color="#8B5CF6" />
         <StatCard label="Awaiting Payment" value={stats.pendingPayment.toString()} icon={CreditCard} color="#F59E0B" />
         <StatCard label="Revenue" value={`$${stats.totalRevenue.toFixed(0)}`} icon={DollarSign} color="#22C55E" />
@@ -730,18 +1069,123 @@ function OverviewSection() {
         <StatCard label="Products" value={stats.totalProducts.toString()} icon={Package} color="#2ED1B4" />
       </div>
 
+      {/* Stock to Restock — preview first, expand for full list */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(245,158,11,0.25)]">
+        <div className="flex flex-wrap items-start sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-base font-semibold text-[#F4F6FA] flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-[#F59E0B]" />
+              Stock to Restock
+            </h3>
+            <p className="text-[11px] text-[#6B7280] mt-1">
+              {stockCounts.out} out · {stockCounts.low} low (≤{LOW_STOCK_THRESHOLD}) · {stockCounts.ok} OK
+            </p>
+          </div>
+
+          <div className="flex rounded-xl overflow-hidden border border-[rgba(244,246,250,0.08)]">
+            {(
+              [
+                { id: 'needs' as const, label: 'Needs restock' },
+                { id: 'out' as const, label: 'Out' },
+                { id: 'all' as const, label: 'All' },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setStockFilter(opt.id)}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  stockFilter === opt.id
+                    ? 'bg-[rgba(245,158,11,0.2)] text-[#F59E0B]'
+                    : 'text-[#6B7280] hover:text-[#A9B3C7]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filteredStockRows.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-[#5A667E]">
+            <Package className="w-8 h-8 opacity-40" />
+            <p className="text-sm">
+              {stockFilter === 'all'
+                ? 'No product dosages found.'
+                : stockFilter === 'out'
+                  ? 'Nothing is out of stock.'
+                  : 'Everything looks stocked — nothing urgent to restock.'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-xl border border-[rgba(244,246,250,0.06)] overflow-x-auto">
+              <table className="w-full text-left min-w-[320px]">
+                <thead className="bg-[rgba(7,10,18,0.65)] border-b border-[rgba(244,246,250,0.08)]">
+                  <tr className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+                    <th className="px-3 py-2 font-semibold">Product</th>
+                    <th className="px-3 py-2 font-semibold">Size</th>
+                    <th className="px-3 py-2 font-semibold text-right">Qty</th>
+                    <th className="px-3 py-2 font-semibold text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleStockRows.map((row) => (
+                    <tr
+                      key={row.key}
+                      className="border-b border-[rgba(244,246,250,0.04)] last:border-0 hover:bg-[rgba(244,246,250,0.02)]"
+                    >
+                      <td className="px-3 py-2 text-sm font-semibold text-[#F4F6FA] max-w-[12rem] sm:max-w-none truncate">
+                        {row.productName}
+                      </td>
+                      <td className="px-3 py-2 text-xs font-mono text-[#A9B3C7] whitespace-nowrap">
+                        {row.dosageLabel}
+                      </td>
+                      <td className="px-3 py-2 text-sm font-bold text-right tabular-nums text-[#F4F6FA]">
+                        {row.stockQuantity}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${
+                            row.level === 'out'
+                              ? 'bg-[rgba(239,68,68,0.15)] text-[#EF4444]'
+                              : row.level === 'low'
+                                ? 'bg-[rgba(245,158,11,0.15)] text-[#F59E0B]'
+                                : 'bg-[rgba(34,197,94,0.12)] text-[#4ADE80]'
+                          }`}
+                        >
+                          {row.level === 'out' ? 'Out' : row.level === 'low' ? 'Low' : 'OK'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filteredStockRows.length > PREVIEW_ROWS && (
+              <button
+                type="button"
+                onClick={() => setStockExpanded((v) => !v)}
+                className="mt-3 w-full py-2.5 rounded-xl border border-[rgba(244,246,250,0.08)] text-xs font-semibold text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.04)] transition-colors"
+              >
+                {stockExpanded
+                  ? 'Show less'
+                  : `Show all ${filteredStockRows.length} sizes`}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
       {/* Best Sellers */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-        {/* Header row */}
-        <div className="flex flex-wrap items-start sm:items-center justify-between gap-3 mb-5">
-          <h3 className="text-base sm:text-lg font-semibold text-[#F4F6FA] flex items-center gap-2">
+      <div className="p-4 sm:p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
+        <div className="flex flex-wrap items-start sm:items-center justify-between gap-3 mb-4">
+          <h3 className="text-base font-semibold text-[#F4F6FA] flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-[#2ED1B4]" />
             Best Sellers
           </h3>
 
-          {/* Controls */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Time period */}
             <div className="flex rounded-xl overflow-hidden border border-[rgba(244,246,250,0.08)]">
               {(['7d', '30d', '90d', 'all'] as const).map((t) => (
                 <button
@@ -754,12 +1198,10 @@ function OverviewSection() {
                       : 'text-[#6B7280] hover:text-[#A9B3C7]'
                   }`}
                 >
-                  {t === 'all' ? 'All time' : t === '7d' ? '7 days' : t === '30d' ? '30 days' : '90 days'}
+                  {t === 'all' ? 'All' : t}
                 </button>
               ))}
             </div>
-
-            {/* Sort toggle */}
             <div className="flex rounded-xl overflow-hidden border border-[rgba(244,246,250,0.08)]">
               <button
                 type="button"
@@ -783,7 +1225,7 @@ function OverviewSection() {
                 }`}
               >
                 <DollarSign className="w-3.5 h-3.5" />
-                Revenue
+                $
               </button>
             </div>
           </div>
@@ -795,69 +1237,71 @@ function OverviewSection() {
             <p className="text-sm">No sales data for this period yet.</p>
           </div>
         ) : (
-          <ol className="space-y-3">
-            {bestSellers.map((item, idx) => {
-              const barPct = bsMax > 0 ? (bsSort === 'revenue' ? item.revenue : item.unitsSold) / bsMax : 0;
-              const rankColors = ['#2ED1B4', '#8B5CF6', '#3B82F6', '#F59E0B', '#22C55E'];
-              const rankColor = rankColors[idx] ?? '#6B7280';
+          <>
+            <ol className="space-y-2.5">
+              {visibleBestSellers.map((item, idx) => {
+                const barPct = bsMax > 0 ? (bsSort === 'revenue' ? item.revenue : item.unitsSold) / bsMax : 0;
+                const rankColors = ['#2ED1B4', '#8B5CF6', '#3B82F6', '#F59E0B', '#22C55E'];
+                const rankColor = rankColors[idx] ?? '#6B7280';
 
-              return (
-                <li key={item.key} className="flex items-center gap-3 group">
-                  {/* Rank badge */}
-                  <span
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
-                    style={{ background: `${rankColor}18`, color: rankColor, border: `1px solid ${rankColor}30` }}
-                  >
-                    {idx + 1}
-                  </span>
-
-                  {/* Name + bar */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline justify-between gap-2 mb-1">
-                      <div className="min-w-0">
-                        <span className="text-sm font-semibold text-[#F4F6FA] truncate block leading-tight">
-                          {item.name}
-                        </span>
-                        {item.dosage && (
-                          <span className="text-[11px] text-[#6B7280] font-mono">{item.dosage}</span>
-                        )}
+                return (
+                  <li key={item.key} className="flex items-center gap-3">
+                    <span
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ background: `${rankColor}18`, color: rankColor, border: `1px solid ${rankColor}30` }}
+                    >
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline justify-between gap-2 mb-1">
+                        <div className="min-w-0">
+                          <span className="text-sm font-semibold text-[#F4F6FA] truncate block leading-tight">
+                            {item.name}
+                          </span>
+                          {item.dosage && (
+                            <span className="text-[11px] text-[#6B7280] font-mono">{item.dosage}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0 text-right">
+                          <span className="text-xs text-[#A9B3C7] whitespace-nowrap">
+                            {item.unitsSold}u
+                          </span>
+                          <span className="text-sm font-bold whitespace-nowrap" style={{ color: rankColor }}>
+                            ${item.revenue.toFixed(0)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0 text-right">
-                        <span className="text-xs text-[#A9B3C7] whitespace-nowrap">
-                          {item.unitsSold} {item.unitsSold === 1 ? 'unit' : 'units'}
-                        </span>
-                        <span className="text-sm font-bold whitespace-nowrap" style={{ color: rankColor }}>
-                          ${item.revenue.toFixed(0)}
-                        </span>
+                      <div className="h-1.5 rounded-full bg-[rgba(244,246,250,0.06)] overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${(barPct * 100).toFixed(1)}%`, background: rankColor, opacity: 0.75 }}
+                        />
                       </div>
                     </div>
-                    {/* Progress bar */}
-                    <div className="h-1.5 rounded-full bg-[rgba(244,246,250,0.06)] overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${(barPct * 100).toFixed(1)}%`, background: rankColor, opacity: 0.75 }}
-                      />
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
+                  </li>
+                );
+              })}
+            </ol>
+            {bestSellers.length > PREVIEW_ROWS && (
+              <button
+                type="button"
+                onClick={() => setSellersExpanded((v) => !v)}
+                className="mt-3 w-full py-2.5 rounded-xl border border-[rgba(244,246,250,0.08)] text-xs font-semibold text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.04)] transition-colors"
+              >
+                {sellersExpanded ? 'Show less' : `Show all ${bestSellers.length} SKUs`}
+              </button>
+            )}
+          </>
         )}
-
-        <p className="mt-5 text-[11px] text-[#5A667E]">
-          Excludes cancelled orders and free-gift items from revenue.
-          Counts all confirmed, processing, shipped, and delivered orders.
-        </p>
       </div>
 
-      {/* Bank Details Quick Reference */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-[rgba(46,209,180,0.1)] to-[rgba(139,92,246,0.1)] border border-[rgba(46,209,180,0.2)]">
-        <h3 className="text-lg font-semibold text-[#F4F6FA] mb-4 flex items-center gap-2">
+      {/* Bank Details */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[rgba(46,209,180,0.1)] to-[rgba(139,92,246,0.1)] border border-[rgba(46,209,180,0.2)]">
+        <h3 className="text-base font-semibold text-[#F4F6FA] mb-4 flex items-center gap-2">
           <CreditCard className="w-5 h-5 text-[#2ED1B4]" />
-          Bank Account Details (For Customer Payments)
+          Bank Account Details
         </h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="p-3 rounded-lg bg-[rgba(7,10,18,0.5)]">
             <p className="text-[10px] text-[#A9B3C7] uppercase">PAYID</p>
             <p className="text-sm font-mono text-[#F4F6FA]">{CONFIG.BANK_DETAILS.PAYID}</p>
@@ -878,15 +1322,14 @@ function OverviewSection() {
       </div>
 
       {/* Recent Orders */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-        <h3 className="text-base sm:text-lg font-semibold text-[#F4F6FA] mb-3">Recent Orders</h3>
+      <div className="p-4 sm:p-5 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
+        <h3 className="text-base font-semibold text-[#F4F6FA] mb-3">Recent Orders</h3>
         {recentOrders.length === 0 ? (
           <p className="text-[#A9B3C7] text-center py-8">No orders yet</p>
         ) : (
           <div className="space-y-2">
-            {recentOrders.map(order => (
+            {recentOrders.map((order) => (
               <div key={order.id} className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(7,10,18,0.5)]">
-                {/* Left: order # + email */}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <p className="text-sm font-semibold text-[#F4F6FA] font-mono leading-tight">
@@ -898,11 +1341,8 @@ function OverviewSection() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[#A9B3C7] truncate mt-0.5">
-                    {order.customer_email}
-                  </p>
+                  <p className="text-xs text-[#A9B3C7] truncate mt-0.5">{order.customer_email}</p>
                 </div>
-                {/* Right: status badge + total */}
                 <div className="shrink-0 flex flex-col items-end gap-1">
                   <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold leading-tight whitespace-nowrap ${getStatusColor(order.status)}`}>
                     {order.status.replace(/_/g, ' ')}
@@ -1165,8 +1605,11 @@ function AdminCopyBox({
 function OrdersSection() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -1177,11 +1620,25 @@ function OrdersSection() {
   const [isBulkSendingReviewEmails, setIsBulkSendingReviewEmails] = useState(false);
   const [preorderFilter, setPreorderFilter] = useState<'all' | 'preorder_only'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'direct' | 'referral'>('all');
+  const [statRows, setStatRows] = useState<OrderListStatRow[]>([]);
   const loadOrdersRequestIdRef = useRef(0);
+  const loadMoreLockRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const listFilters = useMemo<OrdersListFilters>(
+    () => ({
+      status: statusFilter,
+      search: debouncedSearch,
+      preorder: preorderFilter,
+      source: sourceFilter,
+    }),
+    [statusFilter, debouncedSearch, preorderFilter, sourceFilter],
+  );
 
   useEffect(() => {
-    loadOrders();
-  }, []);
+    const t = window.setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (showOrderModal) {
@@ -1210,24 +1667,40 @@ function OrdersSection() {
     };
   }, [showOrderModal, selectedOrder?.id]);
 
-  const loadOrders = async (bust = false) => {
-    const requestId = ++loadOrdersRequestIdRef.current;
-    if (bust) invalidateCache('admin:orders');
-    setLoading(true);
+  const loadOrderStats = async (bust = false) => {
+    if (bust) invalidateCache('admin:orders:stats');
     try {
-      // After mutations (delete, mark paid, etc.) always hit the DB — never reuse
-      // a stale in-flight cache read that can overwrite the list and bump revenue.
-      const data = bust
+      const rows = bust
         ? await (async () => {
-            const fresh = await fetchAllOrdersFromDb();
-            setCache('admin:orders', fresh, TTL_ADMIN_ORDERS);
+            const fresh = await fetchOrderListStats();
+            setCache('admin:orders:stats', fresh, TTL_ADMIN_ORDERS);
             return fresh;
           })()
-        : await cached('admin:orders', fetchAllOrdersFromDb, TTL_ADMIN_ORDERS);
+        : await cached('admin:orders:stats', fetchOrderListStats, TTL_ADMIN_ORDERS);
+      setStatRows(rows);
+    } catch (error) {
+      console.error('Error loading order stats:', error);
+    }
+  };
 
-      if (requestId === loadOrdersRequestIdRef.current) {
-        setOrders(data);
-      }
+  const loadOrders = async (bust = false) => {
+    const requestId = ++loadOrdersRequestIdRef.current;
+    if (bust) {
+      invalidateCache('admin:orders');
+      invalidateCache('admin:orders:stats');
+    }
+    // Full-page skeleton only when the list is empty; filter changes keep the page interactive.
+    setLoading((prev) => prev || orders.length === 0);
+    setHasMore(true);
+    loadMoreLockRef.current = false;
+    try {
+      const [{ orders: page, hasMore: more }] = await Promise.all([
+        fetchOrdersPage(0, listFilters),
+        loadOrderStats(bust),
+      ]);
+      if (requestId !== loadOrdersRequestIdRef.current) return;
+      setOrders(page);
+      setHasMore(more);
     } catch (error) {
       console.error('Error loading orders:', error);
     } finally {
@@ -1236,6 +1709,57 @@ function OrdersSection() {
       }
     }
   };
+
+  const loadMoreOrders = async () => {
+    if (loading || loadingMore || !hasMore || loadMoreLockRef.current) return;
+    loadMoreLockRef.current = true;
+    setLoadingMore(true);
+    const requestId = loadOrdersRequestIdRef.current;
+    const offset = orders.length;
+    try {
+      const { orders: page, hasMore: more } = await fetchOrdersPage(offset, listFilters);
+      if (requestId !== loadOrdersRequestIdRef.current) return;
+      setOrders((prev) => {
+        const seen = new Set(prev.map((o) => o.id));
+        const next = [...prev];
+        for (const row of page) {
+          if (!seen.has(row.id)) next.push(row);
+        }
+        return next;
+      });
+      setHasMore(more);
+    } catch (error) {
+      console.error('Error loading more orders:', error);
+    } finally {
+      loadMoreLockRef.current = false;
+      if (requestId === loadOrdersRequestIdRef.current) {
+        setLoadingMore(false);
+      }
+    }
+  };
+
+  // Reset + fetch first page whenever filters change (fast page fetch, not full catalog).
+  useEffect(() => {
+    void loadOrders(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed to listFilters only
+  }, [listFilters]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          void loadMoreOrders();
+        }
+      },
+      { root: null, rootMargin: '240px 0px', threshold: 0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+    // Re-bind when list length / flags change so the sentinel stays active.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders.length, hasMore, loading, loadingMore, listFilters]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string, orderHint?: Order | null) => {
     setIsUpdating(true);
@@ -1290,21 +1814,26 @@ function OrdersSection() {
     order.status !== 'finalised' &&
     order.status !== 'cancelled';
 
-  const deliveredReviewBacklogCount = useMemo(() => {
-    const seen = new Set<string>();
-    return orders.filter((o) => {
-      if (o.status !== 'delivered' || !o.customer_email?.trim() || o.review_request_email_sent) return false;
-      const key = o.customer_email.trim().toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).length;
-  }, [orders]);
-
   const sendBulkDeliveredReviewEmails = async () => {
-    const eligible = orders.filter(
-      (o) => o.status === 'delivered' && o.customer_email?.trim() && !o.review_request_email_sent,
-    );
+    // Pull only delivered backlog rows (not the full orders catalog).
+    let eligible: Order[] = [];
+    try {
+      eligible = await fetchSupabasePages((from, to) =>
+        supabase
+          .from('orders')
+          .select('*')
+          .eq('status', 'delivered')
+          .or('review_request_email_sent.is.null,review_request_email_sent.eq.false')
+          .order('created_at', { ascending: false })
+          .range(from, to),
+      );
+      eligible = eligible.filter((o) => o.customer_email?.trim());
+    } catch (err) {
+      console.error('Failed to load review email backlog', err);
+      alert('Failed to load delivered orders for review emails.');
+      return;
+    }
+
     if (!eligible.length) {
       alert('No delivered orders are waiting for a review request email.');
       return;
@@ -1593,14 +2122,7 @@ function OrdersSection() {
       setOrders((prev) => prev.filter((o) => o.id !== orderId));
       invalidateCache('admin:overview');
       window.dispatchEvent(new Event('peplab:orders-updated'));
-
-      const requestId = ++loadOrdersRequestIdRef.current;
-      invalidateCache('admin:orders');
-      const fresh = await fetchAllOrdersFromDb();
-      setCache('admin:orders', fresh, TTL_ADMIN_ORDERS);
-      if (requestId === loadOrdersRequestIdRef.current) {
-        setOrders(fresh);
-      }
+      await loadOrders(true);
     } catch (err: any) {
       console.error('Error deleting order:', err);
       alert('Failed to delete order: ' + (err?.message || 'Unknown error'));
@@ -1610,14 +2132,74 @@ function OrdersSection() {
     }
   };
 
-  const preorderOrderCount = useMemo(() => orders.filter(orderIsPreorderRow).length, [orders]);
-  const referralOrders = useMemo(() => orders.filter(orderIsReferralRow), [orders]);
-  const directOrders = useMemo(() => orders.filter((o) => !orderIsReferralRow(o)), [orders]);
-  const referralRevenue = useMemo(
-    () => referralOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0),
-    [referralOrders],
-  );
-  const referralAov = referralOrders.length > 0 ? referralRevenue / referralOrders.length : 0;
+  const orderStats = useMemo(() => {
+    let pendingPayment = 0;
+    let processing = 0;
+    let shipped = 0;
+    let preorder = 0;
+    let referral = 0;
+    let direct = 0;
+    let referralRevenue = 0;
+    let reviewBacklog = 0;
+    const promoCounts = new Map<string, number>();
+    const reviewSeen = new Set<string>();
+
+    for (const row of statRows) {
+      const status = (row.status || '').toLowerCase();
+      if (status === 'pending_payment') pendingPayment += 1;
+      if (status === 'processing') processing += 1;
+      if (status === 'shipped') shipped += 1;
+      if (orderIsPreorderRow(row)) preorder += 1;
+
+      const isReferral = orderIsReferralRow(row);
+      if (isReferral) {
+        referral += 1;
+        referralRevenue += Number(row.total) || 0;
+        const code = (row.affiliate_code || '').trim().toUpperCase();
+        if (code) promoCounts.set(code, (promoCounts.get(code) || 0) + 1);
+      } else {
+        direct += 1;
+      }
+
+      if (
+        status === 'delivered' &&
+        row.customer_email?.trim() &&
+        !row.review_request_email_sent
+      ) {
+        const key = row.customer_email.trim().toLowerCase();
+        if (!reviewSeen.has(key)) {
+          reviewSeen.add(key);
+          reviewBacklog += 1;
+        }
+      }
+    }
+
+    const topPromoCodes = Array.from(promoCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    return {
+      total: statRows.length,
+      pendingPayment,
+      processing,
+      shipped,
+      preorder,
+      referral,
+      direct,
+      referralRevenue,
+      referralAov: referral > 0 ? referralRevenue / referral : 0,
+      revenue: sumOrdersRevenue(statRows),
+      reviewBacklog,
+      topPromoCodes,
+    };
+  }, [statRows]);
+
+  const preorderOrderCount = orderStats.preorder;
+  const referralAov = orderStats.referralAov;
+  const referralRevenue = orderStats.referralRevenue;
+  const topPromoCodes = orderStats.topPromoCodes;
+  const deliveredReviewBacklogCount = orderStats.reviewBacklog;
+
   const selectedOrderTracking = useMemo(
     () => (selectedOrder ? getOrderTrackingInfo(selectedOrder) : null),
     [selectedOrder],
@@ -1627,42 +2209,8 @@ function OrdersSection() {
     [selectedOrder],
   );
 
-  const topPromoCodes = useMemo(() => {
-    const counts = new Map<string, number>();
-    referralOrders.forEach((o) => {
-      const code = (o.affiliate_code || '').trim().toUpperCase();
-      if (!code) return;
-      counts.set(code, (counts.get(code) || 0) + 1);
-    });
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-  }, [referralOrders]);
-
-  const filteredOrders = orders.filter(order => {
-    const orderStatus = (order.status || '').toLowerCase().replace(/\s/g, '_');
-    const matchesStatus = statusFilter === 'all' || orderStatus === statusFilter;
-    const q = (searchQuery || '').trim().toLowerCase();
-    const matchesSearch =
-      !q ||
-      (order.order_number &&
-        (order.order_number.toLowerCase().includes(q) ||
-          formatOrderNumberDisplay(order.order_number).toLowerCase().includes(q))) ||
-      (order.customer_email && order.customer_email.toLowerCase().includes(q)) ||
-      (order.customer_first_name && order.customer_first_name.toLowerCase().includes(q)) ||
-      (order.customer_last_name && order.customer_last_name.toLowerCase().includes(q)) ||
-      (order.affiliate_code && order.affiliate_code.toLowerCase().includes(q)) ||
-      (order.referral_promoter_name && order.referral_promoter_name.toLowerCase().includes(q));
-    const matchesPreorder =
-      preorderFilter === 'all' ||
-      (preorderFilter === 'preorder_only' && orderIsPreorderRow(order));
-    const isReferral = orderIsReferralRow(order);
-    const matchesSource =
-      sourceFilter === 'all' ||
-      (sourceFilter === 'referral' && isReferral) ||
-      (sourceFilter === 'direct' && !isReferral);
-    return matchesStatus && matchesSearch && matchesPreorder && matchesSource;
-  });
+  // Server-side filters already applied — list is the current page window.
+  const filteredOrders = orders;
 
   const statusLabels: Record<string, string> = {
     all: 'All',
@@ -1719,28 +2267,28 @@ function OrdersSection() {
       {/* Stats - status cards clickable to filter */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <button type="button" onClick={() => setStatusFilter('all')} className="text-left">
-          <StatCard label="All Orders" value={orders.length.toString()} icon={ShoppingCart} color="#8B5CF6" />
+          <StatCard label="All Orders" value={orderStats.total.toString()} icon={ShoppingCart} color="#8B5CF6" />
         </button>
         <button type="button" onClick={() => setStatusFilter('pending_payment')} className="text-left">
-          <StatCard label="Awaiting Payment" value={orders.filter(o => o.status === 'pending_payment').length.toString()} icon={CreditCard} color="#F59E0B" />
+          <StatCard label="Awaiting Payment" value={orderStats.pendingPayment.toString()} icon={CreditCard} color="#F59E0B" />
         </button>
         <button type="button" onClick={() => setStatusFilter('processing')} className="text-left">
-          <StatCard label="Processing" value={orders.filter(o => o.status === 'processing').length.toString()} icon={Box} color="#8B5CF6" />
+          <StatCard label="Processing" value={orderStats.processing.toString()} icon={Box} color="#8B5CF6" />
         </button>
         <button type="button" onClick={() => setStatusFilter('shipped')} className="text-left">
-          <StatCard label="Shipped" value={orders.filter(o => o.status === 'shipped').length.toString()} icon={Truck} color="#2ED1B4" />
+          <StatCard label="Shipped" value={orderStats.shipped.toString()} icon={Truck} color="#2ED1B4" />
         </button>
-        <StatCard label="Revenue" value={`$${sumOrdersRevenue(orders).toFixed(0)}`} icon={DollarSign} color="#22C55E" />
+        <StatCard label="Revenue" value={`$${orderStats.revenue.toFixed(0)}`} icon={DollarSign} color="#22C55E" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-4 rounded-2xl bg-[rgba(17,24,39,0.5)] border border-[rgba(244,246,250,0.08)]">
           <p className="text-xs uppercase tracking-wide text-[#A9B3C7] mb-1">Direct Orders</p>
-          <p className="text-2xl font-bold text-[#F4F6FA]">{directOrders.length}</p>
+          <p className="text-2xl font-bold text-[#F4F6FA]">{orderStats.direct}</p>
         </div>
         <div className="p-4 rounded-2xl bg-[rgba(17,24,39,0.5)] border border-[rgba(46,209,180,0.25)]">
           <p className="text-xs uppercase tracking-wide text-[#A9B3C7] mb-1">Referral / Promo Orders</p>
-          <p className="text-2xl font-bold text-[#2ED1B4]">{referralOrders.length}</p>
+          <p className="text-2xl font-bold text-[#2ED1B4]">{orderStats.referral}</p>
         </div>
         <div className="p-4 rounded-2xl bg-[rgba(17,24,39,0.5)] border border-[rgba(139,92,246,0.25)]">
           <p className="text-xs uppercase tracking-wide text-[#A9B3C7] mb-1">Referral Revenue</p>
@@ -1860,7 +2408,7 @@ function OrdersSection() {
                   : 'bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.1)]'
               }`}
             >
-              Direct ({directOrders.length})
+              Direct ({orderStats.direct})
             </button>
             <button
               type="button"
@@ -1871,7 +2419,7 @@ function OrdersSection() {
                   : 'bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.1)]'
               }`}
             >
-              Referral ({referralOrders.length})
+              Referral ({orderStats.referral})
             </button>
             {topPromoCodes.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5 ml-auto">
@@ -1889,7 +2437,13 @@ function OrdersSection() {
           </div>
           <p className="text-sm text-[#A9B3C7]">
             Showing <span className="font-medium text-[#F4F6FA]">{filteredOrders.length}</span>
-            {filteredOrders.length !== orders.length && ` of ${orders.length}`} orders
+            {hasMore ? '+' : ''} loaded
+            {orderStats.total > 0 && (
+              <>
+                {' '}· <span className="font-medium text-[#F4F6FA]">{orderStats.total}</span> total
+              </>
+            )}
+            {hasMore && <span className="text-[#6B7280]"> · scroll for more</span>}
           </p>
         </div>
       </div>
@@ -1900,7 +2454,9 @@ function OrdersSection() {
           <ShoppingCart className="w-14 h-14 sm:w-16 sm:h-16 mx-auto text-[rgba(244,246,250,0.2)] mb-4" />
           <p className="text-[#F4F6FA] font-medium mb-1">No orders found</p>
           <p className="text-sm text-[#A9B3C7]">
-            {orders.length === 0 ? 'Orders will appear here once customers place them.' : 'Try changing the filter or search.'}
+            {orderStats.total === 0
+              ? 'Orders will appear here once customers place them.'
+              : 'Try changing the filter or search.'}
           </p>
         </div>
       ) : (
@@ -2066,6 +2622,23 @@ function OrdersSection() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="px-4 py-4 text-center border-t border-[rgba(244,246,250,0.06)]">
+            {loadingMore ? (
+              <p className="text-xs text-[#A9B3C7]">Loading more orders…</p>
+            ) : hasMore ? (
+              <button
+                type="button"
+                onClick={() => void loadMoreOrders()}
+                className="text-xs font-semibold text-[#2ED1B4] hover:underline"
+              >
+                Load more orders
+              </button>
+            ) : (
+              <p className="text-xs text-[#5A667E]">All matching orders loaded</p>
+            )}
           </div>
         </div>
       )}
@@ -4016,11 +4589,15 @@ function UsersSection() {
   const [users, setUsers] = useState<any[]>([]);
   const [userBalances, setUserBalances] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [deleteUser, setDeleteUser] = useState<any>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [adminEmail, setAdminEmail] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [pointsModal, setPointsModal] = useState<{ user: any; mode: 'add' | 'deduct' } | null>(null);
   const [pointsAmount, setPointsAmount] = useState('');
   const [pointsReason, setPointsReason] = useState('');
@@ -4037,6 +4614,9 @@ function UsersSection() {
   const [birthdaySaving, setBirthdaySaving] = useState(false);
   const [birthdayError, setBirthdayError] = useState<string | null>(null);
   const loadUsersRequestIdRef = useRef(0);
+  const loadMoreLockRef = useRef(false);
+  const rawOffsetRef = useRef(0);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -4047,36 +4627,136 @@ function UsersSection() {
     })();
   }, []);
 
-  useEffect(() => { loadUsers(); }, []);
-
-  // Keep points balances in sync when another tab (Orders) updates points in background.
   useEffect(() => {
-    const onPointsUpdated = () => {
-      void loadUsers();
-    };
-    window.addEventListener('peplab:points-updated', onPointsUpdated);
-    return () => window.removeEventListener('peplab:points-updated', onPointsUpdated);
-  }, []);
+    const t = window.setTimeout(() => setDebouncedSearch(searchQuery.trim().toLowerCase()), 300);
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
 
+  const mergeBalances = async (pageUsers: any[]) => {
+    const balMap = await fetchBalancesForUserIds(pageUsers.map((u) => u.id));
+    setUserBalances((prev) => ({ ...prev, ...balMap }));
+  };
+
+  const userMatchesSearch = (u: any, q: string) => {
+    if (!q) return true;
+    return (u.email || '').toLowerCase().includes(q) || (u.full_name || '').toLowerCase().includes(q);
+  };
+
+  /** Load pages until we fill a visible page (or exhaust), applying client search. */
   const loadUsers = async (bust = false) => {
     const requestId = ++loadUsersRequestIdRef.current;
     if (bust) invalidateCache('admin:users:v2');
-    setLoading(true);
+    setLoading((prev) => prev || users.length === 0);
+    setHasMore(true);
+    loadMoreLockRef.current = false;
+    rawOffsetRef.current = 0;
+
     try {
-      const result = await cached('admin:users:v2', async () => {
-        // Admin SECURITY DEFINER RPC + pagination (direct profiles select is RLS-limited to self).
-        const [users, balMap] = await Promise.all([
-          fetchAllProfilesFromDb(),
-          fetchAllUserPointsBalances(),
-        ]);
-        return { users, balMap };
-      }, TTL_ADMIN_USERS);
-      if (requestId === loadUsersRequestIdRef.current) { setUsers(result.users); setUserBalances(result.balMap); }
-    } catch (error) { console.error('Error loading users:', error); }
-    finally {
+      const [count] = await Promise.all([
+        fetchUsersCount().catch(() => 0),
+      ]);
+      if (requestId !== loadUsersRequestIdRef.current) return;
+      setTotalUsers(count);
+
+      const collected: any[] = [];
+      let offset = 0;
+      let more = true;
+      const q = debouncedSearch;
+
+      while (collected.length < ADMIN_USERS_PAGE_SIZE && more) {
+        const page = await fetchProfilesPage(offset, ADMIN_USERS_PAGE_SIZE);
+        if (requestId !== loadUsersRequestIdRef.current) return;
+        offset += page.users.length;
+        more = page.hasMore;
+        for (const u of page.users) {
+          if (userMatchesSearch(u, q)) collected.push(u);
+        }
+        if (page.users.length === 0) break;
+      }
+
+      rawOffsetRef.current = offset;
+      setUsers(collected);
+      setHasMore(more);
+      await mergeBalances(collected);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
       if (requestId === loadUsersRequestIdRef.current) setLoading(false);
     }
   };
+
+  const loadMoreUsers = async () => {
+    if (loading || loadingMore || !hasMore || loadMoreLockRef.current) return;
+    loadMoreLockRef.current = true;
+    setLoadingMore(true);
+    const requestId = loadUsersRequestIdRef.current;
+    const q = debouncedSearch;
+
+    try {
+      const collected: any[] = [];
+      let offset = rawOffsetRef.current;
+      let more = true;
+
+      while (collected.length < ADMIN_USERS_PAGE_SIZE && more) {
+        const page = await fetchProfilesPage(offset, ADMIN_USERS_PAGE_SIZE);
+        if (requestId !== loadUsersRequestIdRef.current) return;
+        offset += page.users.length;
+        more = page.hasMore;
+        for (const u of page.users) {
+          if (userMatchesSearch(u, q)) collected.push(u);
+        }
+        if (page.users.length === 0) break;
+      }
+
+      rawOffsetRef.current = offset;
+      setHasMore(more);
+      if (collected.length > 0) {
+        setUsers((prev) => {
+          const seen = new Set(prev.map((u) => u.id));
+          const next = [...prev];
+          for (const u of collected) {
+            if (!seen.has(u.id)) next.push(u);
+          }
+          return next;
+        });
+        await mergeBalances(collected);
+      }
+    } catch (error) {
+      console.error('Error loading more users:', error);
+    } finally {
+      loadMoreLockRef.current = false;
+      if (requestId === loadUsersRequestIdRef.current) setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadUsers(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  // Refresh balances for currently loaded users when points change elsewhere.
+  useEffect(() => {
+    const onPointsUpdated = () => {
+      void mergeBalances(users);
+    };
+    window.addEventListener('peplab:points-updated', onPointsUpdated);
+    return () => window.removeEventListener('peplab:points-updated', onPointsUpdated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [users]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) void loadMoreUsers();
+      },
+      { root: null, rootMargin: '240px 0px', threshold: 0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [users.length, hasMore, loading, loadingMore, debouncedSearch]);
 
   const handleExpandUser = async (userId: string) => {
     if (expandedUserId === userId) {
@@ -4250,11 +4930,8 @@ function UsersSection() {
     }
   };
 
-  const filteredUsers = users.filter(u => {
-    const q = searchQuery.toLowerCase();
-    if (!q) return true;
-    return (u.email || '').toLowerCase().includes(q) || (u.full_name || '').toLowerCase().includes(q);
-  });
+  // Search is applied while paging from the RPC; list is already filtered.
+  const filteredUsers = users;
 
   if (loading) return (
     <div className="space-y-6">
@@ -4285,7 +4962,15 @@ function UsersSection() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-[#F4F6FA]">Users ({users.length})</h2>
+      <div>
+        <h2 className="text-xl font-bold text-[#F4F6FA]">
+          Users {totalUsers > 0 ? `(${totalUsers})` : `(${users.length})`}
+        </h2>
+        <p className="text-xs text-[#6B7280] mt-1">
+          Showing {filteredUsers.length}{hasMore ? '+' : ''} loaded
+          {hasMore ? ' · scroll for more' : ''}
+        </p>
+      </div>
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A9B3C7]" />
         <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search users..." className="w-full pl-12 pr-4 py-3 rounded-xl bg-[rgba(7,10,18,0.6)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] placeholder-[#A9B3C7] focus:outline-none focus:border-[#2ED1B4]" />
@@ -4498,6 +5183,24 @@ function UsersSection() {
             </div>
           );
         })}
+
+        <div ref={sentinelRef} className="py-4 text-center">
+          {loadingMore ? (
+            <p className="text-xs text-[#A9B3C7]">Loading more users…</p>
+          ) : hasMore ? (
+            <button
+              type="button"
+              onClick={() => void loadMoreUsers()}
+              className="text-xs font-semibold text-[#2ED1B4] hover:underline"
+            >
+              Load more users
+            </button>
+          ) : filteredUsers.length > 0 ? (
+            <p className="text-xs text-[#5A667E]">All matching users loaded</p>
+          ) : (
+            <p className="text-xs text-[#5A667E]">No users match your search</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -4508,6 +5211,9 @@ function ReviewsAdminSection() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalReviews, setTotalReviews] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingReview, setEditingReview] = useState<any>(null);
@@ -4536,6 +5242,9 @@ function ReviewsAdminSection() {
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
   const [editImageRemoved, setEditImageRemoved] = useState(false);
+  const loadReviewsRequestIdRef = useRef(0);
+  const loadMoreLockRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const resetAddReviewImage = () => {
     revokePreviewUrl(reviewImagePreview);
@@ -4574,32 +5283,90 @@ function ReviewsAdminSection() {
     setEditImageRemoved(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  const mergeAuthorNames = async (pageReviews: any[]) => {
+    const names = await fetchReviewAuthorNames(pageReviews.map((r) => r.user_id));
+    setUserMap((prev) => ({ ...prev, ...names }));
+  };
 
   const loadData = async (bust = false) => {
-    if (bust) invalidateCache('admin:reviews');
-    setLoading(true);
-    try {
-      const result = await cached('admin:reviews', async () => {
-        const [{ data: reviewsData }, { data: productsData }, profilesData] = await Promise.all([
-          supabase.from('reviews').select('*, products(name)').order('created_at', { ascending: false }),
-          supabase.from('products').select('id, name, slug').order('name'),
-          fetchAllProfilesFromDb(),
-        ]);
-        const map: Record<string, string> = {};
-        (profilesData || []).forEach((p: any) => { map[p.id] = p.full_name || p.email || 'User'; });
-        return { reviews: reviewsData || [], products: productsData || [], userMap: map };
-      }, TTL_ADMIN_REVIEWS);
+    const requestId = ++loadReviewsRequestIdRef.current;
+    if (bust) {
+      invalidateCache('admin:reviews');
+      reviewAuthorNameCache = null;
+    }
+    setLoading((prev) => prev || reviews.length === 0);
+    setHasMore(true);
+    loadMoreLockRef.current = false;
 
-      setReviews(result.reviews);
-      setProducts(result.products);
-      setUserMap(result.userMap);
+    try {
+      const [{ count }, productsResult, page] = await Promise.all([
+        supabase.from('reviews').select('*', { count: 'exact', head: true }),
+        products.length > 0
+          ? Promise.resolve({ data: products })
+          : supabase.from('products').select('id, name, slug').order('name'),
+        fetchReviewsPage(0, ADMIN_REVIEWS_PAGE_SIZE),
+      ]);
+
+      if (requestId !== loadReviewsRequestIdRef.current) return;
+
+      setTotalReviews(count ?? page.reviews.length);
+      if (productsResult.data) setProducts(productsResult.data);
+      setReviews(page.reviews);
+      setHasMore(page.hasMore);
+      await mergeAuthorNames(page.reviews);
     } catch (err) {
       console.error('Error loading reviews:', err);
     } finally {
-      setLoading(false);
+      if (requestId === loadReviewsRequestIdRef.current) setLoading(false);
     }
   };
+
+  const loadMoreReviews = async () => {
+    if (loading || loadingMore || !hasMore || loadMoreLockRef.current) return;
+    loadMoreLockRef.current = true;
+    setLoadingMore(true);
+    const requestId = loadReviewsRequestIdRef.current;
+    const offset = reviews.length;
+
+    try {
+      const page = await fetchReviewsPage(offset, ADMIN_REVIEWS_PAGE_SIZE);
+      if (requestId !== loadReviewsRequestIdRef.current) return;
+      setReviews((prev) => {
+        const seen = new Set(prev.map((r) => r.id));
+        const next = [...prev];
+        for (const row of page.reviews) {
+          if (!seen.has(row.id)) next.push(row);
+        }
+        return next;
+      });
+      setHasMore(page.hasMore);
+      await mergeAuthorNames(page.reviews);
+    } catch (err) {
+      console.error('Error loading more reviews:', err);
+    } finally {
+      loadMoreLockRef.current = false;
+      if (requestId === loadReviewsRequestIdRef.current) setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) void loadMoreReviews();
+      },
+      { root: null, rootMargin: '240px 0px', threshold: 0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviews.length, hasMore, loading, loadingMore]);
 
   const handleAddReview = async () => {
     if (!reviewProductId || !reviewComment.trim()) { setError('Product and comment are required'); return; }
@@ -4758,9 +5525,17 @@ function ReviewsAdminSection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-[#F4F6FA]">Reviews ({reviews.length})</h2>
-        <button onClick={() => { resetAddReviewImage(); setShowAddModal(true); }} className="px-4 py-2 rounded-xl bg-[#2ED1B4] text-white hover:bg-[#25b89d] flex items-center gap-2">
+      <div className="flex justify-between items-center gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-[#F4F6FA]">
+            Reviews ({totalReviews || reviews.length})
+          </h2>
+          <p className="text-xs text-[#6B7280] mt-1">
+            Showing {reviews.length}{hasMore ? '+' : ''} loaded
+            {hasMore ? ' · scroll for more' : ''}
+          </p>
+        </div>
+        <button onClick={() => { resetAddReviewImage(); setShowAddModal(true); }} className="px-4 py-2 rounded-xl bg-[#2ED1B4] text-white hover:bg-[#25b89d] flex items-center gap-2 shrink-0">
           <Plus className="w-4 h-4" /> Write Review
         </button>
       </div>
@@ -4908,39 +5683,63 @@ function ReviewsAdminSection() {
       <div className="space-y-3">
         {reviews.length === 0 ? (
           <div className="p-12 text-center text-[#A9B3C7]">No reviews yet. Click "Write Review" to add one.</div>
-        ) : reviews.map(review => (
-          <div key={review.id} className="p-4 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? 'fill-[#F59E0B] text-[#F59E0B]' : 'text-[rgba(244,246,250,0.2)]'}`} />
-                    ))}
+        ) : (
+          <>
+            {reviews.map((review) => (
+              <div key={review.id} className="p-4 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? 'fill-[#F59E0B] text-[#F59E0B]' : 'text-[rgba(244,246,250,0.2)]'}`} />
+                        ))}
+                      </div>
+                      <span className="text-xs text-[#8B5CF6]">{review.products?.name || 'Unknown Product'}</span>
+                      {review.is_verified_purchase && (
+                        <span className="text-[10px] text-[#22C55E] flex items-center gap-0.5">
+                          <CheckCircle className="w-3 h-3" /> Verified
+                        </span>
+                      )}
+                    </div>
+                    {review.title && <p className="text-sm font-medium text-[#F4F6FA]">{review.title}</p>}
+                    {review.image_url && <ReviewPhoto url={review.image_url} className="mt-2 mb-2 max-w-xs" />}
+                    <p className="text-sm text-[#A9B3C7] mt-1">{review.comment}</p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-[#A9B3C7]">
+                      <span>{userMap[review.user_id] || 'Anonymous'}</span>
+                      <span>{new Date(review.created_at).toLocaleDateString('en-AU')}</span>
+                      <span>{review.helpful_count || 0} people found this helpful</span>
+                    </div>
                   </div>
-                  <span className="text-xs text-[#8B5CF6]">{review.products?.name || 'Unknown Product'}</span>
-                  {review.is_verified_purchase && <span className="text-[10px] text-[#22C55E] flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> Verified</span>}
-                </div>
-                {review.title && <p className="text-sm font-medium text-[#F4F6FA]">{review.title}</p>}
-                {review.image_url && <ReviewPhoto url={review.image_url} className="mt-2 mb-2 max-w-xs" />}
-                <p className="text-sm text-[#A9B3C7] mt-1">{review.comment}</p>
-                <div className="flex items-center gap-3 mt-2 text-xs text-[#A9B3C7]">
-                  <span>{userMap[review.user_id] || 'Anonymous'}</span>
-                  <span>{new Date(review.created_at).toLocaleDateString('en-AU')}</span>
-                  <span>{review.helpful_count || 0} people found this helpful</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => openEditReview(review)} className="p-2 rounded-lg text-[#A9B3C7] hover:bg-[rgba(46,209,180,0.15)] hover:text-[#2ED1B4]" title="Edit review">
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setDeleteReview(review)} className="p-2 rounded-lg text-[#A9B3C7] hover:bg-[rgba(239,68,68,0.15)] hover:text-[#EF4444]" title="Delete review">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button onClick={() => openEditReview(review)} className="p-2 rounded-lg text-[#A9B3C7] hover:bg-[rgba(46,209,180,0.15)] hover:text-[#2ED1B4]" title="Edit review">
-                  <Pencil className="w-4 h-4" />
+            ))}
+
+            <div ref={sentinelRef} className="py-4 text-center">
+              {loadingMore ? (
+                <p className="text-xs text-[#A9B3C7]">Loading more reviews…</p>
+              ) : hasMore ? (
+                <button
+                  type="button"
+                  onClick={() => void loadMoreReviews()}
+                  className="text-xs font-semibold text-[#2ED1B4] hover:underline"
+                >
+                  Load more reviews
                 </button>
-                <button onClick={() => setDeleteReview(review)} className="p-2 rounded-lg text-[#A9B3C7] hover:bg-[rgba(239,68,68,0.15)] hover:text-[#EF4444]" title="Delete review">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              ) : (
+                <p className="text-xs text-[#5A667E]">All reviews loaded</p>
+              )}
             </div>
-          </div>
-        ))}
+          </>
+        )}
       </div>
     </div>
   );
