@@ -263,7 +263,7 @@ export default function Catalog() {
             >
               <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-[#22C55E]" />
               <span className="text-[11px] sm:text-xs font-medium text-[#F4F6FA]">
-                <span className="sm:hidden">WhatsApp</span>
+                <span className="sm:hidden">WhatsApp Support</span>
                 <span className="hidden sm:inline">WhatsApp Support</span>
               </span>
             </a>
