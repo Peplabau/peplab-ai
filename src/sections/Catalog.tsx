@@ -15,6 +15,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 const cachedCatalogProducts = getCache<Product[]>('products:all', true);
 
+/** Catalog-only community invite (not the site-wide support Telegram setting). */
+const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+-t-PWn90U9QyZGFl';
+
 export default function Catalog() {
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -26,7 +29,6 @@ export default function Catalog() {
   const [loading, setLoading] = useState(initialProducts.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [discountSettings, setDiscountSettings] = useState<DiscountSettings>(DEFAULT_DISCOUNT_SETTINGS);
-  const [telegramLink, setTelegramLink] = useState(DEFAULT_SUPPORT_LINKS.telegram_link);
   const [whatsappLink, setWhatsappLink] = useState(DEFAULT_SUPPORT_LINKS.whatsapp_link);
   const [researchDisclaimer, setResearchDisclaimer] = useState(DEFAULT_RESEARCH_DISCLAIMER_SETTINGS.message);
 
@@ -40,15 +42,13 @@ export default function Catalog() {
     Promise.all([
       loadProductsFromSupabase(),
       getSiteSetting('discount_settings', DEFAULT_DISCOUNT_SETTINGS),
-      getSiteSetting<{ url: string }>('telegram_link', { url: DEFAULT_SUPPORT_LINKS.telegram_link }),
       getSiteSetting<{ url: string }>('whatsapp_link', { url: DEFAULT_SUPPORT_LINKS.whatsapp_link }),
       getSiteSetting('research_disclaimer_settings', DEFAULT_RESEARCH_DISCLAIMER_SETTINGS),
     ])
-      .then(([data, discount, telegram, whatsapp, researchDisclaimerSettings]) => {
+      .then(([data, discount, whatsapp, researchDisclaimerSettings]) => {
         if (!cancelled) {
           setProducts(data);
           setDiscountSettings(discount);
-          setTelegramLink(telegram?.url || DEFAULT_SUPPORT_LINKS.telegram_link);
           setWhatsappLink(whatsapp?.url || '');
           setResearchDisclaimer(
             researchDisclaimerSettings.message?.trim() || DEFAULT_RESEARCH_DISCLAIMER_SETTINGS.message,
@@ -242,7 +242,7 @@ export default function Catalog() {
         {/* Support chips — forced single row on mobile (no wrap); abbreviated labels below sm */}
         <div className="flex flex-nowrap items-stretch gap-2 sm:gap-3 mb-4 sm:mb-6 w-full">
           <a
-            href={telegramLink}
+            href={CATALOG_TELEGRAM_COMMUNITY}
             target="_blank"
             rel="noopener noreferrer"
             className="flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg bg-[#011d2e] border border-[rgba(0,136,204,0.3)] px-2 py-2 sm:px-3 hover:bg-[#022940] hover:border-[rgba(0,136,204,0.5)] transition-all"
@@ -250,7 +250,7 @@ export default function Catalog() {
             <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-[#0088CC]" />
             <span className="text-[11px] sm:text-xs font-medium text-[#F4F6FA]">
               <span className="sm:hidden">Telegram</span>
-              <span className="hidden sm:inline">Telegram Support</span>
+              <span className="hidden sm:inline">Telegram Community</span>
             </span>
           </a>
 
