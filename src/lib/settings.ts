@@ -5,7 +5,10 @@ export interface BankDetails {
   account_name: string;
   bsb: string;
   account_number: string;
+  /** ABN PayID */
   payid: string;
+  /** Mobile / phone PayID */
+  payid_mobile: string;
   bank_name: string;
 }
 
@@ -57,7 +60,8 @@ export const DEFAULT_BANK_DETAILS: BankDetails = {
   account_name: 'PEPLAB',
   bsb: '062-329',
   account_number: '1063 8508',
-  payid: '0451111104',
+  payid: '58670940431',
+  payid_mobile: '0451111104',
   bank_name: 'Commonwealth Bank of Australia',
 };
 

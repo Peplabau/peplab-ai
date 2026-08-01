@@ -1327,7 +1327,11 @@ function OverviewSection() {
         </h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="p-3 rounded-lg bg-[rgba(7,10,18,0.5)]">
-            <p className="text-[10px] text-[#A9B3C7] uppercase">PAYID</p>
+            <p className="text-[10px] text-[#A9B3C7] uppercase">Mobile PAYID</p>
+            <p className="text-sm font-mono text-[#F4F6FA]">{CONFIG.BANK_DETAILS.PAYID_MOBILE}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-[rgba(7,10,18,0.5)]">
+            <p className="text-[10px] text-[#A9B3C7] uppercase">ABN PAYID</p>
             <p className="text-sm font-mono text-[#F4F6FA]">{CONFIG.BANK_DETAILS.PAYID}</p>
           </div>
           <div className="p-3 rounded-lg bg-[rgba(7,10,18,0.5)]">
@@ -6214,7 +6218,16 @@ function SettingsSection() {
         </h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] text-[#A9B3C7] uppercase">PAYID</label>
+            <label className="text-[10px] text-[#A9B3C7] uppercase">Mobile PAYID</label>
+            <input
+              type="text"
+              value={bankDetails.payid_mobile}
+              onChange={(e) => setBankDetails({ ...bankDetails, payid_mobile: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] text-[#A9B3C7] uppercase">ABN PAYID</label>
             <input
               type="text"
               value={bankDetails.payid}

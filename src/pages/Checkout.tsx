@@ -571,18 +571,36 @@ export default function Checkout() {
             )}
 
             <div className="space-y-2">
-              {/* PAYID */}
+              {/* Mobile PAYID */}
               <div className="p-3 rounded-lg bg-[#8B5CF6]/15 border border-[#8B5CF6]/30">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-xs text-[#8B5CF6] font-bold">PAYID (Easiest)</p>
+                    <p className="text-xs text-[#8B5CF6] font-bold">MOBILE PAYID</p>
+                    <p className="text-sm font-mono text-white">{bankDetails.payid_mobile}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void copyToClipboard(bankDetails.payid_mobile, 'payid_mobile')}
+                    className="p-2 rounded bg-[#8B5CF6]/20"
+                    aria-label="Copy mobile PAYID"
+                  >
+                    {copiedField === 'payid_mobile' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-[#8B5CF6]" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* ABN PAYID */}
+              <div className="p-3 rounded-lg bg-[#8B5CF6]/15 border border-[#8B5CF6]/30">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-xs text-[#8B5CF6] font-bold">ABN PAYID</p>
                     <p className="text-sm font-mono text-white">{bankDetails.payid}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void copyToClipboard(bankDetails.payid, 'payid')}
                     className="p-2 rounded bg-[#8B5CF6]/20"
-                    aria-label="Copy PAYID"
+                    aria-label="Copy ABN PAYID"
                   >
                     {copiedField === 'payid' ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-[#8B5CF6]" />}
                   </button>
