@@ -249,7 +249,7 @@ export default function Catalog() {
           >
             <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-[#0088CC]" />
             <span className="text-[11px] sm:text-xs font-medium text-[#F4F6FA]">
-              <span className="sm:hidden">Telegram</span>
+              <span className="sm:hidden">Telegram Community</span>
               <span className="hidden sm:inline">Telegram Community</span>
             </span>
           </a>
