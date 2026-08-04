@@ -1806,30 +1806,44 @@ function OrdersSection() {
       const { error } = await supabase.from('orders').update(updates).eq('id', orderId);
       if (error) throw error;
 
+      let reviewEmailSent = false;
       if (
         newStatus === 'delivered' &&
         orderBeforeUpdate?.customer_email &&
         !orderBeforeUpdate.review_request_email_sent
       ) {
+        // Same send path as the per-order "Send review" button (From: contact@peplab.ai).
         const reviewResult = await sendOrderDeliveredReviewEmail(orderBeforeUpdate.customer_email, {
           order_number: orderBeforeUpdate.order_number,
           customer_first_name: orderBeforeUpdate.customer_first_name,
         });
         if (reviewResult.success) {
+          reviewEmailSent = true;
           await supabase
             .from('orders')
             .update({ review_request_email_sent: true })
             .eq('id', orderId);
+          alert(
+            `Order marked delivered.\n\nTrustpilot review email sent to ${orderBeforeUpdate.customer_email}\nFrom: contact@peplab.ai`,
+          );
         } else {
           console.error('Review email failed:', reviewResult.error);
           alert(
-            `Order marked delivered, but Trustpilot review email failed:\n\n${reviewResult.error || 'Unknown error'}\n\nCheck Resend (contact@peplab.ai) and try “Send review emails”.`,
+            `Order marked delivered, but Trustpilot review email failed:\n\n${reviewResult.error || 'Unknown error'}\n\nOpen this order and click “Send review (this order only)” to retry.`,
           );
         }
       }
-      
+
       await loadOrders(true);
-      setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, status: newStatus } : prev));
+      setSelectedOrder((prev) =>
+        prev && prev.id === orderId
+          ? {
+              ...prev,
+              status: newStatus,
+              ...(reviewEmailSent ? { review_request_email_sent: true } : {}),
+            }
+          : prev,
+      );
     } catch (error) {
       console.error('Error updating order:', error);
       alert('Failed to update order status: ' + adminRequestErrorMessage(error));
