@@ -62,8 +62,26 @@ interface EmailData {
   allowQueueFallback?: boolean;
 }
 
+type SendResult = { success: boolean; error?: string; id?: string };
+
+/** Pull error detail from Supabase FunctionsHttpError response body when present. */
+async function edgeInvokeErrorMessage(error: { message?: string; context?: Response }): Promise<string> {
+  const fallback = error.message || 'Edge function failed';
+  try {
+    const ctx = error.context;
+    if (ctx && typeof ctx.json === 'function') {
+      const body = (await ctx.clone().json()) as { error?: unknown; message?: unknown };
+      if (body?.error != null) return String(body.error);
+      if (body?.message != null) return String(body.message);
+    }
+  } catch {
+    /* keep fallback */
+  }
+  return fallback;
+}
+
 /** Resend cannot be called from the browser (CORS). Production uses Supabase Edge Function `send-email`. */
-async function sendViaEdgeFunction(data: EmailData): Promise<{ success: boolean; error?: string }> {
+async function sendViaEdgeFunction(data: EmailData): Promise<SendResult> {
   const { data: res, error } = await supabase.functions.invoke('send-email', {
     body: {
       to: data.to,
@@ -75,16 +93,28 @@ async function sendViaEdgeFunction(data: EmailData): Promise<{ success: boolean;
     },
   });
   if (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: await edgeInvokeErrorMessage(error) };
   }
   if (res && typeof res === 'object' && 'error' in res && (res as { error: unknown }).error) {
     return { success: false, error: String((res as { error: unknown }).error) };
   }
-  return { success: true };
+  // Resend success body is `{ id: "..." }`. Require it so queued/empty responses are not false positives.
+  const id =
+    res && typeof res === 'object' && 'id' in res && (res as { id: unknown }).id != null
+      ? String((res as { id: unknown }).id)
+      : '';
+  if (!id) {
+    return {
+      success: false,
+      error:
+        'Resend did not return a message id. The email was not confirmed as sent. Check Supabase function logs / Resend.',
+    };
+  }
+  return { success: true, id };
 }
 
 /** Dev-only: Vite proxies /api/resend/emails → api.resend.com with server-side Authorization. */
-async function sendViaDevProxy(data: EmailData, fromEmail: string): Promise<{ success: boolean; error?: string }> {
+async function sendViaDevProxy(data: EmailData, fromEmail: string): Promise<SendResult> {
   const response = await fetch('/api/resend/emails', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -108,10 +138,18 @@ async function sendViaDevProxy(data: EmailData, fromEmail: string): Promise<{ su
     }
     return { success: false, error: message };
   }
-  return { success: true };
+  try {
+    const body = (await response.json()) as { id?: string };
+    if (!body?.id) {
+      return { success: false, error: 'Resend did not return a message id via dev proxy.' };
+    }
+    return { success: true, id: body.id };
+  } catch {
+    return { success: false, error: 'Invalid Resend response via dev proxy.' };
+  }
 }
 
-async function queuePendingEmail(data: EmailData): Promise<{ success: boolean; error?: string }> {
+async function queuePendingEmail(data: EmailData): Promise<SendResult> {
   const { error: insertError } = await supabase.from('pending_emails').insert({
     to_email: data.to,
     subject: data.subject,
@@ -123,12 +161,13 @@ async function queuePendingEmail(data: EmailData): Promise<{ success: boolean; e
     console.error('[email] pending_emails insert failed:', insertError.message);
     return { success: false, error: insertError.message };
   }
+  // Queued locally — NOT delivered by Resend. Callers that need real delivery must disallow this path.
   return { success: true };
 }
 
 // Send email: Supabase Edge Function first (works from localhost + production — no browser→Resend CORS).
 // Fallback in dev only: Vite proxy + VITE_RESEND_API_KEY if the function is not deployed yet.
-export const sendEmail = async (data: EmailData): Promise<{ success: boolean; error?: string }> => {
+export const sendEmail = async (data: EmailData): Promise<SendResult> => {
   const apiKey = (CONFIG.RESEND_API_KEY || '').trim();
   const defaultFrom = (CONFIG.FROM_EMAIL || '').trim();
   const fromEmail = (data.from || defaultFrom).trim();
@@ -405,7 +444,7 @@ export const sendOrderShipped = async (
 export const sendOrderDeliveredReviewEmail = async (
   to: string,
   orderData: { order_number: string; customer_first_name?: string | null },
-): Promise<{ success: boolean; error?: string }> => {
+): Promise<{ success: boolean; error?: string; id?: string }> => {
   const displayOrderNo = formatOrderNumberDisplay(orderData.order_number);
   const supportLinks = await getEmailSupportLinks();
   const firstName = (orderData.customer_first_name || '').trim();

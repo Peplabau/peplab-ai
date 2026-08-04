@@ -1817,14 +1817,14 @@ function OrdersSection() {
           order_number: orderBeforeUpdate.order_number,
           customer_first_name: orderBeforeUpdate.customer_first_name,
         });
-        if (reviewResult.success) {
+        if (reviewResult.success && reviewResult.id) {
           reviewEmailSent = true;
           await supabase
             .from('orders')
             .update({ review_request_email_sent: true })
             .eq('id', orderId);
           alert(
-            `Order marked delivered.\n\nTrustpilot review email sent to ${orderBeforeUpdate.customer_email}\nFrom: contact@peplab.ai`,
+            `Order marked delivered.\n\nTrustpilot review accepted by Resend.\nTo: ${orderBeforeUpdate.customer_email}\nFrom: contact@peplab.ai\nResend ID: ${reviewResult.id}\n\nIf it is not in the inbox, check Spam/Promotions and Resend → Emails for that ID.`,
           );
         } else {
           console.error('Review email failed:', reviewResult.error);
@@ -1880,7 +1880,7 @@ function OrdersSection() {
         order_number: order.order_number,
         customer_first_name: order.customer_first_name,
       });
-      if (reviewResult.success) {
+      if (reviewResult.success && reviewResult.id) {
         await supabase
           .from('orders')
           .update({ review_request_email_sent: true })
@@ -1889,7 +1889,9 @@ function OrdersSection() {
         setSelectedOrder((prev) =>
           prev && prev.id === order.id ? { ...prev, review_request_email_sent: true } : prev,
         );
-        alert(`Review email sent to ${email}.\n\nCheck inbox (and spam) — From should be contact@peplab.ai`);
+        alert(
+          `Review email accepted by Resend.\nTo: ${email}\nFrom: contact@peplab.ai\nResend ID: ${reviewResult.id}\n\nOpen Resend → Emails and search that ID.\nIf status is Delivered but missing in Gmail, check Spam/Promotions.`,
+        );
       } else {
         console.error('Review email failed:', reviewResult.error);
         alert(
@@ -1961,7 +1963,7 @@ function OrdersSection() {
           order_number: order.order_number,
           customer_first_name: order.customer_first_name,
         });
-        if (reviewResult.success) {
+        if (reviewResult.success && reviewResult.id) {
           await supabase
             .from('orders')
             .update({ review_request_email_sent: true })
