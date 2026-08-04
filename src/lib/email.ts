@@ -55,6 +55,11 @@ interface EmailData {
   attachments?: EmailAttachmentInput[];
   /** Optional Resend From override (e.g. review emails → contact@). Must be allowlisted server-side. */
   from?: string;
+  /**
+   * When false, do not treat `pending_emails` insert as success after Resend/edge failure.
+   * Review emails use this so a failed send is visible and can be retried.
+   */
+  allowQueueFallback?: boolean;
 }
 
 /** Resend cannot be called from the browser (CORS). Production uses Supabase Edge Function `send-email`. */
@@ -127,6 +132,7 @@ export const sendEmail = async (data: EmailData): Promise<{ success: boolean; er
   const apiKey = (CONFIG.RESEND_API_KEY || '').trim();
   const defaultFrom = (CONFIG.FROM_EMAIL || '').trim();
   const fromEmail = (data.from || defaultFrom).trim();
+  const allowQueueFallback = data.allowQueueFallback !== false;
 
   try {
     const edge = await sendViaEdgeFunction(data);
@@ -137,6 +143,13 @@ export const sendEmail = async (data: EmailData): Promise<{ success: boolean; er
       const proxied = await sendViaDevProxy(data, fromEmail);
       if (proxied.success) return proxied;
       console.warn('[email] Dev proxy failed:', proxied.error);
+      if (!allowQueueFallback) {
+        return { success: false, error: proxied.error || edge.error || 'Email send failed' };
+      }
+    }
+
+    if (!allowQueueFallback) {
+      return { success: false, error: edge.error || 'Email send failed' };
     }
 
     return await queuePendingEmail(data);
@@ -392,7 +405,7 @@ export const sendOrderShipped = async (
 export const sendOrderDeliveredReviewEmail = async (
   to: string,
   orderData: { order_number: string; customer_first_name?: string | null },
-): Promise<boolean> => {
+): Promise<{ success: boolean; error?: string }> => {
   const displayOrderNo = formatOrderNumberDisplay(orderData.order_number);
   const supportLinks = await getEmailSupportLinks();
   const firstName = (orderData.customer_first_name || '').trim();
@@ -421,13 +434,13 @@ export const sendOrderDeliveredReviewEmail = async (
     .replace(/{trustpilot_url}/g, escapeHtml(reviewUrl));
 
   const subject = `We'd love your feedback — PEPLAB order ${displayOrderNo}`;
-  const result = await sendEmail({
+  return sendEmail({
     to,
     subject,
     html,
     from: (CONFIG.REVIEW_FROM_EMAIL || 'PEPLAB <contact@peplab.ai>').trim(),
+    allowQueueFallback: false,
   });
-  return result.success;
 };
 
 /** Email for replacement / follow-up shipments (always sends; does not touch shipped_email_sent). */

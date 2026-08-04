@@ -1811,15 +1811,20 @@ function OrdersSection() {
         orderBeforeUpdate?.customer_email &&
         !orderBeforeUpdate.review_request_email_sent
       ) {
-        const sent = await sendOrderDeliveredReviewEmail(orderBeforeUpdate.customer_email, {
+        const reviewResult = await sendOrderDeliveredReviewEmail(orderBeforeUpdate.customer_email, {
           order_number: orderBeforeUpdate.order_number,
           customer_first_name: orderBeforeUpdate.customer_first_name,
         });
-        if (sent) {
+        if (reviewResult.success) {
           await supabase
             .from('orders')
             .update({ review_request_email_sent: true })
             .eq('id', orderId);
+        } else {
+          console.error('Review email failed:', reviewResult.error);
+          alert(
+            `Order marked delivered, but Trustpilot review email failed:\n\n${reviewResult.error || 'Unknown error'}\n\nCheck Resend (contact@peplab.ai) and try “Send review emails”.`,
+          );
         }
       }
       
@@ -1890,11 +1895,11 @@ function OrdersSection() {
 
     for (const order of targets) {
       try {
-        const ok = await sendOrderDeliveredReviewEmail(order.customer_email, {
+        const reviewResult = await sendOrderDeliveredReviewEmail(order.customer_email, {
           order_number: order.order_number,
           customer_first_name: order.customer_first_name,
         });
-        if (ok) {
+        if (reviewResult.success) {
           await supabase
             .from('orders')
             .update({ review_request_email_sent: true })
@@ -1902,6 +1907,7 @@ function OrdersSection() {
             .eq('customer_email', order.customer_email.trim());
           sent++;
         } else {
+          console.error('Bulk review email failed for order', order.order_number, reviewResult.error);
           failed++;
         }
       } catch (err) {
