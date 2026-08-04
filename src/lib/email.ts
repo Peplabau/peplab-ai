@@ -53,6 +53,8 @@ interface EmailData {
   html: string;
   text?: string;
   attachments?: EmailAttachmentInput[];
+  /** Optional Resend From override (e.g. review emails → contact@). Must be allowlisted server-side. */
+  from?: string;
 }
 
 /** Resend cannot be called from the browser (CORS). Production uses Supabase Edge Function `send-email`. */
@@ -63,6 +65,7 @@ async function sendViaEdgeFunction(data: EmailData): Promise<{ success: boolean;
       subject: data.subject,
       html: data.html,
       text: data.text,
+      ...(data.from ? { from: data.from } : {}),
       ...(data.attachments?.length ? { attachments: data.attachments } : {}),
     },
   });
@@ -122,7 +125,8 @@ async function queuePendingEmail(data: EmailData): Promise<{ success: boolean; e
 // Fallback in dev only: Vite proxy + VITE_RESEND_API_KEY if the function is not deployed yet.
 export const sendEmail = async (data: EmailData): Promise<{ success: boolean; error?: string }> => {
   const apiKey = (CONFIG.RESEND_API_KEY || '').trim();
-  const fromEmail = (CONFIG.FROM_EMAIL || '').trim();
+  const defaultFrom = (CONFIG.FROM_EMAIL || '').trim();
+  const fromEmail = (data.from || defaultFrom).trim();
 
   try {
     const edge = await sendViaEdgeFunction(data);
@@ -417,7 +421,12 @@ export const sendOrderDeliveredReviewEmail = async (
     .replace(/{trustpilot_url}/g, escapeHtml(reviewUrl));
 
   const subject = `We'd love your feedback — PEPLAB order ${displayOrderNo}`;
-  const result = await sendEmail({ to, subject, html });
+  const result = await sendEmail({
+    to,
+    subject,
+    html,
+    from: (CONFIG.REVIEW_FROM_EMAIL || 'PEPLAB <contact@peplab.ai>').trim(),
+  });
   return result.success;
 };
 

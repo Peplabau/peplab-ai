@@ -4,13 +4,17 @@
  * Dashboard: Edge Functions → Create → name: send-email → paste this file.
  * Secrets (Edge Functions → send-email → Secrets, or Project Settings → Edge Functions):
  *   RESEND_API_KEY       = re_...
- *   RESEND_FROM_EMAIL    = noreply@peplab.ai
+ *   RESEND_FROM_EMAIL    = noreply@peplab.ai   (default for all mail)
  *   RESEND_FROM_NAME     = PEPLAB   (optional — defaults to PEPLAB)
+ *   RESEND_REVIEW_FROM_EMAIL = contact@peplab.ai  (optional; Trustpilot review mail only)
  *
  * After changing the from address you must:
  *   1. Verify peplab.ai as a sending domain in Resend (SPF/DKIM DNS records).
  *   2. Update the RESEND_FROM_EMAIL secret above in Supabase — the code cannot
  *      change production secrets; that step is manual in the dashboard.
+ *
+ * Optional body.from may override the default From for review emails only.
+ * Overrides are allowlisted to RESEND_REVIEW_FROM_EMAIL / contact@peplab.ai.
  *
  * Settings: allow unauthenticated invoke if you use guest checkout
  *   (CLI: supabase/config.toml verify_jwt = false for this function)
@@ -21,13 +25,49 @@ const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+/** Extract bare email from `Name <addr>` or plain addr. */
+function extractEmailAddress(from: string): string {
+  const angled = from.match(/<([^>]+)>/);
+  return (angled?.[1] || from).trim().toLowerCase();
+}
+
 /** Build a Resend-compatible From header, e.g. `PEPLAB <noreply@peplab.ai>`. */
-function resolveFromAddress(): string | null {
+function formatFromAddress(email: string, nameFallback = "PEPLAB"): string {
+  if (email.includes("<") && email.includes(">")) return email;
+  const name = Deno.env.get("RESEND_FROM_NAME")?.trim() || nameFallback;
+  return `${name} <${email}>`;
+}
+
+function resolveDefaultFromAddress(): string | null {
   const email = Deno.env.get("RESEND_FROM_EMAIL")?.trim();
   if (!email) return null;
-  if (email.includes("<") && email.includes(">")) return email;
-  const name = Deno.env.get("RESEND_FROM_NAME")?.trim() || "PEPLAB";
-  return `${name} <${email}>`;
+  return formatFromAddress(email);
+}
+
+/**
+ * Optional client From override — only contact@ (review mail) is allowed.
+ * Falls back to default noreply if override missing/invalid.
+ */
+function resolveFromAddress(requestedFrom?: string | null): string | null {
+  const defaultFrom = resolveDefaultFromAddress();
+  if (!defaultFrom) return null;
+
+  const requested = requestedFrom?.trim();
+  if (!requested) return defaultFrom;
+
+  const allowedReview =
+    Deno.env.get("RESEND_REVIEW_FROM_EMAIL")?.trim() || "contact@peplab.ai";
+  const allowedAddrs = new Set([
+    extractEmailAddress(allowedReview),
+    extractEmailAddress(defaultFrom),
+  ]);
+
+  if (!allowedAddrs.has(extractEmailAddress(requested))) {
+    console.warn("[send-email] Ignoring disallowed from override:", requested);
+    return defaultFrom;
+  }
+
+  return formatFromAddress(requested);
 }
 
 Deno.serve(async (req: Request) => {
@@ -44,12 +84,11 @@ Deno.serve(async (req: Request) => {
 
   try {
     const key = Deno.env.get("RESEND_API_KEY");
-    const from = resolveFromAddress();
-    if (!key || !from) {
+    if (!key) {
       return new Response(
         JSON.stringify({
           error:
-            "Missing RESEND_API_KEY or RESEND_FROM_EMAIL on the function. Add them under Edge Function secrets.",
+            "Missing RESEND_API_KEY on the function. Add it under Edge Function secrets.",
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
@@ -68,8 +107,20 @@ Deno.serve(async (req: Request) => {
       subject?: string;
       html?: string;
       text?: string;
+      from?: string;
       attachments?: AttachmentIn[];
     };
+
+    const from = resolveFromAddress(body.from);
+    if (!from) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Missing RESEND_FROM_EMAIL on the function. Add it under Edge Function secrets.",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     if (!body.to || !body.subject || !body.html) {
       return new Response(JSON.stringify({ error: "to, subject, and html are required" }), {

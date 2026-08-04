@@ -20,6 +20,13 @@ export const CONFIG = {
   // FROM_EMAIL is used server-side only (Supabase Edge Function → Resend "From:" header)
   // and by the dev-only Vite proxy path. Keep it out of the client UI.
   FROM_EMAIL: import.meta.env.VITE_FROM_EMAIL || '',
+  /**
+   * From address for Trustpilot review-request emails only.
+   * All other transactional mail still uses RESEND_FROM_EMAIL / FROM_EMAIL (noreply).
+   * Override locally with VITE_REVIEW_FROM_EMAIL if needed for the Vite proxy path.
+   */
+  REVIEW_FROM_EMAIL:
+    import.meta.env.VITE_REVIEW_FROM_EMAIL || 'PEPLAB <contact@peplab.ai>',
   // Public support inbox (shown on contact pages + transactional email footers).
   SUPPORT_EMAIL: 'peplab@proton.me',
   CONTACT_EMAIL: 'peplab@proton.me',
