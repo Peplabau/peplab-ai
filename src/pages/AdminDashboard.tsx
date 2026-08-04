@@ -1842,7 +1842,7 @@ function OrdersSection() {
     await updateOrderStatus(orderId, 'finalised');
   };
 
-  /** Manual retry for Trustpilot review email (delivered orders). Surfaces Resend/edge errors. */
+  /** Manual single-order Trustpilot review email (never bulk). Surfaces Resend/edge errors. */
   const sendReviewEmailForOrder = async (order: Order) => {
     const email = order.customer_email?.trim();
     if (!email) {
@@ -1853,6 +1853,12 @@ function OrdersSection() {
       alert('Review emails are only sent for delivered orders.');
       return;
     }
+
+    const displayNo = formatOrderNumberDisplay(order.order_number);
+    const confirmed = window.confirm(
+      `Send Trustpilot review email for THIS order only?\n\nOrder: #${displayNo}\nTo: ${email}\nFrom: contact@peplab.ai\n\nThis does NOT send the bulk backlog (hundreds of customers).`,
+    );
+    if (!confirmed) return;
 
     setIsUpdating(true);
     try {
@@ -2421,7 +2427,7 @@ function OrdersSection() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 mt-1 border-t border-[rgba(244,246,250,0.08)]">
             <p className="text-xs text-[#A9B3C7] leading-relaxed max-w-xl">
               Trustpilot review emails go to <strong className="text-[#F4F6FA]">Delivered</strong> orders only.
-              Shipped orders receive the email when you mark them delivered — not before.
+              To test one customer, open that order and use <strong className="text-[#F4F6FA]">Send review (this order only)</strong> — do not use bulk for testing.
             </p>
             <button
               type="button"
@@ -2432,7 +2438,7 @@ function OrdersSection() {
               <Mail className="w-4 h-4" />
               {isBulkSendingReviewEmails
                 ? 'Sending review emails…'
-                : `Send review emails (${deliveredReviewBacklogCount})`}
+                : `Bulk send all pending (${deliveredReviewBacklogCount})`}
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2 pt-3 mt-1 border-t border-[rgba(244,246,250,0.08)]">
@@ -3143,14 +3149,20 @@ function OrdersSection() {
                   type="button"
                   onClick={() => void sendReviewEmailForOrder(selectedOrder)}
                   disabled={isUpdating}
-                  className="flex-1 px-4 py-3 rounded-xl bg-[#8B5CF6] text-white hover:bg-[#7C3AED] disabled:opacity-50 flex items-center justify-center gap-2"
+                  title={`Send review email only to ${selectedOrder.customer_email}`}
+                  className="flex-1 px-4 py-3 rounded-xl bg-[#8B5CF6] text-white hover:bg-[#7C3AED] disabled:opacity-50 flex flex-col items-center justify-center gap-0.5"
                 >
-                  <Mail className="w-5 h-5" />
-                  {isUpdating
-                    ? 'Sending…'
-                    : selectedOrder.review_request_email_sent
-                      ? 'Resend review email'
-                      : 'Send review email'}
+                  <span className="inline-flex items-center gap-2">
+                    <Mail className="w-5 h-5" />
+                    {isUpdating
+                      ? 'Sending…'
+                      : selectedOrder.review_request_email_sent
+                        ? 'Resend review (this order only)'
+                        : 'Send review (this order only)'}
+                  </span>
+                  <span className="text-[10px] font-normal text-white/80 truncate max-w-full px-1">
+                    {selectedOrder.customer_email}
+                  </span>
                 </button>
               )}
               {(selectedOrder.status === 'pending_payment' || selectedOrder.status === 'processing') && (
