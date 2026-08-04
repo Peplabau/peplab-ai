@@ -1842,6 +1842,48 @@ function OrdersSection() {
     await updateOrderStatus(orderId, 'finalised');
   };
 
+  /** Manual retry for Trustpilot review email (delivered orders). Surfaces Resend/edge errors. */
+  const sendReviewEmailForOrder = async (order: Order) => {
+    const email = order.customer_email?.trim();
+    if (!email) {
+      alert('This order has no customer email.');
+      return;
+    }
+    if (order.status !== 'delivered') {
+      alert('Review emails are only sent for delivered orders.');
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const reviewResult = await sendOrderDeliveredReviewEmail(email, {
+        order_number: order.order_number,
+        customer_first_name: order.customer_first_name,
+      });
+      if (reviewResult.success) {
+        await supabase
+          .from('orders')
+          .update({ review_request_email_sent: true })
+          .eq('id', order.id);
+        await loadOrders(true);
+        setSelectedOrder((prev) =>
+          prev && prev.id === order.id ? { ...prev, review_request_email_sent: true } : prev,
+        );
+        alert(`Review email sent to ${email}.\n\nCheck inbox (and spam) — From should be contact@peplab.ai`);
+      } else {
+        console.error('Review email failed:', reviewResult.error);
+        alert(
+          `Review email failed:\n\n${reviewResult.error || 'Unknown error'}\n\n1) Deploy edge function: supabase functions deploy send-email\n2) Confirm peplab.ai is verified in Resend\n3) Check browser Network tab → send-email`,
+        );
+      }
+    } catch (err) {
+      console.error('Review email error:', err);
+      alert('Review email failed: ' + adminRequestErrorMessage(err));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const canFinalisePreorder = (order: Order) =>
     orderIsPreorderRow(order) &&
     order.status !== 'finalised' &&
@@ -3094,6 +3136,21 @@ function OrdersSection() {
                 >
                   <CheckCircle className="w-5 h-5" />
                   Mark as Delivered
+                </button>
+              )}
+              {selectedOrder.status === 'delivered' && selectedOrder.customer_email?.trim() && (
+                <button
+                  type="button"
+                  onClick={() => void sendReviewEmailForOrder(selectedOrder)}
+                  disabled={isUpdating}
+                  className="flex-1 px-4 py-3 rounded-xl bg-[#8B5CF6] text-white hover:bg-[#7C3AED] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Mail className="w-5 h-5" />
+                  {isUpdating
+                    ? 'Sending…'
+                    : selectedOrder.review_request_email_sent
+                      ? 'Resend review email'
+                      : 'Send review email'}
                 </button>
               )}
               {(selectedOrder.status === 'pending_payment' || selectedOrder.status === 'processing') && (
