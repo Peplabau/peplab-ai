@@ -55,11 +55,6 @@ interface EmailData {
   attachments?: EmailAttachmentInput[];
   /** Optional Resend From override (e.g. review emails → contact@). Must be allowlisted server-side. */
   from?: string;
-  /**
-   * When false, do not treat `pending_emails` insert as success after Resend/edge failure.
-   * Review emails use this so a failed send is visible and can be retried.
-   */
-  allowQueueFallback?: boolean;
 }
 
 type SendResult = { success: boolean; error?: string; id?: string };
@@ -149,29 +144,13 @@ async function sendViaDevProxy(data: EmailData, fromEmail: string): Promise<Send
   }
 }
 
-async function queuePendingEmail(data: EmailData): Promise<SendResult> {
-  const { error: insertError } = await supabase.from('pending_emails').insert({
-    to_email: data.to,
-    subject: data.subject,
-    html_content: data.html,
-    text_content: data.text,
-    status: 'pending',
-  });
-  if (insertError) {
-    console.error('[email] pending_emails insert failed:', insertError.message);
-    return { success: false, error: insertError.message };
-  }
-  // Queued locally — NOT delivered by Resend. Callers that need real delivery must disallow this path.
-  return { success: true };
-}
-
 // Send email: Supabase Edge Function first (works from localhost + production — no browser→Resend CORS).
 // Fallback in dev only: Vite proxy + VITE_RESEND_API_KEY if the function is not deployed yet.
+// No pending_emails queue — that table is unused and produced false checkout errors.
 export const sendEmail = async (data: EmailData): Promise<SendResult> => {
   const apiKey = (CONFIG.RESEND_API_KEY || '').trim();
   const defaultFrom = (CONFIG.FROM_EMAIL || '').trim();
   const fromEmail = (data.from || defaultFrom).trim();
-  const allowQueueFallback = data.allowQueueFallback !== false;
 
   try {
     const edge = await sendViaEdgeFunction(data);
@@ -182,16 +161,10 @@ export const sendEmail = async (data: EmailData): Promise<SendResult> => {
       const proxied = await sendViaDevProxy(data, fromEmail);
       if (proxied.success) return proxied;
       console.warn('[email] Dev proxy failed:', proxied.error);
-      if (!allowQueueFallback) {
-        return { success: false, error: proxied.error || edge.error || 'Email send failed' };
-      }
+      return { success: false, error: proxied.error || edge.error || 'Email send failed' };
     }
 
-    if (!allowQueueFallback) {
-      return { success: false, error: edge.error || 'Email send failed' };
-    }
-
-    return await queuePendingEmail(data);
+    return { success: false, error: edge.error || 'Email send failed' };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error('[email] Send failed:', msg);
@@ -477,8 +450,7 @@ export const sendOrderDeliveredReviewEmail = async (
     to,
     subject,
     html,
-    from: 'PEPLAB <contact@peplab.com.au>',
-    allowQueueFallback: false,
+    from:'PEPLAB <contact@peplab.com.au>',
   });
 };
 
