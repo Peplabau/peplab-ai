@@ -477,7 +477,7 @@ export const sendOrderDeliveredReviewEmail = async (
     to,
     subject,
     html,
-    from: (CONFIG.REVIEW_FROM_EMAIL || 'PEPLAB <contact@peplab.ai>').trim(),
+    from: (CONFIG.REVIEW_FROM_EMAIL || 'PEPLAB <contact@peplab.com.au>').trim(),
     allowQueueFallback: false,
   });
 };
