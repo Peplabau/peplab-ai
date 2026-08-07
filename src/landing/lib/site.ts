@@ -2,10 +2,10 @@ const trim = (url: string) => url.replace(/\/$/, '');
 
 function runtimeOrigin(): string {
   if (typeof window !== 'undefined') return window.location.origin;
-  return trim(import.meta.env.VITE_MAIN_SITE_URL || 'https://peplab.com.au');
+  return trim(import.meta.env.VITE_MAIN_SITE_URL || 'https://peplab.ai');
 }
 
-/** Main storefront — peplab.com.au (shop at /). */
+/** Main storefront — peplab.ai (shop at /). */
 export const MAIN_SITE_URL = trim(import.meta.env.VITE_MAIN_SITE_URL || runtimeOrigin());
 
 /** Alias: shop lives at the main site root. */

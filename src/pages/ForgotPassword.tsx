@@ -16,8 +16,8 @@ export default function ForgotPassword() {
     setError(null);
 
     try {
-      // Always send the reset link to the main storefront origin
-      // (VITE_MAIN_APP_ORIGIN / peplab.com.au) so they land in the shop app
+      // Always send the reset link to the open storefront
+      // (VITE_MAIN_APP_ORIGIN / peplab.ai) so they land in the shop app
       // already able to set a new password.
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: mainAppUrl('/reset-password'),

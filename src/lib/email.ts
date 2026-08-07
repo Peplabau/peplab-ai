@@ -19,9 +19,9 @@ import {
 
 const T = EMAIL_THEME;
 
-/** Shop origin for clickable email links — prefer canonical SITE_URL. */
+/** Shop origin for clickable email links — open storefront (peplab.ai). */
 function shopOrigin(): string {
-  return (CONFIG.SITE_URL || MAIN_APP_ORIGIN || 'https://peplab.com.au').replace(/\/$/, '');
+  return (MAIN_APP_ORIGIN || CONFIG.SITE_URL || 'https://peplab.ai').replace(/\/$/, '');
 }
 
 async function getEmailSupportLinks(): Promise<EmailSupportLinks> {

@@ -240,21 +240,23 @@ export default function Login() {
       {/* Navigation */}
       <nav className="relative z-50 px-6 lg:px-12 py-4">
         <div className="flex items-center justify-between">
-          <a href={isLoginOnlyDomain() ? mainAppUrl('/') : '/'} className="flex flex-col items-start">
+          <div className="flex flex-col items-start">
             <span className="text-3xl lg:text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
               PEPLAB
             </span>
             <span className="text-xs lg:text-sm font-mono uppercase tracking-[0.5em] text-[#8B5CF6] mt-0.5">
               PEPTIDES AUSTRALIA
             </span>
-          </a>
-          <a
-            href={isLoginOnlyDomain() ? mainAppUrl('/') : '/'}
-            className="flex items-center gap-2 text-sm text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Shop
-          </a>
+          </div>
+          {!isLoginOnlyDomain() ? (
+            <a
+              href="/"
+              className="flex items-center gap-2 text-sm text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Shop
+            </a>
+          ) : null}
         </div>
       </nav>
 

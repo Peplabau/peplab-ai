@@ -15,20 +15,17 @@ import {
   Send,
   UserPlus,
   HelpCircle,
-  CheckCircle2,
   User,
   Ticket,
   ArrowLeft,
   MessageCircle,
-  ShoppingBag,
 } from 'lucide-react';
 import { supabase, signIn, signUp, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
 import { sendSignUpWelcome } from '@/lib/email';
 import { resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
-import { buildCrossDomainLoginUrl, LOGIN_GATEWAY_PAGE_TITLE, mainAppUrl } from '@/lib/domain';
-import { SHOP_PATH } from '@/lib/routes';
+import { buildCrossDomainLoginUrl, LOGIN_GATEWAY_PAGE_TITLE } from '@/lib/domain';
 import { CONFIG } from '@/lib/config';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { validateSignupReferralCode } from '@/lib/signup-referral';
@@ -545,18 +542,6 @@ export default function LoginGateway() {
               )}
             </div>
 
-            <a
-              href={mainAppUrl(SHOP_PATH)}
-              className="mt-5 w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-semibold bg-[#2ED1B4] text-[#070A12] hover:bg-[#26b89e] transition-colors shadow-lg shadow-[rgba(46,209,180,0.15)]"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              Shop now
-              <ArrowRight className="w-4 h-4" />
-            </a>
-            <p className="mt-2 text-center text-xs text-[#6B7280]">
-              New here? Browse the store — no account needed to look around.
-            </p>
-
             {!isSignUp && (
               <div className="mt-5 rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.45)] overflow-hidden">
                 <button
@@ -626,11 +611,6 @@ export default function LoginGateway() {
                         </a>
                       ) : null}
                     </div>
-
-                    <p className="mt-4 flex items-start gap-2 text-xs text-[#6B7280]">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#2ED1B4] shrink-0 mt-0.5" />
-                      After signing in or signing up, you'll be redirected to the shop.
-                    </p>
                   </div>
                 )}
               </div>

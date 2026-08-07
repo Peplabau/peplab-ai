@@ -739,6 +739,7 @@ export const products: Product[] = [
     ],
     bundlePricing: standardBundlePricing,
     reviewCount: 19,
+    hidden: true,
     technicalSpecs: {
       synonyms: 'Long R3-IGF-1',
       casNumber: '143045-27-6',

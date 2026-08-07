@@ -614,7 +614,7 @@ export const products: Product[] = [
       storageConditions: 'Store dry at 2–8 °C. Reconstituted material should be refrigerated and used within 2 weeks',
     },
   },
-  // HGH 191AA
+  // HGH 191AA — hidden from public storefront (unlock via Admin → Active)
   {
     id: 'hgh-191aa',
     name: 'HGH 191AA (Somatropin)',
@@ -631,6 +631,7 @@ export const products: Product[] = [
     ],
     bundlePricing: standardBundlePricing,
     reviewCount: 22,
+    hidden: true,
     technicalSpecs: {
       synonyms: 'Somatropin, rHGH',
       casNumber: '12629-01-5',
@@ -734,6 +735,7 @@ export const products: Product[] = [
     ],
     bundlePricing: standardBundlePricing,
     reviewCount: 19,
+    hidden: true,
     technicalSpecs: {
       synonyms: 'Long R3-IGF-1',
       casNumber: '143045-27-6',

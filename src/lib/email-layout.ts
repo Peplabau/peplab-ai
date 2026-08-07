@@ -88,7 +88,7 @@ export function wrapPeplabEmail(opts: WrapOpts): string {
   const pre = escapeHtml(opts.preheader ?? '').slice(0, 140);
   const headline = escapeHtml(opts.headline);
   const subline = opts.subline ? escapeHtml(opts.subline) : '';
-  const site = escapeHtml((CONFIG.SITE_URL || MAIN_APP_ORIGIN).replace(/\/$/, ''));
+  const site = escapeHtml((MAIN_APP_ORIGIN || CONFIG.SITE_URL).replace(/\/$/, ''));
   const supportContact = emailSupportContactLinks(opts.supportLinks);
   const pageBg = opts.colors?.pageBg ?? C.pageBg;
   const panel = opts.colors?.panel ?? C.panel;

@@ -1,25 +1,24 @@
 /**
  * Dual-domain PEPLAB storefront (same Vercel project, both Production).
  *
- * FULL SEO MODE (default / production):
- *   peplab.com.au  → Full shop, indexable. Google canonical domain
- *                    (VITE_SITE_URL / VITE_MAIN_APP_ORIGIN).
- *   peplab.ai      → Optional alias of the same shop (legacy).
+ * LOCKED .com.au / OPEN .ai (current):
+ *   peplab.com.au  → Login/auth only + noindex (VITE_LOGIN_ONLY_HOSTS).
+ *   peplab.ai      → Full open shop (VITE_SITE_URL / VITE_MAIN_APP_ORIGIN).
+ *                    After sign-in on .com.au, sessions hand off here.
  *
- * Optional login-only shell (auth pages + noindex) only when you explicitly
- * set VITE_LOGIN_ONLY_HOSTS (e.g. staging.peplab.com.au). Leave EMPTY for SEO.
+ * To open the full shop on both domains again, clear VITE_LOGIN_ONLY_HOSTS.
  *
  * Env:
- *   VITE_SITE_URL           = https://peplab.com.au
- *   VITE_MAIN_APP_ORIGIN    = https://peplab.com.au
- *   VITE_LOGIN_ONLY_HOSTS   = (empty in Production)
+ *   VITE_SITE_URL           = https://peplab.ai
+ *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai
+ *   VITE_LOGIN_ONLY_HOSTS   = peplab.com.au,www.peplab.com.au
  */
 
-/** Hosts that only render the login/auth flow. Empty = full shop everywhere (SEO). */
-const DEFAULT_LOGIN_ONLY_HOSTS = '';
+/** Hosts that only render the login/auth flow. Empty = full shop everywhere. */
+const DEFAULT_LOGIN_ONLY_HOSTS = 'peplab.com.au,www.peplab.com.au';
 
-/** Full origin (protocol + host) of the main storefront. */
-const DEFAULT_MAIN_APP_ORIGIN = 'https://peplab.com.au';
+/** Full origin (protocol + host) of the open storefront. */
+const DEFAULT_MAIN_APP_ORIGIN = 'https://peplab.ai';
 
 /** Marker in the URL hash that identifies a cross-domain login handoff. */
 export const CROSS_DOMAIN_LOGIN_HASH_TYPE = 'cross-domain-login';
@@ -43,11 +42,12 @@ function parseHostList(raw: string | undefined): string[] {
 
 /**
  * Only hosts listed in VITE_LOGIN_ONLY_HOSTS are gated.
- * Blank / missing env = no login-only hosts (full SEO storefront on every domain).
+ * - unset → DEFAULT_LOGIN_ONLY_HOSTS
+ * - empty string → unlocked (full shop on every host)
  */
 function resolveLoginOnlyHosts(): string[] {
   const raw = import.meta.env.VITE_LOGIN_ONLY_HOSTS;
-  if (typeof raw === 'string' && raw.trim().length > 0) {
+  if (typeof raw === 'string') {
     return parseHostList(raw);
   }
   return parseHostList(DEFAULT_LOGIN_ONLY_HOSTS);
