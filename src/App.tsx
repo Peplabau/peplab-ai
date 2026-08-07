@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useLayoutEffect } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { LANDING_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, PROTOCOLS_PATH } from '@/lib/routes';
 import { gsap } from 'gsap';
@@ -10,6 +10,7 @@ import { AffiliateProvider } from '@/context/AffiliateContext';
 // `DEFAULT_LANDING_PAGE_SETTINGS` was used by the ShopRoute homepage-gate check
 // (now commented out below). Import kept out of the tree until re-enabled.
 import { getSiteSetting, DEFAULT_AFFILIATE_PROGRAM_SETTINGS } from '@/lib/settings';
+import { supabase } from '@/lib/supabase';
 import Navigation from '@/components/Navigation';
 import CartDrawer from '@/components/CartDrawer';
 import SignupWelcomeModal from '@/components/SignupWelcomeModal';
@@ -359,60 +360,154 @@ function ScrollToTop() {
 /**
  * peplab.com.au (login-gated host):
  * - Public content pages stay open for SEO (privacy, terms, COA, calculator, …)
- * - Shop / products / checkout require sign-in (redirect to LoginGateway)
- * - After auth, session hands off to peplab.ai (open storefront)
+ * - Shop / products / checkout require sign-in; after login, stay on this domain
  */
-function shopLoginRedirect(path: string = SHOP_PATH) {
-  return <Navigate to={`/login?redirect=${encodeURIComponent(path)}`} replace />;
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const [ready, setReady] = useState(false);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const sync = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      setAuthed(Boolean(session?.user));
+      setReady(true);
+    };
+
+    sync();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
+      setAuthed(Boolean(session?.user));
+      setReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  if (!ready) {
+    return (
+      <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!authed) {
+    const redirect = encodeURIComponent(`${location.pathname}${location.search}`);
+    return <Navigate to={`/login?redirect=${redirect}`} replace />;
+  }
+
+  return <>{children}</>;
 }
 
 function LoginOnlyApp() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
-        <Routes>
-          <Route path="/" element={<LoginGateway />} />
-          <Route path="/login" element={<LoginGateway />} />
-          <Route path="/signup" element={<LoginGateway />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+    <CartProvider>
+      <RewardsProvider>
+        <AffiliateProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <PersistReferralRef />
+            <StaleTabReloader />
+            <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
+              <Routes>
+                <Route path="/" element={<LoginGateway />} />
+                <Route path="/login" element={<LoginGateway />} />
+                <Route path="/signup" element={<LoginGateway />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Public — keep indexed / crawlable */}
-          <Route path="/landing" element={<PeplabLandingRoute />} />
-          <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/refund" element={<Refund />} />
-          <Route path="/legal" element={<Legal />} />
-          <Route path="/shipping" element={<Shipping />} />
-          <Route path="/contact-info" element={<ContactInfo />} />
-          <Route path="/standards" element={<Standards />} />
-          <Route path="/rewards-terms" element={<RewardsTerms />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/calculator" element={<Calculator />} />
-          <Route path="/protocols" element={<Protocols />} />
-          <Route path="/peptide-dosage-chart" element={<Navigate to={PROTOCOLS_PATH} replace />} />
-          <Route path="/coa" element={<CoaArchive />} />
-          <Route path="/track-order" element={<TrackOrder />} />
+                {/* Public — keep indexed / crawlable */}
+                <Route path="/landing" element={<PeplabLandingRoute />} />
+                <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/refund" element={<Refund />} />
+                <Route path="/legal" element={<Legal />} />
+                <Route path="/shipping" element={<Shipping />} />
+                <Route path="/contact-info" element={<ContactInfo />} />
+                <Route path="/standards" element={<Standards />} />
+                <Route path="/rewards-terms" element={<RewardsTerms />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/calculator" element={<Calculator />} />
+                <Route path="/protocols" element={<Protocols />} />
+                <Route path="/peptide-dosage-chart" element={<Navigate to={PROTOCOLS_PATH} replace />} />
+                <Route path="/coa" element={<CoaArchive />} />
+                <Route path="/track-order" element={<TrackOrder />} />
 
-          {/* Shop locked — members sign in, then hand off to peplab.ai */}
-          <Route path="/shop" element={shopLoginRedirect(SHOP_PATH)} />
-          <Route path="/product/:slug" element={shopLoginRedirect(SHOP_PATH)} />
-          <Route path="/checkout" element={shopLoginRedirect('/checkout')} />
-          <Route path="/dashboard" element={shopLoginRedirect('/dashboard')} />
-          <Route path="/settings" element={shopLoginRedirect('/settings')} />
-          <Route path="/promoter" element={shopLoginRedirect('/promoter')} />
+                {/* Shop — members only; session stays on peplab.com.au */}
+                <Route
+                  path="/shop"
+                  element={
+                    <RequireAuth>
+                      <ShopRoute />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/product/:slug"
+                  element={
+                    <RequireAuth>
+                      <ProductPage />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/checkout"
+                  element={
+                    <RequireAuth>
+                      <Checkout />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <RequireAuth>
+                      <Dashboard />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <RequireAuth>
+                      <Settings />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/promoter"
+                  element={
+                    <RequireAuth>
+                      <PromoterDashboard />
+                    </RequireAuth>
+                  }
+                />
 
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AffiliateProvider>
+      </RewardsProvider>
+    </CartProvider>
   );
 }
 

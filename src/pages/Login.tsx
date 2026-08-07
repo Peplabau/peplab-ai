@@ -7,7 +7,7 @@ import { checkIsAdmin } from '@/lib/supabase-db';
 import { sendSignUpWelcome } from '@/lib/email';
 import { resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
-import { isLoginOnlyDomain, buildCrossDomainLoginUrl, mainAppUrl } from '@/lib/domain';
+import { isLoginOnlyDomain } from '@/lib/domain';
 
 // Friendly fallback message in case the Supabase project still has
 // "Confirm email" enabled. With email-confirmation OFF (recommended), users
@@ -48,29 +48,6 @@ export default function Login() {
 
   const redirectAfterLogin = useCallback(async () => {
     const destination = await resolvePostLoginPath(searchParams.get('redirect'));
-
-    // On a login-only host we can't leave the user here — hand tokens off
-    // to the main storefront via a URL hash fragment. See `src/lib/domain.ts`.
-    if (isLoginOnlyDomain()) {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.access_token && session?.refresh_token) {
-        window.location.replace(
-          buildCrossDomainLoginUrl({
-            accessToken: session.access_token,
-            refreshToken: session.refresh_token,
-            next: destination,
-          }),
-        );
-        return;
-      }
-      // Fallback: session unexpectedly missing — send them to the main app's
-      // login (they'll have to sign in again there) rather than looping here.
-      window.location.replace(mainAppUrl(`/login?redirect=${encodeURIComponent(destination)}`));
-      return;
-    }
-
     navigate(destination);
   }, [navigate, searchParams]);
 

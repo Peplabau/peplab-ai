@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ArrowLeft, Mail, CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { SEO } from '@/components/SEO';
-import { mainAppUrl } from '@/lib/domain';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -16,11 +15,8 @@ export default function ForgotPassword() {
     setError(null);
 
     try {
-      // Always send the reset link to the open storefront
-      // (VITE_MAIN_APP_ORIGIN / peplab.ai) so they land in the shop app
-      // already able to set a new password.
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: mainAppUrl('/reset-password'),
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {

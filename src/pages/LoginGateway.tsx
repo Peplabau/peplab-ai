@@ -2,10 +2,10 @@
  * LoginGateway — entry pages on the login-only host (peplab.com.au / staging.*).
  *
  * Sign-in for returning members; sign-up with referral verification for new members.
- * After auth, tokens are handed off to the main storefront so the user lands logged in.
+ * After auth, members stay on this domain with full shop access.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Mail,
   Lock,
@@ -29,7 +29,7 @@ import { checkIsAdmin } from '@/lib/supabase-db';
 import { sendSignUpWelcome } from '@/lib/email';
 import { resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
-import { buildCrossDomainLoginUrl, LOGIN_GATEWAY_PAGE_TITLE } from '@/lib/domain';
+import { LOGIN_GATEWAY_PAGE_TITLE } from '@/lib/domain';
 import { CONFIG } from '@/lib/config';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { validateSignupReferralCode } from '@/lib/signup-referral';
@@ -55,10 +55,10 @@ function friendlyAuthErrorMessage(raw: string | undefined | null): string {
 }
 
 export default function LoginGateway() {
-  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isSignUp =
-    location.pathname === '/signup' ||
+    (typeof window !== 'undefined' && window.location.pathname === '/signup') ||
     (() => {
       const mode = searchParams.get('signup') ?? searchParams.get('mode');
       return mode === '1' || mode === 'true' || mode === 'signup';
@@ -112,20 +112,14 @@ export default function LoginGateway() {
       data: { session },
     } = await supabase.auth.getSession();
 
-    if (session?.access_token && session?.refresh_token) {
-      window.location.replace(
-        buildCrossDomainLoginUrl({
-          accessToken: session.access_token,
-          refreshToken: session.refresh_token,
-          next: destination,
-        }),
-      );
+    if (!session?.user) {
+      setError('Signed in, but we could not continue automatically. Please try signing in again.');
+      setIsLoading(false);
       return;
     }
 
-    setError('Signed in, but we could not continue automatically. Please try signing in again.');
-    setIsLoading(false);
-  }, [searchParams]);
+    navigate(destination, { replace: true });
+  }, [navigate, searchParams]);
 
   useEffect(() => {
     let cancelled = false;

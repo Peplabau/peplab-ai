@@ -2,8 +2,8 @@
  * Dual-domain PEPLAB storefront (same Vercel project, both Production).
  *
  * LOCKED .com.au / OPEN .ai (current):
- *   peplab.com.au  → Login entry + public content pages (SEO). Shop requires
- *                    sign-in, then session hands off to peplab.ai.
+ *   peplab.com.au  → Login entry + public SEO pages. Shop requires sign-in;
+ *                    after login, full access stays on this domain.
  *   peplab.ai      → Full open shop (VITE_SITE_URL / VITE_MAIN_APP_ORIGIN).
  *
  * To open the full shop on both domains again, clear VITE_LOGIN_ONLY_HOSTS.
