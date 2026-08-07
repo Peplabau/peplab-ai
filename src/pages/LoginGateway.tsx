@@ -19,6 +19,10 @@ import {
   Ticket,
   ArrowLeft,
   MessageCircle,
+  Beaker,
+  FileText,
+  Shield,
+  Scale,
 } from 'lucide-react';
 import { supabase, signIn, signUp, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
@@ -29,6 +33,7 @@ import { buildCrossDomainLoginUrl, LOGIN_GATEWAY_PAGE_TITLE } from '@/lib/domain
 import { CONFIG } from '@/lib/config';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { validateSignupReferralCode } from '@/lib/signup-referral';
+import { CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
 
 const VERIFICATION_PENDING_COPY =
   "Your account is created. We've also sent a quick confirmation email — open it to finish setting up your dashboard access.";
@@ -131,7 +136,8 @@ export default function LoginGateway() {
       .then(([telegramVal, whatsappVal]) => {
         if (cancelled) return;
         setTelegramLink((telegramVal as { url?: string })?.url || DEFAULT_SUPPORT_LINKS.telegram_link);
-        setWhatsappLink((whatsappVal as { url?: string })?.url || '');
+        const wa = (whatsappVal as { url?: string })?.url?.trim();
+        setWhatsappLink(wa || DEFAULT_SUPPORT_LINKS.whatsapp_link);
       })
       .catch(() => {
         /* keep defaults */
@@ -323,13 +329,34 @@ export default function LoginGateway() {
 
         <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-10 sm:px-6">
           <div className="w-full max-w-[420px]">
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <span className="text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
                 PEPLAB
               </span>
               <p className="mt-3 text-sm text-[#A9B3C7]">
                 {isSignUp ? 'Create your account to get started' : 'Sign in to continue to your account'}
               </p>
+            </div>
+
+            <div className="mb-5 grid grid-cols-2 gap-2.5">
+              <a
+                href={telegramLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-[rgba(0,136,204,0.14)] border border-[rgba(0,136,204,0.35)] text-[#F4F6FA] hover:bg-[rgba(0,136,204,0.22)] transition-colors"
+              >
+                <Send className="w-4 h-4 text-[#0088CC] shrink-0" />
+                Community
+              </a>
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-[rgba(34,197,94,0.12)] border border-[rgba(34,197,94,0.35)] text-[#F4F6FA] hover:bg-[rgba(34,197,94,0.2)] transition-colors"
+              >
+                <MessageCircle className="w-4 h-4 text-[#22C55E] shrink-0" />
+                WhatsApp
+              </a>
             </div>
 
             <div className="rounded-2xl bg-[rgba(17,24,39,0.75)] border border-[rgba(244,246,250,0.08)] p-6 sm:p-7 shadow-xl shadow-black/20">
@@ -618,7 +645,60 @@ export default function LoginGateway() {
           </div>
         </main>
 
-        <footer className="relative z-10 px-6 py-5 text-center">
+        <footer className="relative z-10 px-4 sm:px-6 py-6 text-center">
+          <nav
+            aria-label="Site links"
+            className="mx-auto mb-4 flex max-w-md flex-wrap items-center justify-center gap-x-1 gap-y-2"
+          >
+            <Link
+              to="/privacy"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
+            >
+              <Shield className="w-3.5 h-3.5 opacity-70" />
+              Privacy
+            </Link>
+            <span className="text-[#6B7280]/ · </span>
+            <Link
+              to="/terms"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
+            >
+              <Scale className="w-3.5 h-3.5 opacity-70" />
+              Terms
+            </Link>
+            <span className="text-[#6B7280]"> · </span>
+            <Link
+              to={COA_ARCHIVE_PATH}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
+            >
+              <FileText className="w-3.5 h-3.5 opacity-70" />
+              COA
+            </Link>
+            <span className="text-[#6B7280]"> · </span>
+            <Link
+              to={CALCULATOR_PATH}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
+            >
+              <Beaker className="w-3.5 h-3.5 opacity-70" />
+              Calculator
+            </Link>
+          </nav>
+          <div className="mx-auto mb-3 flex max-w-md flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-[#6B7280]">
+            <Link to="/shipping" className="hover:text-[#A9B3C7] transition-colors">
+              Shipping
+            </Link>
+            <Link to="/faq" className="hover:text-[#A9B3C7] transition-colors">
+              FAQ
+            </Link>
+            <Link to="/contact-info" className="hover:text-[#A9B3C7] transition-colors">
+              Contact
+            </Link>
+            <Link to="/standards" className="hover:text-[#A9B3C7] transition-colors">
+              Standards
+            </Link>
+            <Link to="/legal" className="hover:text-[#A9B3C7] transition-colors">
+              Legal
+            </Link>
+          </div>
           <p className="text-xs text-[#6B7280]">© 2026 PEPLAB. All rights reserved.</p>
         </footer>
       </div>

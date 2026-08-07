@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useLayoutEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { LANDING_PATH } from '@/lib/routes';
+import { LANDING_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, PROTOCOLS_PATH } from '@/lib/routes';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -357,27 +357,58 @@ function ScrollToTop() {
 }
 
 /**
- * Login-only shell mounted on peplab.com.au (and any host in
- * `VITE_LOGIN_ONLY_HOSTS`).
- *
- * Login-only hosts expose the smallest possible surface (auth flow only)
- * and hand successful sessions off to VITE_MAIN_APP_ORIGIN. Every unknown
- * route hard-redirects to /login so no shop content is ever rendered there.
- *
- * The `/login` and `/signup` routes render `LoginGateway` — sign-in for
- * returning members and referral-gated sign-up on this host only. After auth,
- * users are handed off to the main storefront already logged in.
+ * peplab.com.au (login-gated host):
+ * - Public content pages stay open for SEO (privacy, terms, COA, calculator, …)
+ * - Shop / products / checkout require sign-in (redirect to LoginGateway)
+ * - After auth, session hands off to peplab.ai (open storefront)
  */
+function shopLoginRedirect(path: string = SHOP_PATH) {
+  return <Navigate to={`/login?redirect=${encodeURIComponent(path)}`} replace />;
+}
+
 function LoginOnlyApp() {
   return (
     <BrowserRouter>
       <ScrollToTop />
       <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
         <Routes>
+          <Route path="/" element={<LoginGateway />} />
           <Route path="/login" element={<LoginGateway />} />
           <Route path="/signup" element={<LoginGateway />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+
+          {/* Public — keep indexed / crawlable */}
+          <Route path="/landing" element={<PeplabLandingRoute />} />
+          <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/refund" element={<Refund />} />
+          <Route path="/legal" element={<Legal />} />
+          <Route path="/shipping" element={<Shipping />} />
+          <Route path="/contact-info" element={<ContactInfo />} />
+          <Route path="/standards" element={<Standards />} />
+          <Route path="/rewards-terms" element={<RewardsTerms />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/calculator" element={<Calculator />} />
+          <Route path="/protocols" element={<Protocols />} />
+          <Route path="/peptide-dosage-chart" element={<Navigate to={PROTOCOLS_PATH} replace />} />
+          <Route path="/coa" element={<CoaArchive />} />
+          <Route path="/track-order" element={<TrackOrder />} />
+
+          {/* Shop locked — members sign in, then hand off to peplab.ai */}
+          <Route path="/shop" element={shopLoginRedirect(SHOP_PATH)} />
+          <Route path="/product/:slug" element={shopLoginRedirect(SHOP_PATH)} />
+          <Route path="/checkout" element={shopLoginRedirect('/checkout')} />
+          <Route path="/dashboard" element={shopLoginRedirect('/dashboard')} />
+          <Route path="/settings" element={shopLoginRedirect('/settings')} />
+          <Route path="/promoter" element={shopLoginRedirect('/promoter')} />
+
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>
