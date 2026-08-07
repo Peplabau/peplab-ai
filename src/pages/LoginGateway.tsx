@@ -657,7 +657,7 @@ export default function LoginGateway() {
               <Shield className="w-3.5 h-3.5 opacity-70" />
               Privacy
             </Link>
-            <span className="text-[#6B7280]/ · </span>
+            <span className="text-[#6B7280]"> · </span>
             <Link
               to="/terms"
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
