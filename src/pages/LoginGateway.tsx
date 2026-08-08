@@ -23,13 +23,14 @@ import {
   FileText,
   Shield,
   Scale,
+  ShoppingBag,
 } from 'lucide-react';
 import { supabase, signIn, signUp, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
 import { sendSignUpWelcome } from '@/lib/email';
 import { resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
-import { LOGIN_GATEWAY_PAGE_TITLE } from '@/lib/domain';
+import { LOGIN_GATEWAY_PAGE_TITLE, MAIN_APP_ORIGIN } from '@/lib/domain';
 import { CONFIG } from '@/lib/config';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { validateSignupReferralCode } from '@/lib/signup-referral';
@@ -37,6 +38,9 @@ import { CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
 
 const VERIFICATION_PENDING_COPY =
   "Your account is created. We've also sent a quick confirmation email — open it to finish setting up your dashboard access.";
+
+/** Login-gateway Community button — group invite (not the support Telegram setting). */
+const LOGIN_COMMUNITY_TELEGRAM = 'https://t.me/+tBvemf2cBBg4ZjRl';
 
 const REF_STORAGE_KEY = 'peplab_ref';
 
@@ -332,25 +336,34 @@ export default function LoginGateway() {
               </p>
             </div>
 
-            <div className="mb-5 grid grid-cols-2 gap-2.5">
+            <div className="mb-5 space-y-2.5">
               <a
-                href={telegramLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-[rgba(0,136,204,0.14)] border border-[rgba(0,136,204,0.35)] text-[#F4F6FA] hover:bg-[rgba(0,136,204,0.22)] transition-colors"
+                href={MAIN_APP_ORIGIN}
+                className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-[rgba(46,209,180,0.16)] border border-[rgba(46,209,180,0.4)] text-[#F4F6FA] hover:bg-[rgba(46,209,180,0.24)] transition-colors"
               >
-                <Send className="w-4 h-4 text-[#0088CC] shrink-0" />
-                Community
+                <ShoppingBag className="w-4 h-4 text-[#2ED1B4] shrink-0" />
+                Shop now
               </a>
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-[rgba(34,197,94,0.12)] border border-[rgba(34,197,94,0.35)] text-[#F4F6FA] hover:bg-[rgba(34,197,94,0.2)] transition-colors"
-              >
-                <MessageCircle className="w-4 h-4 text-[#22C55E] shrink-0" />
-                WhatsApp
-              </a>
+              <div className="grid grid-cols-2 gap-2.5">
+                <a
+                  href={LOGIN_COMMUNITY_TELEGRAM}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-[rgba(0,136,204,0.14)] border border-[rgba(0,136,204,0.35)] text-[#F4F6FA] hover:bg-[rgba(0,136,204,0.22)] transition-colors"
+                >
+                  <Send className="w-4 h-4 text-[#0088CC] shrink-0" />
+                  Community
+                </a>
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-[rgba(34,197,94,0.12)] border border-[rgba(34,197,94,0.35)] text-[#F4F6FA] hover:bg-[rgba(34,197,94,0.2)] transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4 text-[#22C55E] shrink-0" />
+                  WhatsApp
+                </a>
+              </div>
             </div>
 
             <div className="rounded-2xl bg-[rgba(17,24,39,0.75)] border border-[rgba(244,246,250,0.08)] p-6 sm:p-7 shadow-xl shadow-black/20">
