@@ -20,6 +20,10 @@ import { RESEARCH_GATEWAY_SEO } from '@/landing/lib/seo-keywords';
 import LandingFooter from '@/landing/components/LandingFooter';
 import { getStaticProducts } from '@/landing/lib/static-data';
 import { shopUrl, coaArchiveUrl, shopPageUrl } from '@/landing/lib/site';
+import CoaDialog from '@/components/CoaDialog';
+import { getCoaDisplayData, type CoaDisplayData } from '@/lib/coa-utils';
+import { loadProductsFromSupabase } from '@/lib/supabase-db';
+import type { Product } from '@/products';
 
 const COUNT_DURATION = 1.75;
 const COUNT_BASE_DELAY = 0.55;
@@ -53,21 +57,90 @@ const HERO_META_STATS = [
   { icon: Truck, kind: 'text' as const, value: 'AusPost', label: 'Express' },
 ] as const;
 
-const RECENT_BATCHES = [
-  { id: BATCH_NO, purity: '99.20%', lcms: 'Pass', assay: '10.2mg', ago: '2d ago' },
-  { id: BATCH_NO, purity: '99.42%', lcms: 'Pass', assay: '10.1mg', ago: '5d ago' },
-  { id: BATCH_NO, purity: '99.68%', lcms: 'Pass', assay: '10.3mg', ago: '8d ago' },
-  { id: BATCH_NO, purity: '99.31%', lcms: 'Pass', assay: '10.0mg', ago: '11d ago' },
+type RecentBatchRow = {
+  label: string;
+  batch: string;
+  purity: string;
+  lcms: string;
+  assay: string;
+  /** Prefer these product ids when resolving the live COA PDF. */
+  productIds?: readonly string[];
+  /** All tokens must appear in id/name (case-insensitive). */
+  nameIncludes: readonly string[];
+  /** Reject matches that include these tokens (e.g. solo BPC vs combo). */
+  nameExcludes?: readonly string[];
+};
+
+const RECENT_BATCHES: readonly RecentBatchRow[] = [
+  {
+    label: 'Tesamorelin 10mg',
+    batch: BATCH_NO,
+    purity: '99.20%',
+    lcms: 'Pass',
+    assay: '10.2mg',
+    productIds: ['tesamorelin'],
+    nameIncludes: ['tesamorelin'],
+  },
+  {
+    label: 'CJC-1295 + Ipamorelin 10mg',
+    batch: BATCH_NO,
+    purity: '99.42%',
+    lcms: 'Pass',
+    assay: '10.1mg',
+    nameIncludes: ['cjc', 'ipamorelin'],
+  },
+  {
+    label: 'KPV 10mg',
+    batch: BATCH_NO,
+    purity: '99.68%',
+    lcms: 'Pass',
+    assay: '10.3mg',
+    productIds: ['kpv'],
+    nameIncludes: ['kpv'],
+  },
+  {
+    label: 'BPC-157 10mg',
+    batch: BATCH_NO,
+    purity: '99.31%',
+    lcms: 'Pass',
+    assay: '10.0mg',
+    productIds: ['bpc-157'],
+    nameIncludes: ['bpc-157'],
+    nameExcludes: ['tb', '+'],
+  },
+  {
+    label: 'BPC-157 + TB-500 10mg',
+    batch: BATCH_NO,
+    purity: '99.55%',
+    lcms: 'Pass',
+    assay: '10.2mg',
+    productIds: ['bpc-tb-combo'],
+    nameIncludes: ['bpc', 'tb'],
+  },
 ] as const;
 
 const TICKER_ITEMS = [
-  { id: BATCH_NO, hplc: '99.20%', lcms: 'LC-MS pass', assay: '10.2mg', ago: '2d ago' },
-  { id: BATCH_NO, hplc: '99.42%', lcms: 'LC-MS pass', assay: '10.1mg', ago: '5d ago' },
-  { id: BATCH_NO, hplc: '99.68%', lcms: 'LC-MS pass', assay: '10.3mg', ago: '8d ago' },
-  { id: BATCH_NO, hplc: '99.31%', lcms: 'LC-MS pass', assay: '10.0mg', ago: '11d ago' },
-  { id: BATCH_NO, hplc: '99.55%', lcms: 'LC-MS pass', assay: '10.2mg', ago: '14d ago' },
-  { id: BATCH_NO, hplc: '99.70%', lcms: 'LC-MS pass', assay: '10.1mg', ago: '18d ago' },
+  { id: 'Tesamorelin 10mg', hplc: '99.20%', lcms: 'LC-MS pass', assay: '10.2mg' },
+  { id: 'CJC-1295 + Ipamorelin 10mg', hplc: '99.42%', lcms: 'LC-MS pass', assay: '10.1mg' },
+  { id: 'KPV 10mg', hplc: '99.68%', lcms: 'LC-MS pass', assay: '10.3mg' },
+  { id: 'BPC-157 10mg', hplc: '99.31%', lcms: 'LC-MS pass', assay: '10.0mg' },
+  { id: 'BPC-157 + TB-500 10mg', hplc: '99.55%', lcms: 'LC-MS pass', assay: '10.2mg' },
 ] as const;
+
+function findProductForRecentBatch(products: Product[], row: RecentBatchRow): Product | null {
+  if (row.productIds?.length) {
+    const byId = products.find((p) => row.productIds!.includes(p.id));
+    if (byId) return byId;
+  }
+  return (
+    products.find((p) => {
+      const hay = `${p.id} ${p.name}`.toLowerCase();
+      if (!row.nameIncludes.every((tok) => hay.includes(tok.toLowerCase()))) return false;
+      if (row.nameExcludes?.some((tok) => hay.includes(tok.toLowerCase()))) return false;
+      return true;
+    }) ?? null
+  );
+}
 
 const APPROACH = [
   {
@@ -315,7 +388,33 @@ function CertificatePanel({ pathRef }: { pathRef: RefObject<SVGPathElement | nul
   );
 }
 
-function RecentBatchesPanel() {
+function RecentBatchesPanel({
+  products,
+  onOpenCoa,
+}: {
+  products: Product[];
+  onOpenCoa: (data: CoaDisplayData) => void;
+}) {
+  const openRow = (row: RecentBatchRow) => {
+    const product = findProductForRecentBatch(products, row);
+    if (product) {
+      onOpenCoa(getCoaDisplayData(product, '10 mg'));
+      return;
+    }
+    // Fallback: open dialog with label even if catalog match is missing
+    onOpenCoa({
+      productName: row.label.replace(/\s*10mg$/i, ''),
+      coaUrl: '',
+      hasCoaPdf: false,
+      purity: row.purity,
+      dose: '10 mg',
+      testedDate: 'See certificate',
+      batch: row.batch,
+      method: 'HPLC',
+      labName: 'Ozcanium Analytics',
+    });
+  };
+
   return (
     <div className="rg-hplc-panel-inner rg-recent-panel">
       <div className="rg-hplc-card-head">
@@ -327,14 +426,21 @@ function RecentBatchesPanel() {
       </div>
       <ul className="rg-recent-list">
         {RECENT_BATCHES.map((batch, index) => (
-          <li key={`${batch.id}-${batch.ago}-${index}`} className="rg-recent-item">
-            <div>
-              <span className="rg-recent-id">{batch.id}</span>
-              <span className="rg-recent-meta">
-                {batch.ago} · LC-MS <span className="rg-recent-pass">{batch.lcms}</span> · {batch.assay}
-              </span>
-            </div>
-            <span className="rg-recent-purity">{batch.purity}</span>
+          <li key={`${batch.label}-${index}`}>
+            <button
+              type="button"
+              className="rg-recent-item rg-recent-item--button"
+              onClick={() => openRow(batch)}
+              aria-label={`View COA for ${batch.label}`}
+            >
+              <div className="min-w-0 text-left">
+                <span className="rg-recent-id">{batch.label}</span>
+                <span className="rg-recent-meta">
+                  {batch.batch} · LC-MS <span className="rg-recent-pass">{batch.lcms}</span> · {batch.assay}
+                </span>
+              </div>
+              <span className="rg-recent-purity shrink-0">{batch.purity}</span>
+            </button>
           </li>
         ))}
       </ul>
@@ -344,6 +450,28 @@ function RecentBatchesPanel() {
 
 function HplcCard({ pathRef }: { pathRef: RefObject<SVGPathElement | null> }) {
   const [tab, setTab] = useState<'certificate' | 'recent'>('certificate');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [coaOpen, setCoaOpen] = useState(false);
+  const [activeCoa, setActiveCoa] = useState<CoaDisplayData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadProductsFromSupabase()
+      .then((data) => {
+        if (!cancelled) setProducts(data);
+      })
+      .catch(() => {
+        /* keep empty — dialog still opens with fallback data */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const openCoa = (data: CoaDisplayData) => {
+    setActiveCoa(data);
+    setCoaOpen(true);
+  };
 
   return (
     <div className="rg-hplc-wrap rg-hero-card">
@@ -380,9 +508,10 @@ function HplcCard({ pathRef }: { pathRef: RefObject<SVGPathElement | null> }) {
           role="tabpanel"
           aria-hidden={tab !== 'recent'}
         >
-          <RecentBatchesPanel />
+          <RecentBatchesPanel products={products} onOpenCoa={openCoa} />
         </div>
       </div>
+      <CoaDialog open={coaOpen} onOpenChange={setCoaOpen} data={activeCoa} />
     </div>
   );
 }
@@ -561,8 +690,6 @@ function BatchTicker() {
               <span key={`${item.id}-${i}`} className="rg-ticker-item">
                 <Check className="w-3 h-3" strokeWidth={2.5} />
                 {item.id}
-                <span className="rg-ticker-dot">·</span>
-                {item.ago}
                 <span className="rg-ticker-dot">·</span>
                 <span className="rg-ticker-purity">
                   {item.hplc} · {item.lcms} · {item.assay}
