@@ -14,6 +14,7 @@ import {
   getCoaDisplayData,
   isCoaArchiveProduct,
   productHasCoaPdf,
+  sortCoaArchiveProducts,
   type CoaDisplayData,
 } from '@/lib/coa-utils';
 import type { Product } from '@/products';
@@ -34,11 +35,7 @@ export default function CoaArchive() {
     loadProductsFromSupabase()
       .then((data) => {
         if (!cancelled) {
-          setProducts(
-            data
-              .filter(isCoaArchiveProduct)
-              .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
-          );
+          setProducts(sortCoaArchiveProducts(data.filter(isCoaArchiveProduct)));
         }
       })
       .catch(() => {
@@ -61,15 +58,18 @@ export default function CoaArchive() {
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return products;
-    return products.filter((p) => {
-      const coa = getCoaDisplayData(p);
-      return (
-        p.name.toLowerCase().includes(q) ||
-        coa.batch.toLowerCase().includes(q) ||
-        coa.method.toLowerCase().includes(q) ||
-        coa.labName.toLowerCase().includes(q)
-      );
-    });
+    // Keep pinned order when filtering
+    return sortCoaArchiveProducts(
+      products.filter((p) => {
+        const coa = getCoaDisplayData(p);
+        return (
+          p.name.toLowerCase().includes(q) ||
+          coa.batch.toLowerCase().includes(q) ||
+          coa.method.toLowerCase().includes(q) ||
+          coa.labName.toLowerCase().includes(q)
+        );
+      }),
+    );
   }, [products, searchQuery]);
 
   const openCoa = (data: CoaDisplayData) => {

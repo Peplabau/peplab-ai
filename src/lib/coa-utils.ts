@@ -80,6 +80,61 @@ export function isCoaArchiveProduct(
   return true;
 }
 
+/**
+ * Client-requested COA archive pin order (top of list).
+ * Prefer exact product ids; fall back to name matching for admin-created SKUs.
+ */
+function coaArchivePinIndex(product: Pick<Product, 'id' | 'name'>): number {
+  const id = product.id.toLowerCase().trim();
+  const name = product.name.toLowerCase().trim();
+  const hay = `${id} ${name}`;
+
+  // 0 — Tesamorelin
+  if (id === 'tesamorelin' || /^tesamorelin\b/.test(name)) return 0;
+
+  // 1 — CJC-1295 + Ipamorelin (combo only)
+  if (
+    (hay.includes('cjc') && hay.includes('ipamorelin')) ||
+    (id.includes('cjc') && id.includes('ipa'))
+  ) {
+    return 1;
+  }
+
+  // 2 — KPV
+  if (id === 'kpv' || name === 'kpv' || /^kpv\b/.test(name)) return 2;
+
+  // 3 — BPC-157 solo (not the TB combo)
+  if (
+    (id === 'bpc-157' || name === 'bpc-157' || /^bpc-?157\b/.test(name)) &&
+    !hay.includes('tb') &&
+    !name.includes('+')
+  ) {
+    return 3;
+  }
+
+  // 4 — BPC-157 + TB-500
+  if (
+    id === 'bpc-tb-combo' ||
+    (id.includes('bpc') && (id.includes('tb') || name.includes('tb'))) ||
+    (hay.includes('bpc') &&
+      (hay.includes('tb-500') || hay.includes('tb500') || hay.includes('tb 500')))
+  ) {
+    return 4;
+  }
+
+  return Number.POSITIVE_INFINITY;
+}
+
+/** Sort COA archive: pinned products first (client order), then A–Z. */
+export function sortCoaArchiveProducts<T extends Pick<Product, 'id' | 'name'>>(products: T[]): T[] {
+  return [...products].sort((a, b) => {
+    const pa = coaArchivePinIndex(a);
+    const pb = coaArchivePinIndex(b);
+    if (pa !== pb) return pa - pb;
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+  });
+}
+
 export type CoaMgStatus = 'available' | 'pending';
 
 export interface CoaDosageStatus {
