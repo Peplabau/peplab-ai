@@ -105,14 +105,21 @@ export function buildCrossDomainLoginUrl(params: {
   return `${MAIN_APP_ORIGIN}/#${hash}`;
 }
 
+/** Paths on the login-only host that should not be indexed (auth entry, not public content). */
+export function isLoginGatewayPath(pathname?: string): boolean {
+  const p = (pathname ?? (typeof window !== 'undefined' ? window.location.pathname : '')).replace(/\/$/, '') || '/';
+  return p === '/' || p === '/login' || p === '/signup' || p === '/forgot-password';
+}
+
 /**
  * Apply login-gateway branding to the static document shell.
  *
  * Called from `main.tsx` on boot and mirrored by an inline script in
  * `index.html` so the browser tab title updates before React loads.
+ * Only auth entry routes — public pages (privacy, COA, calculator, …) keep SEO.
  */
 export function applyLoginGatewayDocumentBranding(): void {
-  if (!isLoginOnlyDomain()) return;
+  if (!isLoginOnlyDomain() || !isLoginGatewayPath()) return;
 
   document.title = LOGIN_GATEWAY_PAGE_TITLE;
 

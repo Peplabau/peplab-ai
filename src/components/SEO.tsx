@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CONFIG } from '@/lib/config';
+import { isLoginOnlyDomain } from '@/lib/domain';
 import { SITE_SEO_DESCRIPTION, SITE_SEO_KEYWORDS, SITE_SEO_TITLE } from '@/lib/seo-keywords';
 
 interface SEOProps {
@@ -11,20 +12,31 @@ interface SEOProps {
   noIndex?: boolean;
 }
 
+/** Canonical / OG origin — .com.au public pages use their own host; .ai uses SITE_URL. */
+function seoOrigin(): string {
+  if (typeof window !== 'undefined' && isLoginOnlyDomain()) {
+    return window.location.origin;
+  }
+  return CONFIG.SITE_URL.replace(/\/$/, '');
+}
+
 export function SEO({
   title = SITE_SEO_TITLE,
   description = SITE_SEO_DESCRIPTION,
   keywords = SITE_SEO_KEYWORDS,
-  ogImage = `${CONFIG.SITE_URL.replace(/\/$/, '')}${CONFIG.SHARE_PREVIEW_IMAGE_PATH}`,
+  ogImage,
   noIndex = false,
 }: SEOProps) {
   const location = useLocation();
+  const origin = seoOrigin();
+  const resolvedOgImage =
+    ogImage ?? `${origin}${CONFIG.SHARE_PREVIEW_IMAGE_PATH}`;
 
   useEffect(() => {
     // Update document title
     document.title = title;
 
-    const faviconHref = `${CONFIG.SITE_URL.replace(/\/$/, '')}${CONFIG.FAVICON_PATH}`;
+    const faviconHref = `${origin}${CONFIG.FAVICON_PATH}`;
     const ensureLink = (rel: string, attrs: Record<string, string>) => {
       let el = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
       if (!el) {
@@ -44,17 +56,17 @@ export function SEO({
       { name: 'keywords', content: keywords },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:image', content: ogImage },
+      { property: 'og:image', content: resolvedOgImage },
       { property: 'og:image:width', content: '1200' },
       { property: 'og:image:height', content: '630' },
       { property: 'og:image:alt', content: 'PEPLAB — Peptides Australia' },
       { property: 'og:site_name', content: SITE_SEO_TITLE },
-      { property: 'og:url', content: `${CONFIG.SITE_URL.replace(/\/$/, '')}${location.pathname}${location.search}` },
+      { property: 'og:url', content: `${origin}${location.pathname}${location.search}` },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
-      { name: 'twitter:image', content: ogImage },
+      { name: 'twitter:image', content: resolvedOgImage },
     ];
 
     if (noIndex) {
@@ -94,9 +106,9 @@ export function SEO({
     }
     canonical.setAttribute(
       'href',
-      `${CONFIG.SITE_URL.replace(/\/$/, '')}${location.pathname}${location.search}`,
+      `${origin}${location.pathname}${location.search}`,
     );
-  }, [title, description, keywords, ogImage, noIndex, location.pathname, location.search]);
+  }, [title, description, keywords, resolvedOgImage, noIndex, location.pathname, location.search, origin]);
 
   return null;
 }

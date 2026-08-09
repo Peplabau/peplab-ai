@@ -64,6 +64,9 @@
         var full = location.host.toLowerCase();
         var loginOnly = hosts.indexOf(h) !== -1 || hosts.indexOf(full) !== -1;
         if (!loginOnly) return;
+        var p = (location.pathname || '/').replace(/\/$/, '') || '/';
+        var authEntry = p === '/' || p === '/login' || p === '/signup' || p === '/forgot-password';
+        if (!authEntry) return;
         document.title = 'PEPLAB | Sign in';
         var robots = document.querySelector('meta[name="robots"]');
         if (robots) robots.setAttribute('content', 'noindex, nofollow');

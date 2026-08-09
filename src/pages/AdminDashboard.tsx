@@ -7,7 +7,7 @@ import {
   CreditCard, Box, Send, Ban, Save, Tag, Gift, X, Pencil, Trash2,
   ChevronUp, ChevronDown, Star, MessageSquare, Upload, Image as ImageIcon,
   Printer, ArrowUp, ArrowDown, MinusCircle, PlusCircle, Link2, Copy, Check,
-  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle
+  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square
 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -1646,6 +1646,7 @@ function OrdersSection() {
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBulkSendingReviewEmails, setIsBulkSendingReviewEmails] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(() => new Set());
   const [preorderFilter, setPreorderFilter] = useState<'all' | 'preorder_only'>('all');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'direct' | 'referral'>('all');
   const [statRows, setStatRows] = useState<OrderListStatRow[]>([]);
@@ -1769,8 +1770,112 @@ function OrdersSection() {
   // Reset + fetch first page whenever filters change (fast page fetch, not full catalog).
   useEffect(() => {
     void loadOrders(false);
+    setSelectedOrderIds(new Set());
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed to listFilters only
   }, [listFilters]);
+
+  const toggleOrderSelection = (orderId: string) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
+  const clearOrderSelection = () => setSelectedOrderIds(new Set());
+
+  /** Mark one order delivered; optional silent mode for bulk (summary alert at end). */
+  const markOrderDelivered = async (
+    order: Order,
+    opts?: { silent?: boolean },
+  ): Promise<{ ok: boolean; reviewSent: boolean; reviewFailed: boolean; error?: string }> => {
+    const nowIso = new Date().toISOString();
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'delivered', updated_at: nowIso, delivered_at: nowIso })
+      .eq('id', order.id);
+    if (error) {
+      return { ok: false, reviewSent: false, reviewFailed: false, error: error.message };
+    }
+
+    let reviewSent = false;
+    let reviewFailed = false;
+    let reviewEmailId: string | undefined;
+    let reviewEmailError: string | undefined;
+    if (order.customer_email?.trim() && !order.review_request_email_sent) {
+      const reviewResult = await sendOrderDeliveredReviewEmail(order.customer_email, {
+        order_number: order.order_number,
+        customer_first_name: order.customer_first_name,
+      });
+      if (reviewResult.success && reviewResult.id) {
+        reviewSent = true;
+        reviewEmailId = reviewResult.id;
+        await supabase.from('orders').update({ review_request_email_sent: true }).eq('id', order.id);
+      } else {
+        reviewFailed = true;
+        reviewEmailError = reviewResult.error;
+        if (!opts?.silent) {
+          console.error('Review email failed:', reviewResult.error);
+        }
+      }
+    }
+
+    if (!opts?.silent) {
+      const displayNo = formatOrderNumberDisplay(order.order_number);
+      if (reviewSent) {
+        alert(
+          `Order #${displayNo} marked delivered.\n\nTrustpilot review accepted by Resend.\nTo: ${order.customer_email}\nFrom: contact@peplab.ai\nResend ID: ${reviewEmailId}\n\nIf it is not in the inbox, check Spam/Promotions and Resend → Emails for that ID.`,
+        );
+      } else if (reviewFailed) {
+        alert(
+          `Order #${displayNo} marked delivered, but Trustpilot review email failed:\n\n${reviewEmailError || 'Unknown error'}\n\nOpen this order and click “Send review (this order only)” to retry.`,
+        );
+      }
+    }
+
+    return { ok: true, reviewSent, reviewFailed };
+  };
+
+  const bulkMarkSelectedAsDelivered = async () => {
+    const targets = orders.filter((o) => selectedOrderIds.has(o.id) && o.status === 'shipped');
+    if (!targets.length) {
+      alert('Select one or more Shipped orders to mark as delivered.');
+      return;
+    }
+
+    const skipped = selectedOrderIds.size - targets.length;
+    const confirmed = window.confirm(
+      `Mark ${targets.length} order(s) as Delivered?${skipped > 0 ? `\n\n${skipped} selected row(s) are not Shipped and will be skipped.` : ''}\n\nTrustpilot review emails will be sent automatically when eligible.`,
+    );
+    if (!confirmed) return;
+
+    setIsUpdating(true);
+    let delivered = 0;
+    let reviewSent = 0;
+    let reviewFailed = 0;
+    let failed = 0;
+
+    for (const order of targets) {
+      const result = await markOrderDelivered(order, { silent: true });
+      if (result.ok) {
+        delivered++;
+        if (result.reviewSent) reviewSent++;
+        if (result.reviewFailed) reviewFailed++;
+      } else {
+        failed++;
+        console.error(`Failed to mark #${order.order_number} delivered:`, result.error);
+      }
+    }
+
+    await loadOrders(true);
+    setSelectedOrderIds(new Set());
+    setIsUpdating(false);
+
+    alert(
+      `Bulk deliver complete:\n• ${delivered} marked delivered\n• ${reviewSent} review email(s) sent${reviewFailed ? `\n• ${reviewFailed} review email(s) failed — retry from order detail` : ''}${failed ? `\n• ${failed} update(s) failed` : ''}`,
+    );
+  };
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -1798,41 +1903,29 @@ function OrdersSection() {
         orders.find((o) => o.id === orderId) ??
         null;
 
+      if (newStatus === 'delivered' && orderBeforeUpdate) {
+        const result = await markOrderDelivered(orderBeforeUpdate);
+        if (!result.ok) throw new Error(result.error || 'Failed to mark delivered');
+
+        await loadOrders(true);
+        setSelectedOrder((prev) =>
+          prev && prev.id === orderId
+            ? {
+                ...prev,
+                status: 'delivered',
+                ...(result.reviewSent ? { review_request_email_sent: true } : {}),
+              }
+            : prev,
+        );
+        return;
+      }
+
       const updates: any = { status: newStatus, updated_at: new Date().toISOString() };
       if (newStatus === 'shipped') updates.shipped_at = new Date().toISOString();
-      if (newStatus === 'delivered') updates.delivered_at = new Date().toISOString();
       if (newStatus === 'cancelled') updates.cancelled_at = new Date().toISOString();
 
       const { error } = await supabase.from('orders').update(updates).eq('id', orderId);
       if (error) throw error;
-
-      let reviewEmailSent = false;
-      if (
-        newStatus === 'delivered' &&
-        orderBeforeUpdate?.customer_email &&
-        !orderBeforeUpdate.review_request_email_sent
-      ) {
-        // Same send path as the per-order "Send review" button (From: contact@peplab.ai).
-        const reviewResult = await sendOrderDeliveredReviewEmail(orderBeforeUpdate.customer_email, {
-          order_number: orderBeforeUpdate.order_number,
-          customer_first_name: orderBeforeUpdate.customer_first_name,
-        });
-        if (reviewResult.success && reviewResult.id) {
-          reviewEmailSent = true;
-          await supabase
-            .from('orders')
-            .update({ review_request_email_sent: true })
-            .eq('id', orderId);
-          alert(
-            `Order marked delivered.\n\nTrustpilot review accepted by Resend.\nTo: ${orderBeforeUpdate.customer_email}\nFrom: contact@peplab.ai\nResend ID: ${reviewResult.id}\n\nIf it is not in the inbox, check Spam/Promotions and Resend → Emails for that ID.`,
-          );
-        } else {
-          console.error('Review email failed:', reviewResult.error);
-          alert(
-            `Order marked delivered, but Trustpilot review email failed:\n\n${reviewResult.error || 'Unknown error'}\n\nOpen this order and click “Send review (this order only)” to retry.`,
-          );
-        }
-      }
 
       await loadOrders(true);
       setSelectedOrder((prev) =>
@@ -1840,7 +1933,6 @@ function OrdersSection() {
           ? {
               ...prev,
               status: newStatus,
-              ...(reviewEmailSent ? { review_request_email_sent: true } : {}),
             }
           : prev,
       );
@@ -2310,6 +2402,32 @@ function OrdersSection() {
   // Server-side filters already applied — list is the current page window.
   const filteredOrders = orders;
 
+  const deliverableOrders = useMemo(
+    () => filteredOrders.filter((o) => o.status === 'shipped'),
+    [filteredOrders],
+  );
+
+  const selectedDeliverableCount = useMemo(
+    () => deliverableOrders.filter((o) => selectedOrderIds.has(o.id)).length,
+    [deliverableOrders, selectedOrderIds],
+  );
+
+  const allDeliverableSelected =
+    deliverableOrders.length > 0 &&
+    deliverableOrders.every((o) => selectedOrderIds.has(o.id));
+
+  const someDeliverableSelected =
+    selectedDeliverableCount > 0 && !allDeliverableSelected;
+
+  const selectAllDeliverableOnPage = () => {
+    setSelectedOrderIds(new Set(deliverableOrders.map((o) => o.id)));
+  };
+
+  const toggleSelectAllDeliverableOnPage = () => {
+    if (allDeliverableSelected) clearOrderSelection();
+    else selectAllDeliverableOnPage();
+  };
+
   const statusLabels: Record<string, string> = {
     all: 'All',
     pending_payment: 'Awaiting payment',
@@ -2559,11 +2677,83 @@ function OrdersSection() {
         </div>
       ) : (
         <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] overflow-hidden bg-[rgba(17,24,39,0.3)]">
+          {(selectedOrderIds.size > 0 || deliverableOrders.length > 0) && (
+            <div className="sticky top-0 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 bg-[rgba(15,23,42,0.95)] border-b border-[rgba(46,209,180,0.25)] backdrop-blur-sm">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                {selectedOrderIds.size > 0 ? (
+                  <span className="text-sm font-medium text-[#F4F6FA]">
+                    {selectedOrderIds.size} selected
+                    {selectedDeliverableCount > 0 && selectedDeliverableCount !== selectedOrderIds.size && (
+                      <span className="text-[#A9B3C7] font-normal">
+                        {' '}
+                        · {selectedDeliverableCount} shipped
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-sm text-[#A9B3C7]">
+                    Tip: filter by <strong className="text-[#F4F6FA]">Shipped</strong>, then select rows to mark delivered in bulk.
+                  </span>
+                )}
+                {deliverableOrders.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={toggleSelectAllDeliverableOnPage}
+                    className="text-xs font-semibold text-[#2ED1B4] hover:underline"
+                  >
+                    {allDeliverableSelected ? 'Deselect all on page' : `Select all shipped (${deliverableOrders.length})`}
+                  </button>
+                )}
+                {selectedOrderIds.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearOrderSelection}
+                    className="text-xs font-semibold text-[#A9B3C7] hover:text-[#F4F6FA]"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {selectedOrderIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void bulkMarkSelectedAsDelivered()}
+                  disabled={isUpdating || selectedDeliverableCount === 0}
+                  className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 py-2 rounded-xl bg-[#22C55E] text-white text-sm font-semibold hover:bg-[#16A34A] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  {isUpdating
+                    ? 'Updating…'
+                    : selectedDeliverableCount > 0
+                      ? `Mark ${selectedDeliverableCount} as Delivered`
+                      : 'No shipped orders selected'}
+                </button>
+              )}
+            </div>
+          )}
           {/* Desktop table */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[rgba(244,246,250,0.08)] bg-[rgba(7,10,18,0.4)]">
+                  <th className="w-10 px-3 py-3">
+                    <button
+                      type="button"
+                      onClick={toggleSelectAllDeliverableOnPage}
+                      disabled={deliverableOrders.length === 0}
+                      className="p-1 rounded hover:bg-[rgba(244,246,250,0.08)] disabled:opacity-30 disabled:cursor-not-allowed"
+                      aria-label={allDeliverableSelected ? 'Deselect all shipped on page' : 'Select all shipped on page'}
+                      title={allDeliverableSelected ? 'Deselect all shipped on page' : 'Select all shipped on page'}
+                    >
+                      {allDeliverableSelected ? (
+                        <CheckSquare className="w-4 h-4 text-[#2ED1B4]" />
+                      ) : someDeliverableSelected ? (
+                        <CheckSquare className="w-4 h-4 text-[#2ED1B4] opacity-50" />
+                      ) : (
+                        <Square className="w-4 h-4 text-[#A9B3C7]" />
+                      )}
+                    </button>
+                  </th>
                   <th className="text-left text-xs font-semibold text-[#A9B3C7] uppercase tracking-wider px-4 py-3">Order</th>
                   <th className="text-left text-xs font-semibold text-[#A9B3C7] uppercase tracking-wider px-4 py-3">Customer</th>
                   <th className="text-left text-xs font-semibold text-[#A9B3C7] uppercase tracking-wider px-4 py-3">Date</th>
@@ -2578,8 +2768,30 @@ function OrdersSection() {
                   <tr
                     key={order.id}
                     onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}
-                    className="border-b border-[rgba(244,246,250,0.05)] hover:bg-[rgba(46,209,180,0.06)] cursor-pointer transition-colors"
+                    className={`border-b border-[rgba(244,246,250,0.05)] hover:bg-[rgba(46,209,180,0.06)] cursor-pointer transition-colors ${
+                      selectedOrderIds.has(order.id) ? 'bg-[rgba(46,209,180,0.1)]' : ''
+                    }`}
                   >
+                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                      {order.status === 'shipped' ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleOrderSelection(order.id)}
+                          className="p-1 rounded hover:bg-[rgba(244,246,250,0.08)]"
+                          aria-label={selectedOrderIds.has(order.id) ? 'Deselect order' : 'Select order'}
+                        >
+                          {selectedOrderIds.has(order.id) ? (
+                            <CheckSquare className="w-4 h-4 text-[#2ED1B4]" />
+                          ) : (
+                            <Square className="w-4 h-4 text-[#A9B3C7]" />
+                          )}
+                        </button>
+                      ) : (
+                        <span className="inline-flex p-1 opacity-25" title="Only shipped orders can be bulk-marked delivered">
+                          <Square className="w-4 h-4 text-[#A9B3C7]" />
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-mono font-semibold text-[#8B5CF6]">#{formatOrderNumberDisplay(order.order_number)}</span>
@@ -2628,6 +2840,16 @@ function OrdersSection() {
                     </td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
+                        {order.status === 'shipped' && (
+                          <button
+                            type="button"
+                            onClick={() => void updateOrderStatus(order.id, 'delivered', order)}
+                            disabled={isUpdating}
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#22C55E] text-white hover:bg-[#16A34A] disabled:opacity-50 whitespace-nowrap"
+                          >
+                            Delivered
+                          </button>
+                        )}
                         {canFinalisePreorder(order) ? (
                           <button
                             type="button"
@@ -2663,9 +2885,32 @@ function OrdersSection() {
               <div
                 key={order.id}
                 onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}
-                className="p-4 active:bg-[rgba(46,209,180,0.08)] transition-colors"
+                className={`p-4 active:bg-[rgba(46,209,180,0.08)] transition-colors ${
+                  selectedOrderIds.has(order.id) ? 'bg-[rgba(46,209,180,0.1)]' : ''
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
+                  {order.status === 'shipped' ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleOrderSelection(order.id);
+                      }}
+                      className="mt-0.5 p-1 rounded hover:bg-[rgba(244,246,250,0.08)] shrink-0"
+                      aria-label={selectedOrderIds.has(order.id) ? 'Deselect order' : 'Select order'}
+                    >
+                      {selectedOrderIds.has(order.id) ? (
+                        <CheckSquare className="w-5 h-5 text-[#2ED1B4]" />
+                      ) : (
+                        <Square className="w-5 h-5 text-[#A9B3C7]" />
+                      )}
+                    </button>
+                  ) : (
+                    <span className="mt-0.5 p-1 opacity-25 shrink-0">
+                      <Square className="w-5 h-5 text-[#A9B3C7]" />
+                    </span>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-mono font-semibold text-[#8B5CF6]">#{formatOrderNumberDisplay(order.order_number)}</p>
@@ -2700,6 +2945,16 @@ function OrdersSection() {
                     <p className="font-semibold text-[#2ED1B4]">${order.total?.toFixed(2)}</p>
                     <p className="text-xs text-[#A9B3C7]">{order.items?.length || 0} items</p>
                     <div className="flex items-center justify-end gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                      {order.status === 'shipped' && (
+                        <button
+                          type="button"
+                          onClick={() => void updateOrderStatus(order.id, 'delivered', order)}
+                          disabled={isUpdating}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#22C55E] text-white hover:bg-[#16A34A] disabled:opacity-50"
+                        >
+                          Delivered
+                        </button>
+                      )}
                       {canFinalisePreorder(order) ? (
                         <button
                           type="button"
