@@ -2,10 +2,11 @@ const trim = (url: string) => url.replace(/\/$/, '');
 
 function runtimeOrigin(): string {
   if (typeof window !== 'undefined') return window.location.origin;
-  return trim(import.meta.env.VITE_MAIN_SITE_URL || 'https://peplab.ai');
+  const fromEnv = import.meta.env.VITE_MAIN_SITE_URL || import.meta.env.VITE_SITE_URL;
+  return trim(fromEnv || 'https://peplab.com.au');
 }
 
-/** Main storefront — peplab.ai (shop at /). */
+/** Main storefront origin for this deployment. */
 export const MAIN_SITE_URL = trim(import.meta.env.VITE_MAIN_SITE_URL || runtimeOrigin());
 
 /** Alias: shop lives at the main site root. */

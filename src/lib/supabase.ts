@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Session } from '@supabase/supabase-js';
-import { mainAppUrl } from '@/lib/domain';
+import { siteOrigin } from '@/lib/domain';
 
 // PEPLAB Supabase Configuration
 //
@@ -163,7 +163,7 @@ export const signUp = async (email: string, password: string, metadata?: object)
   // Always land verification-email clicks on the main app (peplab.com.au) — even
   // when signup happens on the login-only host — so users never bounce back
   // to peplab.com.au after confirming their email.
-  const dashboardUrl = mainAppUrl('/dashboard');
+  const dashboardUrl = `${siteOrigin()}/dashboard`;
   return await supabase.auth.signUp({
     email,
     password,

@@ -60,9 +60,8 @@ export const CONFIG = {
     BANK_NAME: 'Commonwealth Bank of Australia',
   },
 
-  // Site Info
-  // Canonical / OG / email CTA domain for the open storefront.
-  SITE_URL: import.meta.env.VITE_SITE_URL || 'https://peplab.ai',
+  // Site Info — canonical domain for THIS deployment (.com.au project default).
+  SITE_URL: import.meta.env.VITE_SITE_URL || 'https://peplab.com.au',
   SITE_NAME: 'PEPLAB - Peptides Australia',
   SITE_DESCRIPTION: 'Premium Peptides Australia for research. Lab-tested, fast shipping, exceptional quality.',
   /** Browser tab, Apple touch, and structured-data logo (file in /public). */
@@ -93,6 +92,17 @@ export const CONFIG = {
   TRUSTPILOT: {
     REVIEW_URL: 'https://www.trustpilot.com/evaluate/peplab.com.au',
     PROFILE_URL: 'https://www.trustpilot.com/review/peplab.com.au',
+    /** From Trustpilot Business → Website widgets → embed code (data-businessunit-id). */
+    BUSINESS_UNIT_ID: (import.meta.env.VITE_TRUSTPILOT_BUSINESS_UNIT_ID as string | undefined)?.trim() || '',
+    /** Optional widget token from embed code (Plus plans). */
+    WIDGET_TOKEN: (import.meta.env.VITE_TRUSTPILOT_WIDGET_TOKEN as string | undefined)?.trim() || '',
+    /** Official TrustBox template IDs — https://help.trustpilot.com/s/article/Add-a-service-review-TrustBox-widget */
+    TEMPLATES: {
+      MICRO_TRUST_SCORE: '5419b6ffb0d04a076446a9af',
+      REVIEW_CAROUSEL: '53aa8912dec7e10d38f59f36',
+      MINI: '53aa8807dec7e10d38f59f32',
+      GRID: '5418cfb6d4884ec5fcc6cc8b',
+    },
   },
 
   // Shipping

@@ -3,7 +3,7 @@ import { CONFIG } from './config';
 import { DEFAULT_BANK_DETAILS, DEFAULT_SUPPORT_LINKS, getSiteSetting, type BankDetails } from './settings';
 import { supabase } from './supabase';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
-import { MAIN_APP_ORIGIN } from '@/lib/domain';
+import { siteOrigin } from './domain';
 import {
   wrapPeplabEmail,
   emailCtaRow,
@@ -19,9 +19,9 @@ import {
 
 const T = EMAIL_THEME;
 
-/** Shop origin for clickable email links — open storefront (peplab.ai). */
+/** Shop origin for clickable email links — this deployment's canonical site. */
 function shopOrigin(): string {
-  return (MAIN_APP_ORIGIN || CONFIG.SITE_URL || 'https://peplab.ai').replace(/\/$/, '');
+  return siteOrigin();
 }
 
 async function getEmailSupportLinks(): Promise<EmailSupportLinks> {
@@ -450,7 +450,7 @@ export const sendOrderDeliveredReviewEmail = async (
     to,
     subject,
     html,
-    from:'PEPLAB <contact@peplab.com.au>',
+    from: CONFIG.REVIEW_FROM_EMAIL,
   });
 };
 

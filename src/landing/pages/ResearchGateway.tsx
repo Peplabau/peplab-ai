@@ -20,6 +20,7 @@ import { RESEARCH_GATEWAY_SEO } from '@/landing/lib/seo-keywords';
 import LandingFooter from '@/landing/components/LandingFooter';
 import { getStaticProducts } from '@/landing/lib/static-data';
 import { shopUrl, coaArchiveUrl, shopPageUrl } from '@/landing/lib/site';
+import { siteHostname } from '@/lib/domain';
 import CoaDialog from '@/components/CoaDialog';
 import { getCoaDisplayData, type CoaDisplayData } from '@/lib/coa-utils';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
@@ -379,7 +380,7 @@ function CertificatePanel({ pathRef }: { pathRef: RefObject<SVGPathElement | nul
       </div>
       <a href={coaArchiveUrl()} className="rg-hplc-archive">
         <span className="rg-hplc-archive-label">COA archive</span>
-        <span className="rg-hplc-archive-url">peplab.ai/coa</span>
+        <span className="rg-hplc-archive-url">{siteHostname()}/coa</span>
         <span className="rg-hplc-archive-cta">
           View full COA <ArrowRight className="w-3.5 h-3.5" />
         </span>

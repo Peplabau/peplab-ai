@@ -1,18 +1,25 @@
 /**
- * Dual-domain PEPLAB storefront (same Vercel project, both Production).
+ * PEPLAB domain routing — split deployments (recommended for SEO):
  *
- * LOCKED .com.au / OPEN .ai (current):
- *   peplab.com.au  → Login entry + public SEO pages. Shop requires sign-in;
- *                    after login, full access stays on this domain.
- *   peplab.ai      → Full open shop (VITE_SITE_URL / VITE_MAIN_APP_ORIGIN).
+ *   peplab.com.au  → This repo / Vercel project #1
+ *                    Login entry + public SEO pages; shop requires sign-in.
+ *                    index.html, sitemap, robots all use peplab.com.au.
  *
- * To open the full shop on both domains again, clear VITE_LOGIN_ONLY_HOSTS.
+ *   peplab.ai      → Separate repo copy / Vercel project #2
+ *                    Full open storefront. Apply files from deploy/peplab-ai/.
  *
- * Env:
+ * Env (this .com.au deployment):
+ *   VITE_SITE_URL           = https://peplab.com.au
+ *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai   (Shop now / open storefront)
+ *   VITE_LOGIN_ONLY_HOSTS   = peplab.com.au,www.peplab.com.au
+ *
+ * Env (peplab.ai deployment — see deploy/peplab-ai/.env.example):
  *   VITE_SITE_URL           = https://peplab.ai
  *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai
- *   VITE_LOGIN_ONLY_HOSTS   = peplab.com.au,www.peplab.com.au
+ *   VITE_LOGIN_ONLY_HOSTS   =   (empty — full shop)
  */
+
+import { CONFIG } from './config';
 
 /** Hosts that only render the login/auth flow. Empty = full shop everywhere. */
 const DEFAULT_LOGIN_ONLY_HOSTS = 'peplab.com.au,www.peplab.com.au';
@@ -58,6 +65,20 @@ const LOGIN_ONLY_HOSTS = resolveLoginOnlyHosts();
 export const MAIN_APP_ORIGIN: string = (
   import.meta.env.VITE_MAIN_APP_ORIGIN ?? DEFAULT_MAIN_APP_ORIGIN
 ).replace(/\/+$/, '');
+
+/** Canonical site origin for this deployment (no trailing slash). */
+export function siteOrigin(): string {
+  return CONFIG.SITE_URL.replace(/\/$/, '');
+}
+
+/** Hostname shown in footers and legal copy, e.g. peplab.com.au */
+export function siteHostname(): string {
+  try {
+    return new URL(siteOrigin()).hostname;
+  } catch {
+    return 'peplab.com.au';
+  }
+}
 
 /**
  * True when the current page is being served from a host that should be

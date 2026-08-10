@@ -4,14 +4,35 @@
  *
  * Uses scripts/storefront-product-slugs.mjs — NOT seed ids from src/products.ts.
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { STOREFRONT_PRODUCT_SLUGS } from './storefront-product-slugs.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
-const SITE_URL = (process.env.VITE_SITE_URL || 'https://peplab.com.au').replace(/\/$/, '');
+
+/** Read VITE_* from process.env or `.env` (prebuild runs before Vite loads env). */
+function envVar(name, fallback) {
+  if (process.env[name]) return process.env[name];
+  try {
+    const text = readFileSync(join(root, '.env'), 'utf8');
+    for (const line of text.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eq = trimmed.indexOf('=');
+      if (eq === -1) continue;
+      const key = trimmed.slice(0, eq).trim();
+      if (key !== name) continue;
+      return trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
+    }
+  } catch {
+    /* no .env */
+  }
+  return fallback;
+}
+
+const SITE_URL = envVar('VITE_SITE_URL', 'https://peplab.com.au').replace(/\/$/, '');
 
 const STATIC_ROUTES = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },

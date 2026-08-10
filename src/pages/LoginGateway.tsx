@@ -13,8 +13,8 @@ import {
   EyeOff,
   ArrowRight,
   Send,
-  UserPlus,
-  HelpCircle,
+  // UserPlus,
+  // HelpCircle,
   User,
   Ticket,
   ArrowLeft,
@@ -31,7 +31,6 @@ import { sendSignUpWelcome } from '@/lib/email';
 import { resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
 import { LOGIN_GATEWAY_PAGE_TITLE, MAIN_APP_ORIGIN } from '@/lib/domain';
-import { CONFIG } from '@/lib/config';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { validateSignupReferralCode } from '@/lib/signup-referral';
 import { CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
@@ -70,7 +69,7 @@ export default function LoginGateway() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [showNewMemberHelp, setShowNewMemberHelp] = useState(false);
+  // const [showNewMemberHelp, setShowNewMemberHelp] = useState(false);
   const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({
     name: '',
@@ -80,7 +79,7 @@ export default function LoginGateway() {
   });
   const [referralFromLink, setReferralFromLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [telegramLink, setTelegramLink] = useState(CONFIG.SOCIAL.TELEGRAM);
+  // const [telegramLink, setTelegramLink] = useState(CONFIG.SOCIAL.TELEGRAM);
   const [whatsappLink, setWhatsappLink] = useState(DEFAULT_SUPPORT_LINKS.whatsapp_link);
 
   const getReferrerIdFromUrl = (): string | null => {
@@ -127,13 +126,9 @@ export default function LoginGateway() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      getSiteSetting('telegram_link', { url: DEFAULT_SUPPORT_LINKS.telegram_link }),
-      getSiteSetting('whatsapp_link', { url: DEFAULT_SUPPORT_LINKS.whatsapp_link }),
-    ])
-      .then(([telegramVal, whatsappVal]) => {
+    getSiteSetting('whatsapp_link', { url: DEFAULT_SUPPORT_LINKS.whatsapp_link })
+      .then((whatsappVal) => {
         if (cancelled) return;
-        setTelegramLink((telegramVal as { url?: string })?.url || DEFAULT_SUPPORT_LINKS.telegram_link);
         const wa = (whatsappVal as { url?: string })?.url?.trim();
         setWhatsappLink(wa || DEFAULT_SUPPORT_LINKS.whatsapp_link);
       })
@@ -576,6 +571,7 @@ export default function LoginGateway() {
               )}
             </div>
 
+            {/* "New to PEPLAB?" help dropdown — hidden; Shop now + Community/WhatsApp cover new visitors
             {!isSignUp && (
               <div className="mt-5 rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.45)] overflow-hidden">
                 <button
@@ -649,6 +645,7 @@ export default function LoginGateway() {
                 )}
               </div>
             )}
+            */}
           </div>
         </main>
 

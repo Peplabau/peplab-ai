@@ -1,4 +1,4 @@
-/** Main storefront homepage (peplab.ai). */
+/** Main storefront homepage. */
 export const HOME_PATH = '/';
 
 /** Canonical shop / catalogue URL. */
@@ -16,9 +16,11 @@ export const PROTOCOLS_PATH = '/protocols';
 /** Published COA archive — all products with certificates on file. */
 export const COA_ARCHIVE_PATH = '/coa';
 
+import { CONFIG } from '@/lib/config';
+
 /** Full URL for external links (subdomain override via env). */
 export const LANDING_SITE_URL =
   import.meta.env.VITE_LANDING_SITE_URL ||
   (typeof window !== 'undefined'
     ? `${window.location.origin}${LANDING_PATH}`
-    : 'https://peplab.ai/landing');
+    : `${CONFIG.SITE_URL.replace(/\/$/, '')}${LANDING_PATH}`);

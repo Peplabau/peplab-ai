@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Star, ThumbsUp, CheckCircle } from 'lucide-react';
+import { Star, ThumbsUp, CheckCircle, ExternalLink } from 'lucide-react';
 import { ReviewPhoto } from '@/components/ReviewImageUpload';
+import { CONFIG } from '@/lib/config';
 import { getHomepageReviews, incrementReviewHelpful, type HomepageReviewRow } from '@/lib/supabase-db';
 import {
   getReviewHelpfulVotedIds,
@@ -281,7 +282,17 @@ export default function Reviews() {
           </div>
         </div>
 
-        {/* CTA removed per landing-page request */}
+        <div className="mt-10 flex justify-center">
+          <a
+            href={CONFIG.TRUSTPILOT.REVIEW_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold bg-[#2ED1B4] text-[#070A12] hover:bg-[#26b89e] transition-colors"
+          >
+            Write a review on Trustpilot
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
       </div>
     </section>
   );

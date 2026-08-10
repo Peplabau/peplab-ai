@@ -1,5 +1,5 @@
 import { CONFIG } from './config';
-import { MAIN_APP_ORIGIN } from './domain';
+import { siteOrigin } from './domain';
 
 /** Light transactional palette — white card, no dark outer frame (matches saved-cart emails). */
 export const EMAIL_THEME = {
@@ -88,7 +88,7 @@ export function wrapPeplabEmail(opts: WrapOpts): string {
   const pre = escapeHtml(opts.preheader ?? '').slice(0, 140);
   const headline = escapeHtml(opts.headline);
   const subline = opts.subline ? escapeHtml(opts.subline) : '';
-  const site = escapeHtml((MAIN_APP_ORIGIN || CONFIG.SITE_URL).replace(/\/$/, ''));
+  const site = escapeHtml(siteOrigin());
   const supportContact = emailSupportContactLinks(opts.supportLinks);
   const pageBg = opts.colors?.pageBg ?? C.pageBg;
   const panel = opts.colors?.panel ?? C.panel;
