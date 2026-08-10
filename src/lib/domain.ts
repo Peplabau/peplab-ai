@@ -5,15 +5,15 @@
  *                    Login entry + public SEO pages; shop requires sign-in.
  *                    index.html, sitemap, robots all use peplab.com.au.
  *
- *   peplab.ai      → Separate repo copy / Vercel project #2
- *                    Full open storefront. Apply files from deploy/peplab-ai/.
+ *   peplab.ai      → Separate repo (peplab-ai) / Vercel project #2
+ *                    Full open storefront.
  *
  * Env (this .com.au deployment):
  *   VITE_SITE_URL           = https://peplab.com.au
  *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai   (Shop now / open storefront)
  *   VITE_LOGIN_ONLY_HOSTS   = peplab.com.au,www.peplab.com.au
  *
- * Env (peplab.ai deployment — see deploy/peplab-ai/.env.example):
+ * Env (peplab.ai deployment — separate peplab-ai repo):
  *   VITE_SITE_URL           = https://peplab.ai
  *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai
  *   VITE_LOGIN_ONLY_HOSTS   =   (empty — full shop)
