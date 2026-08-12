@@ -22,7 +22,7 @@ import { isLoginOnlyDomain } from '@/lib/domain';
 import Catalog from '@/sections/Catalog';
 import BulkSales from '@/sections/BulkSales';
 import Quality from '@/sections/Quality';
-import Reviews from '@/sections/Reviews';
+import TrustpilotReviews from '@/sections/TrustpilotReviews';
 import LeaderboardTop3 from '@/sections/LeaderboardTop3';
 import Footer from '@/sections/Footer';
 
@@ -142,8 +142,8 @@ function HomePage() {
         {/* Quality Section (merged purity/standards/quality/trust) */}
         <Quality />
 
-        {/* Customer reviews */}
-        <Reviews />
+        {/* Trustpilot reviews */}
+        <TrustpilotReviews />
         
         {/* Promoter Leaderboard — Top 3 podium with CTA to full /leaderboard */}
         <LeaderboardTop3 />

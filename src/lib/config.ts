@@ -102,6 +102,8 @@ export const CONFIG = {
       REVIEW_CAROUSEL: '53aa8912dec7e10d38f59f36',
       MINI: '53aa8807dec7e10d38f59f32',
       GRID: '5418cfb6d4884ec5fcc6cc8b',
+      /** Review Collector — leave a review on-site */
+      REVIEW_COLLECTOR: '56278e9abfbbba0bdcd568bc',
     },
   },
 

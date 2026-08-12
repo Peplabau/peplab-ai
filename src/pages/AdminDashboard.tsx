@@ -17,6 +17,7 @@ import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_
 import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, type PointsEvent } from '@/lib/supabase-db';
 import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-reward';
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
+import TrustpilotAdminSection from '@/components/admin/TrustpilotAdminSection';
 import ResearchMarquee from '@/components/ResearchMarquee';
 import { DEFAULT_MORE_INFO_TEXT } from '@/lib/defaultMoreInfo';
 import { BONUS_POINTS } from '@/context/RewardsContext';
@@ -762,7 +763,7 @@ export default function AdminDashboard() {
           {activeTab === 'orders' && <OrdersSection />}
           {activeTab === 'products' && <ProductsSection />}
           {activeTab === 'users' && <UsersSection />}
-          {activeTab === 'reviews' && <ReviewsAdminSection />}
+          {activeTab === 'reviews' && <ReviewsAdminHub />}
           {/* Affiliates tab disabled — see navItems comment above. */}
           {/* {activeTab === 'affiliates' && <AffiliatesSection />} */}
           {activeTab === 'promo-codes' && <PromoCodesSection />}
@@ -5576,6 +5577,40 @@ function UsersSection() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Reviews Admin Hub — product reviews + Trustpilot sync
+function ReviewsAdminHub() {
+  const [subTab, setSubTab] = useState<'product' | 'trustpilot'>('trustpilot');
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-2 p-1 rounded-xl bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.08)] w-fit">
+        <button
+          type="button"
+          onClick={() => setSubTab('trustpilot')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            subTab === 'trustpilot'
+              ? 'bg-[#2ED1B4] text-[#070A12]'
+              : 'text-[#A9B3C7] hover:text-[#F4F6FA]'
+          }`}
+        >
+          Trustpilot
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubTab('product')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            subTab === 'product'
+              ? 'bg-[#2ED1B4] text-[#070A12]'
+              : 'text-[#A9B3C7] hover:text-[#F4F6FA]'
+          }`}
+        >
+          Product reviews
+        </button>
+      </div>
+      {subTab === 'trustpilot' ? <TrustpilotAdminSection /> : <ReviewsAdminSection />}
     </div>
   );
 }

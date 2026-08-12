@@ -1253,6 +1253,266 @@ export const getHomepageReviews = (): Promise<HomepageReviewRow[]> =>
     true, // SWR: return stale immediately, refresh in background
   );
 
+// ============================================
+// TRUSTPILOT (synced into Supabase)
+// ============================================
+
+export interface TrustpilotReviewRow {
+  id: string;
+  external_id: string;
+  author_name: string | null;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  reviewed_at: string | null;
+  is_verified: boolean | null;
+  source_url: string | null;
+  is_visible?: boolean | null;
+  admin_edited?: boolean | null;
+}
+
+export interface TrustpilotStatsRow {
+  id: number;
+  trust_score: number | null;
+  review_count: number;
+  stars_breakdown: Record<string, number> | null;
+  last_synced_at: string | null;
+  last_sync_error: string | null;
+}
+
+export interface TrustpilotHomepageFeed {
+  reviews: TrustpilotReviewRow[];
+  stats: TrustpilotStatsRow | null;
+}
+
+export const getTrustpilotHomepageFeed = (): Promise<TrustpilotHomepageFeed> =>
+  cached(
+    'trustpilot:homepage',
+    async () => {
+      const [reviewsRes, statsRes] = await Promise.all([
+        supabase
+          .from('trustpilot_reviews')
+          .select(
+            'id, external_id, author_name, rating, title, body, reviewed_at, is_verified, source_url',
+          )
+          .eq('is_visible', true)
+          .order('reviewed_at', { ascending: false, nullsFirst: false }),
+        supabase
+          .from('trustpilot_stats')
+          .select('id, trust_score, review_count, stars_breakdown, last_synced_at, last_sync_error')
+          .eq('id', 1)
+          .maybeSingle(),
+      ]);
+
+      if (reviewsRes.error) {
+        console.error('Failed to load Trustpilot reviews:', reviewsRes.error);
+      }
+      if (statsRes.error) {
+        console.error('Failed to load Trustpilot stats:', statsRes.error);
+      }
+
+      return {
+        reviews: (reviewsRes.data || []) as TrustpilotReviewRow[],
+        stats: (statsRes.data as TrustpilotStatsRow | null) || null,
+      };
+    },
+    TTL_REVIEWS,
+    false,
+    true,
+  );
+
+/** Admin: all Trustpilot rows including hidden. */
+export const getTrustpilotAdminReviews = async (): Promise<{
+  reviews: TrustpilotReviewRow[];
+  stats: TrustpilotStatsRow | null;
+}> => {
+  const [reviewsRes, statsRes] = await Promise.all([
+    supabase
+      .from('trustpilot_reviews')
+      .select(
+        'id, external_id, author_name, rating, title, body, reviewed_at, is_verified, source_url, is_visible, admin_edited',
+      )
+      .order('reviewed_at', { ascending: false, nullsFirst: false }),
+    supabase
+      .from('trustpilot_stats')
+      .select('id, trust_score, review_count, stars_breakdown, last_synced_at, last_sync_error')
+      .eq('id', 1)
+      .maybeSingle(),
+  ]);
+  if (reviewsRes.error) throw reviewsRes.error;
+  return {
+    reviews: (reviewsRes.data || []) as TrustpilotReviewRow[],
+    stats: (statsRes.data as TrustpilotStatsRow | null) || null,
+  };
+};
+
+export const invokeSyncTrustpilot = async (): Promise<{
+  ok?: boolean;
+  imported?: number;
+  updated?: number;
+  skippedEdited?: number;
+  totalMapped?: number;
+  stats?: TrustpilotStatsRow;
+  warning?: string | null;
+  debug?: { rawItemCount?: number; sampleKeys?: unknown; runId?: string | null };
+  error?: string;
+}> => {
+  const { data, error } = await supabase.functions.invoke('sync-trustpilot', { body: {} });
+  if (error) {
+    const message =
+      (data as { error?: string } | null)?.error ||
+      error.message ||
+      'Trustpilot sync failed';
+    return { error: message };
+  }
+  invalidateCache('trustpilot:homepage');
+  return (data || {}) as {
+    ok?: boolean;
+    imported?: number;
+    updated?: number;
+    skippedEdited?: number;
+    totalMapped?: number;
+    stats?: TrustpilotStatsRow;
+    warning?: string | null;
+    debug?: { rawItemCount?: number; sampleKeys?: unknown; runId?: string | null };
+    error?: string;
+  };
+};
+
+export const updateTrustpilotReview = async (
+  id: string,
+  patch: {
+    author_name?: string | null;
+    rating?: number;
+    title?: string | null;
+    body?: string | null;
+    is_visible?: boolean;
+    is_verified?: boolean;
+  },
+): Promise<{ error?: string }> => {
+  const { error } = await supabase
+    .from('trustpilot_reviews')
+    .update({
+      ...patch,
+      admin_edited: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+  if (error) return { error: error.message };
+  invalidateCache('trustpilot:homepage');
+  await refreshTrustpilotStatsFromReviews();
+  return {};
+};
+
+export const deleteTrustpilotReview = async (id: string): Promise<{ error?: string }> => {
+  const { error } = await supabase.from('trustpilot_reviews').delete().eq('id', id);
+  if (error) return { error: error.message };
+  invalidateCache('trustpilot:homepage');
+  await refreshTrustpilotStatsFromReviews();
+  return {};
+};
+
+export type TrustpilotManualReviewInput = {
+  author_name?: string | null;
+  rating: number;
+  title?: string | null;
+  body?: string | null;
+  reviewed_at?: string | null;
+  is_verified?: boolean;
+  is_visible?: boolean;
+  external_id?: string;
+};
+
+/** Recalculate trust_score / review_count from visible rows and upsert stats. */
+export const refreshTrustpilotStatsFromReviews = async (): Promise<{ error?: string }> => {
+  const { data: rows, error } = await supabase
+    .from('trustpilot_reviews')
+    .select('rating')
+    .eq('is_visible', true);
+  if (error) return { error: error.message };
+
+  const list = rows || [];
+  const review_count = list.length;
+  const trust_score =
+    review_count === 0
+      ? null
+      : Math.round(
+          (list.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / review_count) * 10,
+        ) / 10;
+
+  const { error: upsertError } = await supabase.from('trustpilot_stats').upsert(
+    {
+      id: 1,
+      trust_score,
+      review_count,
+      last_synced_at: new Date().toISOString(),
+      last_sync_error: null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'id' },
+  );
+  if (upsertError) return { error: upsertError.message };
+  invalidateCache('trustpilot:homepage');
+  return {};
+};
+
+export const createTrustpilotReview = async (
+  input: TrustpilotManualReviewInput,
+): Promise<{ error?: string }> => {
+  const rating = Math.min(5, Math.max(1, Math.round(Number(input.rating) || 5)));
+  const external_id =
+    input.external_id?.trim() ||
+    `manual:${crypto.randomUUID()}`;
+
+  const { error } = await supabase.from('trustpilot_reviews').insert({
+    external_id,
+    author_name: input.author_name?.trim() || null,
+    rating,
+    title: input.title?.trim() || null,
+    body: input.body?.trim() || null,
+    reviewed_at: input.reviewed_at || null,
+    is_verified: input.is_verified ?? true,
+    is_visible: input.is_visible ?? true,
+    admin_edited: true,
+    raw: { imported_manually: true },
+  });
+  if (error) return { error: error.message };
+
+  await refreshTrustpilotStatsFromReviews();
+  return {};
+};
+
+export const importTrustpilotReviewsBulk = async (
+  items: TrustpilotManualReviewInput[],
+): Promise<{ imported: number; error?: string }> => {
+  if (!items.length) return { imported: 0, error: 'No reviews to import' };
+
+  const rows = items.map((input, i) => {
+    const rating = Math.min(5, Math.max(1, Math.round(Number(input.rating) || 5)));
+    return {
+      external_id: input.external_id?.trim() || `manual-import:${Date.now()}-${i}`,
+      author_name: input.author_name?.trim() || null,
+      rating,
+      title: input.title?.trim() || null,
+      body: input.body?.trim() || null,
+      reviewed_at: input.reviewed_at || null,
+      is_verified: input.is_verified ?? true,
+      is_visible: input.is_visible ?? true,
+      admin_edited: true,
+      raw: { imported_manually: true },
+    };
+  });
+
+  const { error } = await supabase.from('trustpilot_reviews').upsert(rows, {
+    onConflict: 'external_id',
+    ignoreDuplicates: false,
+  });
+  if (error) return { imported: 0, error: error.message };
+
+  await refreshTrustpilotStatsFromReviews();
+  return { imported: rows.length };
+};
+
 // Re-export cache invalidation for admin use
 export { invalidateCache };
 

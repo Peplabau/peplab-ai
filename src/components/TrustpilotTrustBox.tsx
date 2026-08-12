@@ -15,27 +15,27 @@ const TRUSTPILOT_SCRIPT_SRC =
 
 function ensureTrustpilotScript(): Promise<void> {
   if (typeof window === 'undefined') return Promise.resolve();
-  if (window.Trustpilot) return Promise.resolve();
+  if (window.Trustpilot?.loadFromElement) return Promise.resolve();
 
   const existing = document.getElementById(TRUSTPILOT_SCRIPT_ID) as HTMLScriptElement | null;
-  if (existing) {
-    return new Promise((resolve) => {
-      if (window.Trustpilot) {
+
+  const waitForApi = () =>
+    new Promise<void>((resolve) => {
+      if (window.Trustpilot?.loadFromElement) {
         resolve();
         return;
       }
-      existing.addEventListener('load', () => resolve(), { once: true });
+      const started = Date.now();
       const poll = window.setInterval(() => {
-        if (window.Trustpilot) {
+        if (window.Trustpilot?.loadFromElement || Date.now() - started > 10000) {
           window.clearInterval(poll);
           resolve();
         }
-      }, 150);
-      window.setTimeout(() => {
-        window.clearInterval(poll);
-        resolve();
-      }, 8000);
+      }, 100);
     });
+
+  if (existing) {
+    return waitForApi();
   }
 
   return new Promise((resolve) => {
@@ -44,7 +44,9 @@ function ensureTrustpilotScript(): Promise<void> {
     script.type = 'text/javascript';
     script.src = TRUSTPILOT_SCRIPT_SRC;
     script.async = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      void waitForApi().then(resolve);
+    };
     script.onerror = () => resolve();
     document.head.appendChild(script);
   });
@@ -54,10 +56,12 @@ type TrustpilotTrustBoxProps = {
   templateId: string;
   height: string;
   className?: string;
-  /** Optional Trustpilot widget token (shown in embed code on Plus plans). */
+  /** Optional Trustpilot widget token from embed code. */
   token?: string;
-  /** Filter to 4–5 star reviews only when supported by the template. */
-  stars?: '4,5';
+  /** Filter stars when supported by the template (e.g. "1,2,3,4,5"). */
+  stars?: string;
+  theme?: 'dark' | 'light';
+  locale?: string;
 };
 
 export default function TrustpilotTrustBox({
@@ -66,6 +70,8 @@ export default function TrustpilotTrustBox({
   className = '',
   token,
   stars,
+  theme = 'dark',
+  locale = 'en-AU',
 }: TrustpilotTrustBoxProps) {
   const widgetRef = useRef<HTMLDivElement>(null);
   const businessUnitId = CONFIG.TRUSTPILOT.BUSINESS_UNIT_ID;
@@ -75,16 +81,31 @@ export default function TrustpilotTrustBox({
     if (!element || !businessUnitId) return;
 
     let cancelled = false;
+    let retryTimer: number | null = null;
+
+    const load = () => {
+      if (cancelled || !widgetRef.current || !window.Trustpilot?.loadFromElement) return;
+      window.Trustpilot.loadFromElement(widgetRef.current, true);
+    };
 
     void ensureTrustpilotScript().then(() => {
-      if (cancelled || !widgetRef.current) return;
-      window.Trustpilot?.loadFromElement(widgetRef.current, true);
+      if (cancelled) return;
+      load();
+      // SPA / lazy mount: retry once after paint in case the first call raced the iframe.
+      retryTimer = window.setTimeout(load, 400);
     });
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       cancelled = true;
+      if (retryTimer != null) window.clearTimeout(retryTimer);
+      document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [businessUnitId, templateId, height, token, stars]);
+  }, [businessUnitId, templateId, height, token, stars, theme, locale]);
 
   if (!businessUnitId) return null;
 
@@ -92,12 +113,12 @@ export default function TrustpilotTrustBox({
     <div
       ref={widgetRef}
       className={`trustpilot-widget ${className}`.trim()}
-      data-locale="en-AU"
+      data-locale={locale}
       data-template-id={templateId}
       data-businessunit-id={businessUnitId}
       data-style-height={height}
       data-style-width="100%"
-      data-theme="dark"
+      data-theme={theme}
       {...(token ? { 'data-token': token } : {})}
       {...(stars ? { 'data-stars': stars } : {})}
     >

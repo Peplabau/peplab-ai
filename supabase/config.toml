@@ -4,6 +4,9 @@
 [functions.send-email]
 verify_jwt = false
 
+[functions.sync-trustpilot]
+verify_jwt = true
+
 # -----------------------------------------------------------------------------
 # Auth — frictionless signup (no email verification)
 # -----------------------------------------------------------------------------
