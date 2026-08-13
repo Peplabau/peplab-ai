@@ -18,7 +18,7 @@ const SMALL_CARDS = [
     icon: FileText,
     title: 'Batch records',
     description:
-      'Batch documentation is maintained internally while public certificate links are being updated.',
+      'Certificates of Analysis are published in the public COA archive — view the full document for any tested batch.',
   },
   {
     icon: Search,
