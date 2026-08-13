@@ -40,8 +40,8 @@ export const CONFIG = {
   // GA_MEASUREMENT_ID: import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-KPKKM59S9Y',
   GA_MEASUREMENT_ID: '',
 
-  /** Blur COA PDF previews in the dialog (default on). Set VITE_COA_PDF_BLURRED=false to disable. */
-  COA_PDF_BLURRED: import.meta.env.VITE_COA_PDF_BLURRED !== 'false',
+  /** Blur COA PDF previews in the dialog (default off — published COAs are visible). Set VITE_COA_PDF_BLURRED=true to blur. */
+  COA_PDF_BLURRED: import.meta.env.VITE_COA_PDF_BLURRED === 'true',
 
   // Australia Post API (Optional — for live shipping rates).
   // Values come from env vars only; see `.env.example`. When the live
