@@ -15,8 +15,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 const cachedCatalogProducts = getCache<Product[]>('products:all', true);
 
-/** Catalog-only community invite (not the site-wide support Telegram setting). */
-const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+-t-PWn90U9QyZGFl';
+/** Catalog-only community invite with admin approval (not the site-wide support Telegram setting). */
+const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
 
 export default function Catalog() {
   const sectionRef = useRef<HTMLElement>(null);
