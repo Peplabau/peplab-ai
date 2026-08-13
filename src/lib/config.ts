@@ -43,10 +43,9 @@ export const CONFIG = {
   /** Blur COA PDF previews in the dialog (default off — published COAs are visible). Set VITE_COA_PDF_BLURRED=true to blur. */
   COA_PDF_BLURRED: import.meta.env.VITE_COA_PDF_BLURRED === 'true',
 
-  // Australia Post API (Optional — for live shipping rates).
-  // Values come from env vars only; see `.env.example`. When the live
-  // integration is enabled, move these to a Supabase Edge Function so the
-  // key is not exposed in the client bundle at all.
+  // Australia Post postage rate placeholders (legacy). Label creation uses the
+  // Edge Function `auspost-create-label` with server-side secrets — never put
+  // Shipping API credentials in VITE_* vars.
   AUSPOST_API_KEY: import.meta.env.VITE_AUSPOST_API_KEY || '',
   AUSPOST_API_SECRET: import.meta.env.VITE_AUSPOST_API_SECRET || '',
 

@@ -7,6 +7,9 @@ verify_jwt = false
 [functions.sync-trustpilot]
 verify_jwt = true
 
+[functions.auspost-create-label]
+verify_jwt = true
+
 # -----------------------------------------------------------------------------
 # Auth — frictionless signup (no email verification)
 # -----------------------------------------------------------------------------

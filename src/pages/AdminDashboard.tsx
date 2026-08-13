@@ -40,6 +40,7 @@ import {
 } from '@/lib/promo-codes';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
 import { sendPaymentReceived, sendOrderShipped, sendReplacementTrackingEmail, sendOrderDeliveredReviewEmail } from '@/lib/email';
+import { createAusPostLabel } from '@/lib/auspost-shipping';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { SEO } from '@/components/SEO';
 import {
@@ -73,6 +74,8 @@ interface Order {
   shipping_method: string;
   tracking_number: string;
   additional_tracking_numbers?: string[] | null;
+  auspost_shipment_id?: string | null;
+  auspost_label_url?: string | null;
   notes: string;
   created_at: string;
   paid_at: string;
@@ -1644,6 +1647,7 @@ function OrdersSection() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [copiedShippingField, setCopiedShippingField] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isCreatingAusPostLabel, setIsCreatingAusPostLabel] = useState(false);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBulkSendingReviewEmails, setIsBulkSendingReviewEmails] = useState(false);
@@ -2220,6 +2224,116 @@ function OrdersSection() {
       alert('Failed to add tracking number: ' + adminRequestErrorMessage(error));
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  /** Create AusPost shipment + label, save tracking, mark shipped, email customer. */
+  const createAusPostLabelForOrder = async (order: Order) => {
+    if (order.tracking_number?.trim()) {
+      const reuse = window.confirm(
+        `This order already has tracking ${order.tracking_number}.\n\nCreate another AusPost label anyway?`,
+      );
+      if (!reuse) return;
+    } else {
+      const ok = window.confirm(
+        `Create Australia Post label for #${formatOrderNumberDisplay(order.order_number)}?\n\nThis will generate tracking, mark the order Shipped, and email the customer.`,
+      );
+      if (!ok) return;
+    }
+
+    setIsCreatingAusPostLabel(true);
+    try {
+      const result = await createAusPostLabel({
+        order_number: formatOrderNumberDisplay(order.order_number) || order.order_number,
+        shipping_method: order.shipping_method,
+        customer_first_name: order.customer_first_name,
+        customer_last_name: order.customer_last_name,
+        customer_email: order.customer_email,
+        customer_phone: order.customer_phone,
+        shipping_address: order.shipping_address,
+        shipping_suburb: order.shipping_suburb,
+        shipping_state: order.shipping_state,
+        shipping_postcode: order.shipping_postcode,
+      });
+
+      if (!result.success || !result.tracking_number) {
+        alert(`AusPost label failed:\n\n${result.error || 'Unknown error'}`);
+        return;
+      }
+
+      const tracking = result.tracking_number.trim();
+      const updates: Record<string, unknown> = {
+        tracking_number: tracking,
+        status: 'shipped',
+        shipped_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      if (result.shipment_id) updates.auspost_shipment_id = result.shipment_id;
+      if (result.label_url) updates.auspost_label_url = result.label_url;
+
+      const { error } = await supabase.from('orders').update(updates).eq('id', order.id);
+      if (error) throw error;
+
+      if (order.customer_email && !order.shipped_email_sent) {
+        void sendOrderShipped(order.customer_email, {
+          order_number: order.order_number,
+          tracking_number: tracking,
+        });
+      }
+
+      void loadOrders(true);
+      setSelectedOrder((prev) => {
+        if (!prev || prev.id !== order.id) return prev;
+        return {
+          ...prev,
+          tracking_number: tracking,
+          status: 'shipped',
+          auspost_shipment_id: result.shipment_id || prev.auspost_shipment_id,
+          auspost_label_url: result.label_url || prev.auspost_label_url,
+        };
+      });
+
+      // Award points in background (same as manual tracking).
+      void (async () => {
+        try {
+          const alreadyAwarded = await getOrderPointsAwarded(order.id);
+          if (!alreadyAwarded && order.user_id && order.subtotal > 0) {
+            const points = calculatePurchasePoints(order.subtotal, {
+              promoDiscountApplied: Number(order.affiliate_discount) > 0,
+            });
+            const earnedCountBefore = await getEarnedTransactionsCount(order.user_id);
+            await addUserPoints(
+              order.user_id,
+              points,
+              'purchase',
+              `Order ${formatOrderNumberDisplay(order.order_number)}`,
+              order.id,
+            );
+            if (earnedCountBefore === 0) {
+              await addUserPoints(order.user_id, BONUS_POINTS.FIRST_PURCHASE, 'first_order', 'First order bonus', null);
+            }
+          }
+        } catch (pointsErr) {
+          console.error('[createAusPostLabelForOrder] points award failed', pointsErr);
+        } finally {
+          window.dispatchEvent(new Event('peplab:points-updated'));
+        }
+      })();
+
+      if (result.label_url) {
+        window.open(result.label_url, '_blank', 'noopener,noreferrer');
+      }
+
+      alert(
+        `AusPost label created.\n\nTracking: ${tracking}${
+          result.warning ? `\n\nWarning: ${result.warning}` : ''
+        }${result.label_url ? '\n\nLabel PDF opened in a new tab.' : '\n\nNo label URL returned — retry or print later from order details.'}`,
+      );
+    } catch (error) {
+      console.error('AusPost label error:', error);
+      alert('AusPost label failed: ' + adminRequestErrorMessage(error));
+    } finally {
+      setIsCreatingAusPostLabel(false);
     }
   };
 
@@ -3104,22 +3218,44 @@ function OrdersSection() {
 
             <div className="p-4 rounded-xl bg-[rgba(7,10,18,0.55)] border border-[rgba(244,246,250,0.1)] mb-6">
               <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-                <button
-                  type="button"
-                  onClick={() => openAdminShippingLabelWindow(selectedOrder, { print: true })}
-                  className="px-4 py-2 rounded-lg bg-[#2ED1B4] text-[#070A12] text-sm font-semibold hover:opacity-90 flex items-center gap-2"
-                >
-                  <Printer className="w-4 h-4" />
-                  Print Label
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openAdminShippingLabelWindow(selectedOrder, { edit: true })}
-                  className="px-4 py-2 rounded-lg bg-[#8B5CF6] text-white text-sm font-semibold hover:opacity-90 flex items-center gap-2"
-                >
-                  <Pencil className="w-4 h-4" />
-                  Edit Label
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void createAusPostLabelForOrder(selectedOrder)}
+                    disabled={isCreatingAusPostLabel || isUpdating}
+                    className="px-4 py-2 rounded-lg bg-[#F59E0B] text-[#070A12] text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                    title="Create Australia Post shipment, tracking number, and printable label"
+                  >
+                    <Truck className="w-4 h-4" />
+                    {isCreatingAusPostLabel ? 'Creating AusPost label…' : 'Create AusPost Label'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openAdminShippingLabelWindow(selectedOrder, { print: true })}
+                    className="px-4 py-2 rounded-lg bg-[#2ED1B4] text-[#070A12] text-sm font-semibold hover:opacity-90 flex items-center gap-2"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Print Label
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openAdminShippingLabelWindow(selectedOrder, { edit: true })}
+                    className="px-4 py-2 rounded-lg bg-[#8B5CF6] text-white text-sm font-semibold hover:opacity-90 flex items-center gap-2"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit Label
+                  </button>
+                </div>
+                {selectedOrder.auspost_label_url ? (
+                  <a
+                    href={selectedOrder.auspost_label_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-[#F59E0B] hover:underline"
+                  >
+                    Open AusPost PDF
+                  </a>
+                ) : null}
               </div>
 
               <div className="text-sm text-[#F4F6FA] space-y-3 rounded-lg border border-[rgba(244,246,250,0.12)] bg-[rgba(0,0,0,0.25)] p-4 font-sans">
@@ -3290,6 +3426,26 @@ function OrdersSection() {
                   <Truck className="w-4 h-4 text-[#8B5CF6]" />
                   Tracking Information
                 </h4>
+
+                {!selectedOrder.tracking_number &&
+                  (selectedOrder.status === 'processing' || selectedOrder.status === 'finalised') && (
+                  <div className="mb-3">
+                    <button
+                      type="button"
+                      onClick={() => void createAusPostLabelForOrder(selectedOrder)}
+                      disabled={isCreatingAusPostLabel || isUpdating}
+                      className="w-full px-4 py-3 rounded-xl bg-[#F59E0B] text-[#070A12] font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <Truck className="w-5 h-5" />
+                      {isCreatingAusPostLabel
+                        ? 'Creating AusPost label…'
+                        : 'Create AusPost Label + Tracking'}
+                    </button>
+                    <p className="text-[11px] text-[#A9B3C7] mt-2 text-center">
+                      Auto-creates the label with customer details, saves tracking, marks Shipped, and emails the customer.
+                    </p>
+                  </div>
+                )}
 
                 {selectedOrder.tracking_number && (
                   <div className="space-y-2 mb-3">
