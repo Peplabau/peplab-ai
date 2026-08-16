@@ -76,6 +76,9 @@ export default function CoaDialog({ open, onOpenChange, data }: CoaDialogProps) 
   const pdfPreviewUrl = data.hasCoaPdf
     ? `${data.coaUrl}#toolbar=0&navpanes=0&view=FitH`
     : '';
+  const pdfMobileUrl = data.hasCoaPdf
+    ? `${data.coaUrl}#toolbar=0&navpanes=0&view=FitW`
+    : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -103,34 +106,22 @@ export default function CoaDialog({ open, onOpenChange, data }: CoaDialogProps) 
           <X size={16} strokeWidth={2.25} className="hidden sm:block" />
         </DialogClose>
 
-        <CoaHeader productName={data.productName} />
+        <div className="hidden sm:block">
+          <CoaHeader productName={data.productName} />
+        </div>
 
-        {/* Mobile — stacked full-width */}
-        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden sm:hidden">
-          <div className="flex min-h-0 flex-1 flex-col gap-2.5 px-3 pb-2 pt-2">
-            <CoaAnalyticsPanel
-              data={data}
-              purityValue={purityValue}
-              purityDecimals={purityDecimals}
-              animate={open}
-              compact
-              className="shrink-0"
+        {/* Mobile — PDF only */}
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-2 pt-12 sm:hidden">
+          {data.hasCoaPdf ? (
+            <CoaPdfPreview
+              title={`COA — ${data.productName}`}
+              src={pdfMobileUrl}
+              blurred={coaPdfBlurred}
+              fill
             />
-            <div className="flex min-h-0 flex-1 flex-col">
-              <CoaPreviewLabel />
-              {data.hasCoaPdf ? (
-                <CoaPdfPreview
-                  title={`COA preview — ${data.productName}`}
-                  src={pdfPreviewUrl}
-                  blurred={coaPdfBlurred}
-                  fill
-                />
-              ) : (
-                <CoaPdfPending fill />
-              )}
-            </div>
-          </div>
-          <CoaFooter compact data={data} />
+          ) : (
+            <CoaPdfPending fill />
+          )}
         </div>
 
         {/* Desktop */}
