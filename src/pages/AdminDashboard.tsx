@@ -7,7 +7,7 @@ import {
   CreditCard, Box, Send, Ban, Save, Tag, Gift, X, Pencil, Trash2,
   ChevronUp, ChevronDown, Star, MessageSquare, Upload, Image as ImageIcon,
   Printer, ArrowUp, ArrowDown, MinusCircle, PlusCircle, Link2, Copy, Check,
-  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square
+  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square, Clock
 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +18,7 @@ import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPoints
 import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-reward';
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
 import TrustpilotAdminSection from '@/components/admin/TrustpilotAdminSection';
+import OrderTimingSection from '@/components/admin/OrderTimingSection';
 import ResearchMarquee from '@/components/ResearchMarquee';
 import { DEFAULT_MORE_INFO_TEXT } from '@/lib/defaultMoreInfo';
 import { BONUS_POINTS } from '@/context/RewardsContext';
@@ -446,6 +447,7 @@ interface Product {
 type AdminTabId =
   | 'overview'
   | 'orders'
+  | 'timing'
   | 'products'
   | 'users'
   | 'reviews'
@@ -456,6 +458,7 @@ type AdminTabId =
 const ADMIN_TAB_IDS = new Set<AdminTabId>([
   'overview',
   'orders',
+  'timing',
   'products',
   'users',
   'reviews',
@@ -630,6 +633,7 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'orders', label: 'Orders', icon: ShoppingCart },
+    { id: 'timing', label: 'Timing', icon: Clock },
     { id: 'products', label: 'Products', icon: Package },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'reviews', label: 'Reviews', icon: MessageSquare },
@@ -761,6 +765,7 @@ export default function AdminDashboard() {
 
           {activeTab === 'overview' && <OverviewSection />}
           {activeTab === 'orders' && <OrdersSection />}
+          {activeTab === 'timing' && <OrderTimingSection />}
           {activeTab === 'products' && <ProductsSection />}
           {activeTab === 'users' && <UsersSection />}
           {activeTab === 'reviews' && <ReviewsAdminHub />}
