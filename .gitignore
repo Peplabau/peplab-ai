@@ -17,6 +17,4 @@ config.bat
 
 # Local environment variables — never commit real values.
 # `.env.example` (tracked) documents which variables to set.
-.env
-.env.local
 .env.*.local

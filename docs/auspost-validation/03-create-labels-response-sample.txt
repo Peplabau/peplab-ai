@@ -1,0 +1,13 @@
+HTTP 200
+
+{
+  "labels": [
+    {
+      "url": "https://digitalapi.auspost.com.au/.../label.pdf",
+      "status": "AVAILABLE",
+      "shipment_ids": ["EXAMPLE_SHIPMENT_ID"]
+    }
+  ]
+}
+
+Note: Attach the actual test label PDF separately if the support form allows (in addition to these JSON TXT files).

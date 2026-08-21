@@ -1,0 +1,25 @@
+HTTP 201
+
+{
+  "shipments": [
+    {
+      "shipment_id": "EXAMPLE_SHIPMENT_ID",
+      "shipment_reference": "D2HMW3XY",
+      "shipment_creation_date": "2026-08-13T20:00:00+10:00",
+      "items": [
+        {
+          "item_id": "EXAMPLE_ITEM_ID",
+          "item_reference": "D2HMW3XY",
+          "product_id": "3K55",
+          "tracking_details": {
+            "article_id": "111JD884511601000960800",
+            "consignment_id": "111JD884511601000960800"
+          }
+        }
+      ]
+    }
+  ]
+}
+
+Note: Prefer replacing EXAMPLE_* with real shipment_id / item_id from your successful testbed create-shipment response.
+ Tracking article used in testing: 111JD884511601000960800

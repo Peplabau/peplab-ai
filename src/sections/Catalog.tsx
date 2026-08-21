@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Search, Truck, Gift, Beaker, Award, TrendingUp, MessageCircle } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
+import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
 import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS, type DiscountSettings } from '@/lib/settings';
 import { getCache } from '@/lib/cache';
 import { preloadProductImages } from '@/lib/product-image';
@@ -14,6 +15,7 @@ import ResearchMarquee from '@/components/ResearchMarquee';
 gsap.registerPlugin(ScrollTrigger);
 
 const cachedCatalogProducts = getCache<Product[]>('products:all', true);
+const cachedCatalogSales = getCache<Record<string, number>>('products:homepage-sales', true);
 
 /** Catalog-only community invite with admin approval (not the site-wide support Telegram setting). */
 const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
@@ -24,7 +26,7 @@ export default function Catalog() {
   const gridRef = useRef<HTMLDivElement>(null);
   const cardRenderIndex = useRef(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const initialProducts = cachedCatalogProducts ?? [];
+  const initialProducts = rankCatalogBySales(cachedCatalogProducts ?? [], cachedCatalogSales ?? {});
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(initialProducts.length === 0);
   const [error, setError] = useState<string | null>(null);
@@ -41,13 +43,14 @@ export default function Catalog() {
 
     Promise.all([
       loadProductsFromSupabase(),
+      loadHomepageProductSales(),
       getSiteSetting('discount_settings', DEFAULT_DISCOUNT_SETTINGS),
       getSiteSetting<{ url: string }>('whatsapp_link', { url: DEFAULT_SUPPORT_LINKS.whatsapp_link }),
       getSiteSetting('research_disclaimer_settings', DEFAULT_RESEARCH_DISCLAIMER_SETTINGS),
     ])
-      .then(([data, discount, whatsapp, researchDisclaimerSettings]) => {
+      .then(([data, sales, discount, whatsapp, researchDisclaimerSettings]) => {
         if (!cancelled) {
-          setProducts(data);
+          setProducts(rankCatalogBySales(data, sales));
           setDiscountSettings(discount);
           setWhatsappLink(whatsapp?.url || '');
           setResearchDisclaimer(

@@ -1,0 +1,8 @@
+GET /test/shipping/v1/accounts/2005401703
+
+Headers:
+  Account-Number: 2005401703
+  Authorization: Basic <base64(API_KEY:PASSWORD)>
+  Accept: application/json
+
+(No request body)

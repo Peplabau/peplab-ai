@@ -1,0 +1,29 @@
+HTTP 200
+
+{
+  "account_number": "2005401703",
+  "name": "PEPLAB Australia",
+  "postage_products": [
+    {
+      "product_id": "7E55",
+      "type": "PARCEL POST",
+      "group": "Parcel Post"
+    },
+    {
+      "product_id": "3K55",
+      "type": "EXPRESS POST",
+      "group": "Express Post"
+    }
+  ],
+  "addresses": [
+    {
+      "type": "MERCHANT_LOCATION",
+      "lines": ["YOUR STREET ADDRESS"],
+      "suburb": "SYDNEY",
+      "state": "NSW",
+      "postcode": "2000"
+    }
+  ]
+}
+
+Note: Replace product/address fields with exact values returned from your successful testbed Get Accounts call if available.
