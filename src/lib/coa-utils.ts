@@ -125,9 +125,14 @@ function coaArchivePinIndex(product: Pick<Product, 'id' | 'name'>): number {
   return Number.POSITIVE_INFINITY;
 }
 
-/** Sort COA archive: pinned products first (client order), then A–Z. */
-export function sortCoaArchiveProducts<T extends Pick<Product, 'id' | 'name'>>(products: T[]): T[] {
+/** Sort COA archive: products with a PDF first, then pin order, then A–Z. */
+export function sortCoaArchiveProducts<T extends Pick<Product, 'id' | 'name' | 'coaUrl'>>(
+  products: T[],
+): T[] {
   return [...products].sort((a, b) => {
+    const aHas = productHasCoaPdf(a) ? 0 : 1;
+    const bHas = productHasCoaPdf(b) ? 0 : 1;
+    if (aHas !== bHas) return aHas - bHas;
     const pa = coaArchivePinIndex(a);
     const pb = coaArchivePinIndex(b);
     if (pa !== pb) return pa - pb;

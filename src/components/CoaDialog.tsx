@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, type ComponentProps } from 'react';
-import { Check, FileText, Shield, X } from 'lucide-react';
+import { Check, Download, FileText, Shield, X } from 'lucide-react';
 import { gsap } from 'gsap';
 import {
   Dialog,
@@ -13,6 +13,7 @@ import CoaHplcChart from '@/components/CoaHplcChart';
 import OzcaniumAnalyticsName, { OZCANIUM_ANALYTICS_LAB_NAME } from '@/components/OzcaniumAnalyticsName';
 import type { CoaDisplayData } from '@/lib/coa-utils';
 import { ACTIVE_COA_BATCH } from '@/lib/coa-utils';
+import { downloadCoaPdf, getCoaDownloadFilename } from '@/lib/coa-download';
 import { CONFIG } from '@/lib/config';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +76,9 @@ export default function CoaDialog({ open, onOpenChange, data }: CoaDialogProps) 
   const pdfPreviewUrl = data.hasCoaPdf
     ? `${data.coaUrl}#toolbar=0&navpanes=0&view=FitH`
     : '';
+  const pdfMobileUrl = data.hasCoaPdf
+    ? `${data.coaUrl}#toolbar=0&navpanes=0&view=FitW`
+    : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -102,34 +106,22 @@ export default function CoaDialog({ open, onOpenChange, data }: CoaDialogProps) 
           <X size={16} strokeWidth={2.25} className="hidden sm:block" />
         </DialogClose>
 
-        <CoaHeader productName={data.productName} />
+        <div className="hidden sm:block">
+          <CoaHeader productName={data.productName} />
+        </div>
 
-        {/* Mobile — stacked full-width */}
-        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden sm:hidden">
-          <div className="flex min-h-0 flex-1 flex-col gap-2.5 px-3 pb-2 pt-2">
-            <CoaAnalyticsPanel
-              data={data}
-              purityValue={purityValue}
-              purityDecimals={purityDecimals}
-              animate={open}
-              compact
-              className="shrink-0"
+        {/* Mobile — PDF only */}
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden p-2 pt-12 sm:hidden">
+          {data.hasCoaPdf ? (
+            <CoaPdfPreview
+              title={`COA — ${data.productName}`}
+              src={pdfMobileUrl}
+              blurred={coaPdfBlurred}
+              fill
             />
-            <div className="flex min-h-0 flex-1 flex-col">
-              <CoaPreviewLabel />
-              {data.hasCoaPdf ? (
-                <CoaPdfPreview
-                  title={`COA preview — ${data.productName}`}
-                  src={pdfPreviewUrl}
-                  blurred={coaPdfBlurred}
-                  fill
-                />
-              ) : (
-                <CoaPdfPending fill />
-              )}
-            </div>
-          </div>
-          <CoaFooter compact />
+          ) : (
+            <CoaPdfPending fill />
+          )}
         </div>
 
         {/* Desktop */}
@@ -161,7 +153,7 @@ export default function CoaDialog({ open, onOpenChange, data }: CoaDialogProps) 
               />
             </section>
           </div>
-          <CoaFooter />
+          <CoaFooter data={data} />
         </div>
       </DialogContent>
     </Dialog>
@@ -189,7 +181,12 @@ function CoaHeader({ productName }: { productName: string }) {
   );
 }
 
-function CoaFooter({ compact = false }: { compact?: boolean }) {
+function CoaFooter({ compact = false, data }: { compact?: boolean; data: CoaDisplayData }) {
+  const handleDownload = () => {
+    if (!data.hasCoaPdf) return;
+    void downloadCoaPdf(data.coaUrl, getCoaDownloadFilename(data.productName));
+  };
+
   return (
     <footer
       className={cn(
@@ -197,15 +194,30 @@ function CoaFooter({ compact = false }: { compact?: boolean }) {
         compact ? 'px-3.5 py-2' : 'px-4 py-2.5 sm:px-5',
       )}
     >
-      <a
-        href="/standards"
-        className={cn(
-          'coa-rg-btn-secondary flex w-full items-center justify-center rounded-lg border border-[rgba(244,246,250,0.12)] bg-[rgba(17,24,39,0.65)] font-bold uppercase tracking-[0.08em] text-[#F4F6FA] transition-colors hover:bg-[rgba(139,92,246,0.08)] active:scale-[0.99] sm:rounded-xl',
-          compact ? 'min-h-[44px] px-3 py-2.5 text-[11px]' : 'min-h-[40px] px-4 py-2.5 text-[11px]',
+      <div className={cn('flex w-full items-stretch', compact ? 'gap-2' : 'gap-2.5')}>
+        {data.hasCoaPdf && (
+          <button
+            type="button"
+            onClick={handleDownload}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-gradient-to-r from-[#3b82f6] via-[#8b5cf6] to-[#ec4899] font-bold uppercase tracking-[0.08em] text-white transition-opacity hover:opacity-90 active:scale-[0.99] sm:rounded-xl',
+              compact ? 'min-h-[44px] px-3 py-2.5 text-[11px]' : 'min-h-[40px] px-4 py-2.5 text-[11px]',
+            )}
+          >
+            <Download size={compact ? 13 : 14} strokeWidth={2.5} />
+            Download full COA
+          </button>
         )}
-      >
-        Full Lab Archive
-      </a>
+        <a
+          href="/standards"
+          className={cn(
+            'coa-rg-btn-secondary flex flex-1 items-center justify-center rounded-lg border border-[rgba(244,246,250,0.12)] bg-[rgba(17,24,39,0.65)] font-bold uppercase tracking-[0.08em] text-[#F4F6FA] transition-colors hover:bg-[rgba(139,92,246,0.08)] active:scale-[0.99] sm:rounded-xl',
+            compact ? 'min-h-[44px] px-3 py-2.5 text-[11px]' : 'min-h-[40px] px-4 py-2.5 text-[11px]',
+          )}
+        >
+          Full Lab Archive
+        </a>
+      </div>
       <p
         className={cn(
           'mt-2 flex items-center justify-center gap-1.5 text-center font-semibold uppercase leading-snug tracking-[0.06em] text-[#6B7280]',
@@ -374,7 +386,8 @@ function CoaPdfPreview({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-lg border border-[rgba(139,92,246,0.15)] bg-[#08080B] touch-none',
+        'relative overflow-hidden rounded-lg border border-[rgba(139,92,246,0.15)] bg-[#08080B]',
+        blurred && 'touch-none',
         fill && 'min-h-0 flex-1',
         className,
       )}
@@ -382,12 +395,12 @@ function CoaPdfPreview({
       <iframe
         title={title}
         src={src}
-        scrolling="no"
-        tabIndex={-1}
+        scrolling={blurred ? 'no' : 'yes'}
+        tabIndex={blurred ? -1 : 0}
         className={cn(
-          'w-full bg-[#111827] transition-[filter] duration-300 pointer-events-none select-none overflow-hidden',
+          'w-full bg-[#111827] transition-[filter] duration-300',
+          blurred && 'pointer-events-none select-none overflow-hidden blur-[12px]',
           fill ? 'h-full min-h-0' : 'h-full',
-          blurred && 'blur-[12px]',
         )}
       />
       {blurred && (

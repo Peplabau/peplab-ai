@@ -47,8 +47,8 @@ export function SEO({
       el.href = faviconHref;
       Object.entries(attrs).forEach(([k, v]) => el!.setAttribute(k, v));
     };
-    ensureLink('icon', { type: 'image/png', sizes: 'any' });
-    ensureLink('apple-touch-icon', {});
+    ensureLink('icon', { type: 'image/png', sizes: '192x192' });
+    ensureLink('apple-touch-icon', { sizes: '180x180' });
 
     // Update meta tags
     const metaTags = [

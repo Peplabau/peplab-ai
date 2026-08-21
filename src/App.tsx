@@ -136,17 +136,17 @@ function HomePage() {
         {/* Shop - Catalog */}
         <Catalog />
 
-        {/* Bulk sales / wholesale */}
-        <BulkSales />
-        
-        {/* Quality Section (merged purity/standards/quality/trust) */}
-        <Quality />
-
         {/* Trustpilot reviews */}
         <TrustpilotReviews />
-        
+
         {/* Promoter Leaderboard — Top 3 podium with CTA to full /leaderboard */}
         <LeaderboardTop3 />
+
+        {/* Bulk sales / wholesale */}
+        <BulkSales />
+
+        {/* Quality Section (merged purity/standards/quality/trust) */}
+        <Quality />
 
         {/* Footer */}
         <Footer />
