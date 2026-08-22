@@ -8,6 +8,7 @@ import {
   type TrustpilotReviewRow,
   type TrustpilotStatsRow,
 } from '@/lib/supabase-db';
+import { filterPublicTrustpilotReviews } from '@/lib/trustpilot-filters';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -64,7 +65,7 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
     getTrustpilotHomepageFeed()
       .then((feed) => {
         if (cancelled) return;
-        setReviews(feed.reviews);
+        setReviews(filterPublicTrustpilotReviews(feed.reviews));
         setStats(feed.stats);
       })
       .catch((err) => console.error('Failed to load Trustpilot feed:', err))
