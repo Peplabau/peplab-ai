@@ -63,10 +63,11 @@ export const SITE_SEO_KEYWORDS = mergeSeoKeywords(
   CORE_SITE_SEO_KEYWORDS,
 );
 
-export const SITE_SEO_TITLE = 'PEPLAB | Peptides Australia';
+import { HOMEPAGE_SEO_DESCRIPTION, HOMEPAGE_SEO_TITLE } from '@/lib/seo-constants';
 
-export const SITE_SEO_DESCRIPTION =
-  "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.";
+export const SITE_SEO_TITLE = HOMEPAGE_SEO_TITLE;
+
+export const SITE_SEO_DESCRIPTION = HOMEPAGE_SEO_DESCRIPTION;
 
 export const NEW_LANDING_SEO = {
   title: SITE_SEO_TITLE,

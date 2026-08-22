@@ -12,7 +12,7 @@ import {
 import { CONFIG } from '@/lib/config';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/auspost';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
-import { HOME_PATH, SHOP_PATH, PROTOCOLS_PATH, CALCULATOR_PATH } from '@/lib/routes';
+import { HOME_PATH, SHOP_PATH, PROTOCOLS_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
 
 const HIGHLIGHTS = [
   {
@@ -124,6 +124,9 @@ export default function Footer() {
           <div className="nl-footer-col">
             <h4 className="nl-footer-col-heading">Quality</h4>
             <ul className="nl-footer-links">
+              <li>
+                <Link to={COA_ARCHIVE_PATH}>COA results</Link>
+              </li>
               <li>
                 <Link to="/standards">Our standards</Link>
               </li>

@@ -59,8 +59,8 @@
     <!-- ═══════════════════════════════════════════════
          PRIMARY SEO
     ════════════════════════════════════════════════ -->
-    <title>PEPLAB | Peptides Australia</title>
-    <!-- Login-only hosts: only when VITE_LOGIN_ONLY_HOSTS is set. Empty = full SEO shop. -->
+    <title>PEPLAB Australia | Research Peptides &amp; COA Results</title>
+    <!-- Login-only hosts: noindex auth entry routes only (/login, /signup, /forgot-password). -->
     <script>
       (function () {
         var raw = '%VITE_LOGIN_ONLY_HOSTS%';
@@ -71,14 +71,14 @@
         var loginOnly = hosts.indexOf(h) !== -1 || hosts.indexOf(full) !== -1;
         if (!loginOnly) return;
         var p = (location.pathname || '/').replace(/\/$/, '') || '/';
-        var authEntry = p === '/' || p === '/login' || p === '/signup' || p === '/forgot-password';
+        var authEntry = p === '/login' || p === '/signup' || p === '/forgot-password';
         if (!authEntry) return;
         document.title = 'PEPLAB | Sign in';
         var robots = document.querySelector('meta[name="robots"]');
         if (robots) robots.setAttribute('content', 'noindex, nofollow');
       })();
     </script>
-    <meta name="description" content="Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only." />
+    <meta name="description" content="PEPLAB Australia supplies research peptides with independent HPLC testing and published COA results. Browse certificates, quality standards, and lab documentation. Research use only." />
     <meta name="keywords" content="peptides australia, bpc 157 australia, bpc 157, bpc 157 peptide, buy bpc 157, buy peptides australia, buy peptides, bpc 157 pure, peptide 157, semaglutide peptide buy, bpc peptide, bpc 157 tb 500, best place to buy peptides australia, bpc 157 near me, order bpc 157, bpc 157 10mg, bpc 157 purchase, ghk peptide, tb 500 and bpc 157, bpc 157 5mg, bpc 157 reviews, bpc 157 peptide australia, bpc 157 injections, tb 500 bpc 157, purchase bpc 157, BPC-157 Australia, TB-500 Australia, buy peptides Australia, research peptides Australia, GHK-Cu Australia, Retatrutide for sale Australia, Semaglutide peptide Australia, Tirzepatide Australia, peptide supplier Sydney, HPLC tested peptides, lab grade peptides online, domestic peptide shipping Australia" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://peplab.com.au/" />
@@ -93,14 +93,14 @@
          OPEN GRAPH (Facebook, LinkedIn, etc.)
     ════════════════════════════════════════════════ -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PEPLAB | Peptides Australia" />
+    <meta property="og:site_name" content="PEPLAB Australia" />
     <meta property="og:url" content="https://peplab.com.au/" />
-    <meta property="og:title" content="PEPLAB | Peptides Australia" />
-    <meta property="og:description" content="Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only." />
+    <meta property="og:title" content="PEPLAB Australia | Research Peptides &amp; COA Results" />
+    <meta property="og:description" content="PEPLAB Australia supplies research peptides with independent HPLC testing and published COA results. Browse certificates, quality standards, and lab documentation. Research use only." />
     <meta property="og:image" content="https://peplab.com.au/chrome-seo.jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="PEPLAB — Peptides Australia" />
+    <meta property="og:image:alt" content="PEPLAB Australia — Research Peptides" />
     <meta property="og:locale" content="en_AU" />
 
     <!-- ═══════════════════════════════════════════════
@@ -108,8 +108,8 @@
     ════════════════════════════════════════════════ -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@peplab_au" />
-    <meta name="twitter:title" content="PEPLAB | Peptides Australia" />
-    <meta name="twitter:description" content="Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only." />
+    <meta name="twitter:title" content="PEPLAB Australia | Research Peptides &amp; COA Results" />
+    <meta name="twitter:description" content="PEPLAB Australia supplies research peptides with independent HPLC testing and published COA results. Browse certificates, quality standards, and lab documentation. Research use only." />
     <meta name="twitter:image" content="https://peplab.com.au/chrome-seo.jpeg" />
 
     <!-- ═══════════════════════════════════════════════
@@ -122,14 +122,14 @@
         {
           "@type": "Organization",
           "@id": "https://peplab.com.au/#organization",
-          "name": "PEPLAB | Peptides Australia",
+          "name": "PEPLAB Australia",
           "url": "https://peplab.com.au/",
           "logo": {
             "@type": "ImageObject",
             "url": "https://peplab.com.au/favicon.png"
           },
           "image": "https://peplab.com.au/chrome-seo.jpeg",
-          "description": "Australian research peptide supplier. HPLC-verified, domestic shipping, ≥99% purity.",
+          "description": "Australian research peptide supplier with HPLC-verified batches and published COA results. Research use only.",
           "address": {
             "@type": "PostalAddress",
             "addressLocality": "Sydney",
@@ -146,20 +146,15 @@
           "@type": "WebSite",
           "@id": "https://peplab.com.au/#website",
           "url": "https://peplab.com.au/",
-          "name": "PEPLAB | Peptides Australia",
-          "publisher": { "@id": "https://peplab.com.au/#organization" },
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://peplab.com.au/?search={search_term_string}",
-            "query-input": "required name=search_term_string"
-          }
+          "name": "PEPLAB Australia",
+          "publisher": { "@id": "https://peplab.com.au/#organization" }
         },
         {
           "@type": "WebPage",
           "@id": "https://peplab.com.au/#webpage",
           "url": "https://peplab.com.au/",
-          "name": "PEPLAB | Peptides Australia",
-          "description": "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.",
+          "name": "PEPLAB Australia | Research Peptides & COA Results",
+          "description": "PEPLAB Australia supplies research peptides with independent HPLC testing and published COA results. Browse certificates, quality standards, and lab documentation. Research use only.",
           "primaryImageOfPage": {
             "@type": "ImageObject",
             "url": "https://peplab.com.au/chrome-seo.jpeg",
@@ -172,22 +167,18 @@
         {
           "@type": "ItemList",
           "@id": "https://peplab.com.au/#sitewide-primary-nav",
-          "name": "PEPLAB primary pages",
-          "description": "Main sections PEPLAB links to from navigation and footer (helps crawlers infer site structure; Google sitelinks are still automated).",
+          "name": "PEPLAB Australia primary pages",
+          "description": "Main sections linked from navigation and footer.",
           "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Shop — research peptides catalogue", "url": "https://peplab.com.au/" },
-            { "@type": "ListItem", "position": 2, "name": "COA archive — published certificates", "url": "https://peplab.com.au/coa" },
-            { "@type": "ListItem", "position": 3, "name": "Reconstitution calculator", "url": "https://peplab.com.au/calculator" },
-            { "@type": "ListItem", "position": 4, "name": "About — quality & laboratory standards", "url": "https://peplab.com.au/standards" },
-            { "@type": "ListItem", "position": 5, "name": "Contact", "url": "https://peplab.com.au/contact-info" },
-            { "@type": "ListItem", "position": 6, "name": "FAQ", "url": "https://peplab.com.au/faq" },
-            { "@type": "ListItem", "position": 7, "name": "Shipping", "url": "https://peplab.com.au/shipping" },
-            { "@type": "ListItem", "position": 8, "name": "Leaderboard", "url": "https://peplab.com.au/leaderboard" },
-            { "@type": "ListItem", "position": 9, "name": "Track order", "url": "https://peplab.com.au/track-order" },
-            { "@type": "ListItem", "position": 10, "name": "Marketing landing", "url": "https://peplab.com.au/landing" },
-            { "@type": "ListItem", "position": 11, "name": "BPC-157", "url": "https://peplab.com.au/product/bpc-157" },
-            { "@type": "ListItem", "position": 12, "name": "Retatrutide", "url": "https://peplab.com.au/product/reta" },
-            { "@type": "ListItem", "position": 13, "name": "GHK-Cu", "url": "https://peplab.com.au/product/ghk-cu" }
+            { "@type": "ListItem", "position": 1, "name": "Home", "url": "https://peplab.com.au/" },
+            { "@type": "ListItem", "position": 2, "name": "Shop — research peptides", "url": "https://peplab.com.au/shop" },
+            { "@type": "ListItem", "position": 3, "name": "COA Results", "url": "https://peplab.com.au/coa" },
+            { "@type": "ListItem", "position": 4, "name": "Peptide Calculator", "url": "https://peplab.com.au/calculator" },
+            { "@type": "ListItem", "position": 5, "name": "Quality Standards", "url": "https://peplab.com.au/standards" },
+            { "@type": "ListItem", "position": 6, "name": "Track Order", "url": "https://peplab.com.au/track-order" },
+            { "@type": "ListItem", "position": 7, "name": "Contact", "url": "https://peplab.com.au/contact-info" },
+            { "@type": "ListItem", "position": 8, "name": "FAQ", "url": "https://peplab.com.au/faq" },
+            { "@type": "ListItem", "position": 9, "name": "Shipping", "url": "https://peplab.com.au/shipping" }
           ]
         }
       ]
@@ -199,6 +190,23 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PS75R6HS"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+    <noscript>
+      <h1>PEPLAB Australia — Research Peptides</h1>
+      <p>
+        PEPLAB Australia supplies research peptides with independent HPLC testing and published COA
+        results. Research use only.
+      </p>
+      <nav aria-label="Primary">
+        <ul>
+          <li><a href="https://peplab.com.au/shop">Research Peptides</a></li>
+          <li><a href="https://peplab.com.au/standards">Quality &amp; Testing</a></li>
+          <li><a href="https://peplab.com.au/coa">COA Results</a></li>
+          <li><a href="https://peplab.com.au/calculator">Peptide Calculator</a></li>
+          <li><a href="https://peplab.com.au/track-order">Track Order</a></li>
+          <li><a href="https://peplab.com.au/contact-info">Contact &amp; Support</a></li>
+        </ul>
+      </nav>
+    </noscript>
     <div id="root"></div>
     <!--
       Inline loading shell — outside #root so React never auto-removes it.

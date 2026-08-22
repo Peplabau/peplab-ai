@@ -27,6 +27,9 @@ import {
 import { sendOrderTrackingUpdate } from '@/lib/email';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
 import { SEO } from '@/components/SEO';
+import { JsonLd } from '@/components/JsonLd';
+import { PAGE_SEO } from '@/lib/seo-constants';
+import { buildBreadcrumbJsonLd } from '@/lib/seo-breadcrumbs';
 
 // Throttle duplicate status emails so re-submits don't spam the customer.
 // Keyed by (order_number, email) and stored in sessionStorage — resets every tab.
@@ -179,8 +182,15 @@ export default function TrackOrder() {
   return (
     <>
       <SEO
-        title="Track Your Order | PEPLAB"
-        description="Track your PEPLAB peptide order with your order number and email. Australia-wide AusPost tracking updates."
+        title={PAGE_SEO.trackOrder.title}
+        description={PAGE_SEO.trackOrder.description}
+      />
+      <JsonLd
+        id="track-order-breadcrumbs"
+        data={buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Track Order', path: '/track-order' },
+        ])}
       />
     <div className="min-h-screen" style={{ background: '#070A12' }}>
       <div className="absolute inset-0 grid-overlay opacity-60" />

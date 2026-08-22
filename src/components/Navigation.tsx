@@ -101,7 +101,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
       >
         <div className={embedded ? 'nl-container' : 'w-full px-4 sm:px-6 lg:px-12'}>
           <div className={`nl-nav-bar flex items-center justify-between ${embedded ? '' : 'h-16 sm:h-20 lg:h-24'}`}>
-            <a href={HOME_PATH} className="flex flex-col items-start" onClick={() => setIsMobileMenuOpen(false)}>
+            <a href={HOME_PATH} className="flex flex-col items-start" aria-label="PEPLAB Australia home" onClick={() => setIsMobileMenuOpen(false)}>
               <span className={`font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-4xl' : 'text-3xl sm:text-4xl lg:text-5xl'}`}>
                 PEPLAB
               </span>

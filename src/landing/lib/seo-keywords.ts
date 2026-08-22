@@ -72,10 +72,14 @@ const COA_LANDING_SEO_KEYWORDS = [
   'Ozcanium Analytics COA',
 ] as const;
 
+import {
+  HOMEPAGE_SEO_DESCRIPTION,
+  HOMEPAGE_SEO_TITLE,
+} from '@/lib/seo-constants';
+
 export const RESEARCH_GATEWAY_SEO = {
-  title: 'PEPLAB COA Proof | HPLC, LC-MS & Content Assay — Published Every Batch',
-  description:
-    'See the lab proof before you order. Every PEPLAB batch published with HPLC purity, LC-MS identity, and peptide content assay on an independent Ozcanium Analytics COA. Research use only.',
+  title: HOMEPAGE_SEO_TITLE,
+  description: HOMEPAGE_SEO_DESCRIPTION,
   keywords: mergeSeoKeywords(PEPTIDE_AUSTRALIA_SEO_KEYWORDS, CORE_SITE_SEO_KEYWORDS, COA_LANDING_SEO_KEYWORDS),
 } as const;
 

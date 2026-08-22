@@ -1,7 +1,14 @@
 import { ArrowLeft, Award, Gift, TrendingUp, Users, Clock, AlertTriangle } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 
 export default function RewardsTerms() {
   return (
+    <>
+      <SEO
+        title="Rewards Terms | PEPLAB Australia"
+        description="Terms and conditions for the PEPLAB rewards program."
+        noIndex
+      />
     <div className="min-h-screen" style={{ background: '#070A12' }}>
       {/* Grid Overlay */}
       <div className="absolute inset-0 grid-overlay opacity-60" />
@@ -319,5 +326,6 @@ export default function RewardsTerms() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

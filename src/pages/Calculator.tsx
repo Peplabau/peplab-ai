@@ -4,6 +4,9 @@ import CartDrawer from '@/components/CartDrawer';
 import ReconstitutionCalculator from '@/components/ReconstitutionCalculator';
 import Footer from '@/sections/Footer';
 import { SEO } from '@/components/SEO';
+import { JsonLd } from '@/components/JsonLd';
+import { PAGE_SEO } from '@/lib/seo-constants';
+import { buildBreadcrumbJsonLd } from '@/lib/seo-breadcrumbs';
 
 const STEPS = [
   {
@@ -27,9 +30,16 @@ export default function Calculator() {
   return (
     <div className="relative min-h-screen page-grid-bg">
       <SEO
-        title="Peptide Calculator | PEPLAB"
-        description="Calculate reconstitution volumes, syringe units, and dose counts for research peptides with the PEPLAB calculator."
-        keywords={['peptide calculator', 'reconstitution calculator', 'BAC water', 'research peptides', 'PEPLAB']}
+        title={PAGE_SEO.calculator.title}
+        description={PAGE_SEO.calculator.description}
+        keywords={['peptide calculator', 'reconstitution calculator', 'BAC water', 'research peptides', 'PEPLAB Australia']}
+      />
+      <JsonLd
+        id="calculator-breadcrumbs"
+        data={buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Peptide Calculator', path: '/calculator' },
+        ])}
       />
 
       <Navigation />

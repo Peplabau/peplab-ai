@@ -152,10 +152,16 @@ export default function LandingFooter({ hideCta = false }: LandingFooterProps) {
             <h4 className="rg-footer-col-heading">Quality</h4>
             <ul className="rg-footer-links">
               <li>
+                <a href={coaArchiveUrl()}>COA results</a>
+              </li>
+              <li>
                 <a href={shopUrl('/standards')}>Our standards</a>
               </li>
               <li>
                 <a href={shopUrl('/protocols')}>Dosage chart</a>
+              </li>
+              <li>
+                <a href={shopUrl('/calculator')}>Peptide calculator</a>
               </li>
               <li>
                 <a href={`${shopUrl('/')}#tutorial`}>Reconstitution guide</a>

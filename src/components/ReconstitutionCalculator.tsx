@@ -343,7 +343,7 @@ export default function ReconstitutionCalculator() {
             <Calculator className="w-6 h-6" strokeWidth={2} />
           </div>
           <div className="rcalc-header-copy">
-            <h3 className="rcalc-title">Research calculator</h3>
+            <h1 className="rcalc-title">Research calculator</h1>
             <p className="rcalc-subtitle">Calculate your research dosage with precision.</p>
           </div>
         </div>

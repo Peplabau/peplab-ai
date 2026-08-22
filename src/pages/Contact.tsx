@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Send, ArrowLeft, MessageCircle, Clock, MapPin, ExternalLink, Mail } from 'lucide-react';
 import { CONFIG } from '@/lib/config';
 import { SEO } from '@/components/SEO';
+import { JsonLd } from '@/components/JsonLd';
+import { PAGE_SEO } from '@/lib/seo-constants';
+import { buildBreadcrumbJsonLd } from '@/lib/seo-breadcrumbs';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 
 export default function Contact() {
@@ -89,8 +92,15 @@ export default function Contact() {
   return (
     <>
       <SEO
-        title="Contact PEPLAB | Peptides Australia"
-        description="Contact PEPLAB for order support, product questions, and research enquiries. Australian peptide supplier — Mon–Fri response."
+        title={PAGE_SEO.contact.title}
+        description={PAGE_SEO.contact.description}
+      />
+      <JsonLd
+        id="contact-breadcrumbs"
+        data={buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Contact', path: '/contact' },
+        ])}
       />
     <div className="min-h-screen" style={{ background: '#070A12' }}>
       {/* Grid Overlay */}

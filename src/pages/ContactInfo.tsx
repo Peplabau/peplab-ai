@@ -4,6 +4,9 @@ import QRCode from 'react-qr-code';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { CONFIG } from '@/lib/config';
 import { SEO } from '@/components/SEO';
+import { JsonLd } from '@/components/JsonLd';
+import { PAGE_SEO } from '@/lib/seo-constants';
+import { buildBreadcrumbJsonLd } from '@/lib/seo-breadcrumbs';
 
 function telegramHandleFromUrl(input: string): string {
   const s = input.trim();
@@ -131,8 +134,15 @@ export default function ContactInfo() {
   return (
     <>
       <SEO
-        title="Contact & Support | PEPLAB — Peptides Australia"
-        description="PEPLAB contact details, Telegram support, business hours, and registered address. Australian research peptide supplier."
+        title={PAGE_SEO.contactInfo.title}
+        description={PAGE_SEO.contactInfo.description}
+      />
+      <JsonLd
+        id="contact-info-breadcrumbs"
+        data={buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Contact & Support', path: '/contact-info' },
+        ])}
       />
     <div className="min-h-screen" style={{ background: '#070A12' }}>
       {/* Grid Overlay */}

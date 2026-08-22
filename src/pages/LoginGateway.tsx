@@ -693,6 +693,9 @@ export default function LoginGateway() {
             <Link to="/faq" className="hover:text-[#A9B3C7] transition-colors">
               FAQ
             </Link>
+            <Link to="/track-order" className="hover:text-[#A9B3C7] transition-colors">
+              Track order
+            </Link>
             <Link to="/contact-info" className="hover:text-[#A9B3C7] transition-colors">
               Contact
             </Link>

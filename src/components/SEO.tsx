@@ -7,7 +7,7 @@ import { SITE_SEO_DESCRIPTION, SITE_SEO_KEYWORDS, SITE_SEO_TITLE } from '@/lib/s
 interface SEOProps {
   title?: string;
   description?: string;
-  keywords?: string;
+  keywords?: string | readonly string[];
   ogImage?: string;
   noIndex?: boolean;
 }
@@ -29,6 +29,7 @@ export function SEO({
 }: SEOProps) {
   const location = useLocation();
   const origin = seoOrigin();
+  const keywordsText = Array.isArray(keywords) ? keywords.join(', ') : keywords;
   const resolvedOgImage =
     ogImage ?? `${origin}${CONFIG.SHARE_PREVIEW_IMAGE_PATH}`;
 
@@ -53,17 +54,19 @@ export function SEO({
     // Update meta tags
     const metaTags = [
       { name: 'description', content: description },
-      { name: 'keywords', content: keywords },
+      { name: 'keywords', content: keywordsText },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
       { property: 'og:image', content: resolvedOgImage },
       { property: 'og:image:width', content: '1200' },
       { property: 'og:image:height', content: '630' },
-      { property: 'og:image:alt', content: 'PEPLAB — Peptides Australia' },
-      { property: 'og:site_name', content: SITE_SEO_TITLE },
+      { property: 'og:image:alt', content: 'PEPLAB Australia — Research Peptides' },
+      { property: 'og:site_name', content: 'PEPLAB Australia' },
       { property: 'og:url', content: `${origin}${location.pathname}${location.search}` },
       { property: 'og:type', content: 'website' },
+      { property: 'og:locale', content: 'en_AU' },
       { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:site', content: '@peplab_au' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
       { name: 'twitter:image', content: resolvedOgImage },
@@ -108,7 +111,7 @@ export function SEO({
       'href',
       `${origin}${location.pathname}${location.search}`,
     );
-  }, [title, description, keywords, resolvedOgImage, noIndex, location.pathname, location.search, origin]);
+  }, [title, description, keywordsText, resolvedOgImage, noIndex, location.pathname, location.search, origin]);
 
   return null;
 }

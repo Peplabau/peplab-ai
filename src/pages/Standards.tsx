@@ -1,12 +1,22 @@
 import { ArrowLeft, Beaker, Shield, FileText, MessageCircle, Heart } from 'lucide-react';
 import { SEO } from '@/components/SEO';
+import { JsonLd } from '@/components/JsonLd';
+import { PAGE_SEO } from '@/lib/seo-constants';
+import { buildBreadcrumbJsonLd } from '@/lib/seo-breadcrumbs';
 
 export default function Standards() {
   return (
     <>
       <SEO
-        title="Quality Standards | PEPLAB — HPLC-verified research peptides"
-        description="How PEPLAB tests every peptide batch: HPLC purity, identity verification, published COAs, and research-grade handling standards."
+        title={PAGE_SEO.standards.title}
+        description={PAGE_SEO.standards.description}
+      />
+      <JsonLd
+        id="standards-breadcrumbs"
+        data={buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Quality Standards', path: '/standards' },
+        ])}
       />
     <div className="min-h-screen" style={{ background: '#070A12' }}>
       {/* Grid Overlay */}

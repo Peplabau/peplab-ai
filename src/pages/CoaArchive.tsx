@@ -8,6 +8,9 @@ import CoaArchiveTable from '@/components/CoaArchiveTable';
 import CoaBatchLanes from '@/components/CoaBatchLanes';
 import CoaDialog from '@/components/CoaDialog';
 import { SEO } from '@/components/SEO';
+import { JsonLd } from '@/components/JsonLd';
+import { PAGE_SEO } from '@/lib/seo-constants';
+import { buildBreadcrumbJsonLd } from '@/lib/seo-breadcrumbs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import {
@@ -80,8 +83,8 @@ export default function CoaArchive() {
   return (
     <div className="relative min-h-screen page-grid-bg">
       <SEO
-        title="COA Archive | PEPLAB — Published Certificates of Analysis"
-        description="Browse every published Certificate of Analysis for PEPLAB research peptides. HPLC-verified batch documentation, independent Ozcanium Analytics testing."
+        title={PAGE_SEO.coa.title}
+        description={PAGE_SEO.coa.description}
         keywords={[
           'COA peptides Australia',
           'certificate of analysis',
@@ -90,6 +93,13 @@ export default function CoaArchive() {
           'PEPLAB COA archive',
           'research peptide COA',
         ]}
+      />
+      <JsonLd
+        id="coa-breadcrumbs"
+        data={buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'COA Results', path: '/coa' },
+        ])}
       />
 
       <Navigation />

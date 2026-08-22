@@ -275,9 +275,9 @@ export default function Catalog() {
 
         {/* Header */}
         <div ref={headerRef} className="mb-8">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA] mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA] mb-4">
             Shop <span className="gradient-text">peptides</span>
-          </h2>
+          </h1>
 
           {/* Search */}
           <div className="relative max-w-md">

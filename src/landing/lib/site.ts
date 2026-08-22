@@ -17,7 +17,7 @@ export const SHOP_URL = MAIN_SITE_URL;
  * Override with VITE_LANDING_SITE_URL for standalone subdomain deploys.
  */
 export const LANDING_SITE_URL = trim(
-  import.meta.env.VITE_LANDING_SITE_URL || `${runtimeOrigin()}/landing`,
+  import.meta.env.VITE_LANDING_SITE_URL || runtimeOrigin(),
 );
 
 /** Published COA archive on the main shop site. */
