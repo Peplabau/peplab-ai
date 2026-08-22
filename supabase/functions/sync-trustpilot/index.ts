@@ -34,6 +34,12 @@ type MappedReview = {
   raw: Record<string, unknown>;
 };
 
+const GHK_CU_PATTERN = /ghk[\s._\-/:]*cu\b/i;
+
+function reviewMentionsGhkCu(row: Pick<MappedReview, "title" | "body" | "author_name">): boolean {
+  return GHK_CU_PATTERN.test([row.title, row.body, row.author_name].filter(Boolean).join(" "));
+}
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -601,7 +607,7 @@ Deno.serve(async (req: Request) => {
           reviewed_at: row.reviewed_at,
           is_verified: row.is_verified,
           source_url: row.source_url,
-          is_visible: true,
+          is_visible: !reviewMentionsGhkCu(row),
           admin_edited: false,
           raw: row.raw,
           updated_at: new Date().toISOString(),
@@ -635,6 +641,7 @@ Deno.serve(async (req: Request) => {
           reviewed_at: row.reviewed_at,
           is_verified: row.is_verified,
           source_url: row.source_url,
+          is_visible: reviewMentionsGhkCu(row) ? false : existing.is_visible,
           raw: row.raw,
           updated_at: new Date().toISOString(),
         })
@@ -643,15 +650,15 @@ Deno.serve(async (req: Request) => {
       updated += 1;
     }
 
-    const extracted = extractStats(items);
+    const publicReviews = unique.filter((row) => !reviewMentionsGhkCu(row));
     const stars_breakdown: Record<string, number> = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
-    for (const row of unique) {
+    for (const row of publicReviews) {
       stars_breakdown[String(row.rating)] = (stars_breakdown[String(row.rating)] || 0) + 1;
     }
 
     const avg =
-      unique.length > 0
-        ? Math.round((unique.reduce((s, r) => s + r.rating, 0) / unique.length) * 10) / 10
+      publicReviews.length > 0
+        ? Math.round((publicReviews.reduce((s, r) => s + r.rating, 0) / publicReviews.length) * 10) / 10
         : null;
 
     const emptyHint =
@@ -663,8 +670,8 @@ Deno.serve(async (req: Request) => {
 
     const statsPayload = {
       id: 1,
-      trust_score: extracted.trust_score ?? avg,
-      review_count: extracted.review_count > 0 ? extracted.review_count : unique.length,
+      trust_score: avg,
+      review_count: publicReviews.length,
       stars_breakdown,
       last_synced_at: new Date().toISOString(),
       last_sync_error: emptyHint,

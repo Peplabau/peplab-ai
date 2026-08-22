@@ -6,6 +6,10 @@ import type { PointType } from '@/utils/points';
 import type { TechnicalSpecs } from '@/products';
 import { enrichProductDetails, buildAllProductDetailSeedPayloads } from '@/lib/product-detail-content';
 import {
+  filterPublicTrustpilotReviews,
+  trustpilotReviewMentionsGhkCu,
+} from '@/lib/trustpilot-filters';
+import {
   cached, invalidateCache,
   TTL_PRODUCTS, TTL_PRODUCT, TTL_REVIEWS, TTL_ADMIN, TTL_UUID, TTL_USER_SHORT,
   TTL_USER_ORDERS, TTL_USER_REVIEWS,
@@ -1311,9 +1315,32 @@ export const getTrustpilotHomepageFeed = (): Promise<TrustpilotHomepageFeed> =>
         console.error('Failed to load Trustpilot stats:', statsRes.error);
       }
 
+      const reviews = filterPublicTrustpilotReviews(
+        (reviewsRes.data || []) as TrustpilotReviewRow[],
+      );
+      const dbStats = (statsRes.data as TrustpilotStatsRow | null) || null;
+      const review_count = reviews.length;
+      const trust_score =
+        review_count === 0
+          ? null
+          : Math.round(
+              (reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / review_count) * 10,
+            ) / 10;
+
       return {
-        reviews: (reviewsRes.data || []) as TrustpilotReviewRow[],
-        stats: (statsRes.data as TrustpilotStatsRow | null) || null,
+        reviews,
+        stats: dbStats
+          ? { ...dbStats, review_count, trust_score }
+          : review_count > 0
+            ? {
+                id: 1,
+                trust_score,
+                review_count,
+                stars_breakdown: null,
+                last_synced_at: null,
+                last_sync_error: null,
+              }
+            : null,
       };
     },
     TTL_REVIEWS,
@@ -1340,11 +1367,50 @@ export const getTrustpilotAdminReviews = async (): Promise<{
       .maybeSingle(),
   ]);
   if (reviewsRes.error) throw reviewsRes.error;
-  return {
-    reviews: (reviewsRes.data || []) as TrustpilotReviewRow[],
-    stats: (statsRes.data as TrustpilotStatsRow | null) || null,
-  };
+
+  const hidden = await hideGhkCuTrustpilotReviews(
+    (reviewsRes.data || []) as TrustpilotReviewRow[],
+  );
+  const reviews = hidden.reviews;
+  let stats = (statsRes.data as TrustpilotStatsRow | null) || null;
+  if (hidden.hiddenCount > 0) {
+    await refreshTrustpilotStatsFromReviews();
+    const { data: refreshed } = await supabase
+      .from('trustpilot_stats')
+      .select('id, trust_score, review_count, stars_breakdown, last_synced_at, last_sync_error')
+      .eq('id', 1)
+      .maybeSingle();
+    stats = (refreshed as TrustpilotStatsRow | null) || stats;
+  }
+
+  return { reviews, stats };
 };
+
+/** Hide GHK-Cu mentions in-place. Returns the updated list. */
+async function hideGhkCuTrustpilotReviews(
+  reviews: TrustpilotReviewRow[],
+): Promise<{ reviews: TrustpilotReviewRow[]; hiddenCount: number }> {
+  const ids = reviews
+    .filter((row) => row.is_visible !== false && trustpilotReviewMentionsGhkCu(row))
+    .map((row) => row.id);
+  if (!ids.length) return { reviews, hiddenCount: 0 };
+
+  const { error } = await supabase
+    .from('trustpilot_reviews')
+    .update({ is_visible: false, updated_at: new Date().toISOString() })
+    .in('id', ids);
+  if (error) {
+    console.error('Failed to hide GHK-Cu Trustpilot reviews:', error);
+    return { reviews, hiddenCount: 0 };
+  }
+  invalidateCache('trustpilot:homepage');
+  return {
+    reviews: reviews.map((row) =>
+      ids.includes(row.id) ? { ...row, is_visible: false } : row,
+    ),
+    hiddenCount: ids.length,
+  };
+}
 
 export const invokeSyncTrustpilot = async (): Promise<{
   ok?: boolean;
@@ -1390,10 +1456,29 @@ export const updateTrustpilotReview = async (
     is_verified?: boolean;
   },
 ): Promise<{ error?: string }> => {
+  const nextPatch = { ...patch };
+  if (nextPatch.is_visible === true || nextPatch.title !== undefined || nextPatch.body !== undefined) {
+    const { data: existing } = await supabase
+      .from('trustpilot_reviews')
+      .select('title, body, author_name')
+      .eq('id', id)
+      .maybeSingle();
+    if (
+      existing &&
+      trustpilotReviewMentionsGhkCu({
+        title: nextPatch.title !== undefined ? nextPatch.title : existing.title,
+        body: nextPatch.body !== undefined ? nextPatch.body : existing.body,
+        author_name: existing.author_name,
+      })
+    ) {
+      nextPatch.is_visible = false;
+    }
+  }
+
   const { error } = await supabase
     .from('trustpilot_reviews')
     .update({
-      ...patch,
+      ...nextPatch,
       admin_edited: true,
       updated_at: new Date().toISOString(),
     })
@@ -1427,11 +1512,11 @@ export type TrustpilotManualReviewInput = {
 export const refreshTrustpilotStatsFromReviews = async (): Promise<{ error?: string }> => {
   const { data: rows, error } = await supabase
     .from('trustpilot_reviews')
-    .select('rating')
+    .select('rating, title, body, author_name')
     .eq('is_visible', true);
   if (error) return { error: error.message };
 
-  const list = rows || [];
+  const list = filterPublicTrustpilotReviews(rows || []);
   const review_count = list.length;
   const trust_score =
     review_count === 0
@@ -1472,7 +1557,13 @@ export const createTrustpilotReview = async (
     body: input.body?.trim() || null,
     reviewed_at: input.reviewed_at || null,
     is_verified: input.is_verified ?? true,
-    is_visible: input.is_visible ?? true,
+    is_visible:
+      (input.is_visible ?? true) &&
+      !trustpilotReviewMentionsGhkCu({
+        title: input.title,
+        body: input.body,
+        author_name: input.author_name,
+      }),
     admin_edited: true,
     raw: { imported_manually: true },
   });
@@ -1497,7 +1588,13 @@ export const importTrustpilotReviewsBulk = async (
       body: input.body?.trim() || null,
       reviewed_at: input.reviewed_at || null,
       is_verified: input.is_verified ?? true,
-      is_visible: input.is_visible ?? true,
+      is_visible:
+        (input.is_visible ?? true) &&
+        !trustpilotReviewMentionsGhkCu({
+          title: input.title,
+          body: input.body,
+          author_name: input.author_name,
+        }),
       admin_edited: true,
       raw: { imported_manually: true },
     };
