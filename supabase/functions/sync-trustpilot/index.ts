@@ -34,21 +34,10 @@ type MappedReview = {
   raw: Record<string, unknown>;
 };
 
-const GHK_CU_PATTERN =
-  /ghk[\s\u00a0\u2000-\u200b\u2010-\u2015._\-–—/:]*cu\b/i;
-
-function normalizeTrustpilotText(text: string): string {
-  return text
-    .normalize("NFKC")
-    .replace(/[\u2010-\u2015\u2212]/g, "-")
-    .replace(/[\u00a0\u2000-\u200b]/g, " ");
-}
+const GHK_CU_PATTERN = /ghk[\s._\-/:]*cu\b/i;
 
 function reviewMentionsGhkCu(row: Pick<MappedReview, "title" | "body" | "author_name">): boolean {
-  const text = normalizeTrustpilotText(
-    [row.title, row.body, row.author_name].filter(Boolean).join(" "),
-  );
-  return GHK_CU_PATTERN.test(text);
+  return GHK_CU_PATTERN.test([row.title, row.body, row.author_name].filter(Boolean).join(" "));
 }
 
 function jsonResponse(body: unknown, status = 200) {
