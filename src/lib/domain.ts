@@ -129,7 +129,7 @@ export function buildCrossDomainLoginUrl(params: {
 /** Paths on the login-only host that should not be indexed (auth entry, not public content). */
 export function isLoginGatewayPath(pathname?: string): boolean {
   const p = (pathname ?? (typeof window !== 'undefined' ? window.location.pathname : '')).replace(/\/$/, '') || '/';
-  return p === '/login' || p === '/signup' || p === '/forgot-password';
+  return p === '/' || p === '/login' || p === '/signup' || p === '/forgot-password';
 }
 
 /**

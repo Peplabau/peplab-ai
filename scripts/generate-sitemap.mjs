@@ -37,6 +37,7 @@ const SITE_URL = envVar('VITE_SITE_URL', 'https://peplab.com.au').replace(/\/$/,
 const STATIC_ROUTES = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },
   { path: '/shop', priority: '0.98', changefreq: 'weekly' },
+  { path: '/landing', priority: '0.95', changefreq: 'weekly' },
   { path: '/coa', priority: '0.88', changefreq: 'weekly' },
   { path: '/calculator', priority: '0.78', changefreq: 'monthly' },
   { path: '/protocols', priority: '0.86', changefreq: 'monthly' },

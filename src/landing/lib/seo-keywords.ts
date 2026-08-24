@@ -74,11 +74,10 @@ const COA_LANDING_SEO_KEYWORDS = [
 
 import {
   HOMEPAGE_SEO_DESCRIPTION,
-  HOMEPAGE_SEO_TITLE,
 } from '@/lib/seo-constants';
 
 export const RESEARCH_GATEWAY_SEO = {
-  title: HOMEPAGE_SEO_TITLE,
+  title: 'PEPLAB Australia | Research Peptides & COA Results',
   description: HOMEPAGE_SEO_DESCRIPTION,
   keywords: mergeSeoKeywords(PEPTIDE_AUSTRALIA_SEO_KEYWORDS, CORE_SITE_SEO_KEYWORDS, COA_LANDING_SEO_KEYWORDS),
 } as const;

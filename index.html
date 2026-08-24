@@ -71,7 +71,7 @@
         var loginOnly = hosts.indexOf(h) !== -1 || hosts.indexOf(full) !== -1;
         if (!loginOnly) return;
         var p = (location.pathname || '/').replace(/\/$/, '') || '/';
-        var authEntry = p === '/login' || p === '/signup' || p === '/forgot-password';
+        var authEntry = p === '/' || p === '/login' || p === '/signup' || p === '/forgot-password';
         if (!authEntry) return;
         document.title = 'PEPLAB | Sign in';
         var robots = document.querySelector('meta[name="robots"]');
@@ -171,14 +171,15 @@
           "description": "Main sections linked from navigation and footer.",
           "itemListElement": [
             { "@type": "ListItem", "position": 1, "name": "Home", "url": "https://peplab.com.au/" },
-            { "@type": "ListItem", "position": 2, "name": "Shop — research peptides", "url": "https://peplab.com.au/shop" },
-            { "@type": "ListItem", "position": 3, "name": "COA Results", "url": "https://peplab.com.au/coa" },
-            { "@type": "ListItem", "position": 4, "name": "Peptide Calculator", "url": "https://peplab.com.au/calculator" },
-            { "@type": "ListItem", "position": 5, "name": "Quality Standards", "url": "https://peplab.com.au/standards" },
-            { "@type": "ListItem", "position": 6, "name": "Track Order", "url": "https://peplab.com.au/track-order" },
-            { "@type": "ListItem", "position": 7, "name": "Contact", "url": "https://peplab.com.au/contact-info" },
-            { "@type": "ListItem", "position": 8, "name": "FAQ", "url": "https://peplab.com.au/faq" },
-            { "@type": "ListItem", "position": 9, "name": "Shipping", "url": "https://peplab.com.au/shipping" }
+            { "@type": "ListItem", "position": 2, "name": "Landing — research peptides & COA", "url": "https://peplab.com.au/landing" },
+            { "@type": "ListItem", "position": 3, "name": "Shop — research peptides", "url": "https://peplab.com.au/shop" },
+            { "@type": "ListItem", "position": 4, "name": "COA Results", "url": "https://peplab.com.au/coa" },
+            { "@type": "ListItem", "position": 5, "name": "Peptide Calculator", "url": "https://peplab.com.au/calculator" },
+            { "@type": "ListItem", "position": 6, "name": "Quality Standards", "url": "https://peplab.com.au/standards" },
+            { "@type": "ListItem", "position": 7, "name": "Track Order", "url": "https://peplab.com.au/track-order" },
+            { "@type": "ListItem", "position": 8, "name": "Contact", "url": "https://peplab.com.au/contact-info" },
+            { "@type": "ListItem", "position": 9, "name": "FAQ", "url": "https://peplab.com.au/faq" },
+            { "@type": "ListItem", "position": 10, "name": "Shipping", "url": "https://peplab.com.au/shipping" }
           ]
         }
       ]
