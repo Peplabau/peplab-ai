@@ -9,7 +9,7 @@
  */
 
 const PREFIX = 'peplab_cache_';
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const VERSION_KEY = 'peplab_cache_version';
 
 // On first load after a cache-version bump, wipe all stale persisted entries
