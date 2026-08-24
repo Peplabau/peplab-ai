@@ -422,15 +422,15 @@ function LoginOnlyApp() {
             <StaleTabReloader />
             <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
               <Routes>
-                <Route path="/" element={<LoginGateway />} />
+                <Route path="/" element={<PeplabLandingRoute />} />
+                <Route path="/landing" element={<Navigate to="/" replace />} />
                 <Route path="/login" element={<LoginGateway />} />
                 <Route path="/signup" element={<LoginGateway />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Public — keep indexed / crawlable */}
-                <Route path="/landing" element={<PeplabLandingRoute />} />
-                <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
+                <Route path="/new-landing" element={<Navigate to="/" replace />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
