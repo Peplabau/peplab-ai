@@ -422,15 +422,14 @@ function LoginOnlyApp() {
             <StaleTabReloader />
             <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
               <Routes>
-                <Route path="/" element={<PeplabLandingRoute />} />
-                <Route path="/landing" element={<Navigate to="/" replace />} />
                 <Route path="/login" element={<LoginGateway />} />
                 <Route path="/signup" element={<LoginGateway />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Public — keep indexed / crawlable */}
-                <Route path="/new-landing" element={<Navigate to="/" replace />} />
+                <Route path="/landing" element={<PeplabLandingRoute />} />
+                <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
@@ -448,7 +447,15 @@ function LoginOnlyApp() {
                 <Route path="/coa" element={<CoaArchive />} />
                 <Route path="/track-order" element={<TrackOrder />} />
 
-                {/* Shop — members only; session stays on peplab.com.au */}
+                {/* Shop — members only; same catalogue homepage as peplab.ai */}
+                <Route
+                  path="/"
+                  element={
+                    <RequireAuth>
+                      <ShopRoute />
+                    </RequireAuth>
+                  }
+                />
                 <Route
                   path="/shop"
                   element={
