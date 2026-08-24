@@ -224,7 +224,7 @@ export default function TrustpilotAdminSection() {
 
   const toggleVisible = async (row: TrustpilotReviewRow) => {
     if (row.is_visible === false && trustpilotReviewMentionsGhkCu(row)) {
-      setError('Reviews that mention GHK-Cu stay hidden on the site.');
+      setError('Reviews that mention GHK stay hidden on the site.');
       return;
     }
     const next = row.is_visible === false;
@@ -264,7 +264,7 @@ export default function TrustpilotAdminSection() {
           <p className="text-xs text-[#A9B3C7] mt-2 max-w-xl">
             Click <strong className="text-[#F4F6FA]">Sync from Trustpilot</strong> to pull live reviews
             (uses Apify + residential proxy). Add / Paste JSON is only a backup. Reviews that mention
-            GHK-Cu are auto-hidden from the homepage and landing page.
+            GHK (including GHK-Cu) are auto-hidden from the homepage, shop, and landing page.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
@@ -361,7 +361,7 @@ export default function TrustpilotAdminSection() {
                   )}
                   {trustpilotReviewMentionsGhkCu(row) && (
                     <span className="text-[10px] uppercase tracking-wide text-[#F59E0B]">
-                      GHK-Cu filtered
+                      GHK filtered
                     </span>
                   )}
                 </div>

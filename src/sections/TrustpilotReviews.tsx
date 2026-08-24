@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Star, CheckCircle, ExternalLink } from 'lucide-react';
@@ -6,9 +6,8 @@ import { CONFIG } from '@/lib/config';
 import {
   getTrustpilotHomepageFeed,
   type TrustpilotReviewRow,
-  type TrustpilotStatsRow,
 } from '@/lib/supabase-db';
-import { filterPublicTrustpilotReviews } from '@/lib/trustpilot-filters';
+import { filterPublicTrustpilotReviews, statsFromPublicTrustpilotReviews } from '@/lib/trustpilot-filters';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -32,7 +31,6 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [reviews, setReviews] = useState<TrustpilotReviewRow[]>([]);
-  const [stats, setStats] = useState<TrustpilotStatsRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -52,7 +50,11 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
       : viewportWidth < 1024
         ? 2
         : 4;
-  const maxIndex = Math.max(0, reviews.length - reviewsPerView);
+  const visibleReviews = useMemo(
+    () => filterPublicTrustpilotReviews(reviews),
+    [reviews],
+  );
+  const maxIndex = Math.max(0, visibleReviews.length - reviewsPerView);
 
   useEffect(() => {
     const onResize = () => setViewportWidth(window.innerWidth);
@@ -65,8 +67,8 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
     getTrustpilotHomepageFeed()
       .then((feed) => {
         if (cancelled) return;
-        setReviews(filterPublicTrustpilotReviews(feed.reviews));
-        setStats(feed.stats);
+        const publicReviews = filterPublicTrustpilotReviews(feed.reviews);
+        setReviews(publicReviews);
       })
       .catch((err) => console.error('Failed to load Trustpilot feed:', err))
       .finally(() => {
@@ -104,31 +106,26 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
   }, []);
 
   useEffect(() => {
-    if (!isAutoPlaying || reviews.length <= reviewsPerView) return;
+    if (!isAutoPlaying || visibleReviews.length <= reviewsPerView) return;
     autoPlayRef.current = setInterval(() => {
       setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
     }, 4500);
     return () => {
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     };
-  }, [isAutoPlaying, maxIndex, reviews.length, reviewsPerView]);
+  }, [isAutoPlaying, maxIndex, visibleReviews.length, reviewsPerView]);
 
   useEffect(() => {
     setCurrentIndex((prev) => Math.min(prev, maxIndex));
   }, [maxIndex]);
 
-  const avgFromRows = reviews.length
-    ? reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / reviews.length
-    : null;
+  const publicStats = statsFromPublicTrustpilotReviews(visibleReviews);
   const displayScore =
-    stats?.trust_score != null && Number.isFinite(Number(stats.trust_score))
-      ? Number(stats.trust_score).toFixed(1)
-      : avgFromRows != null
-        ? avgFromRows.toFixed(1)
-        : null;
-  const displayCount =
-    stats?.review_count && stats.review_count > 0 ? stats.review_count : reviews.length;
-  const verifiedCount = reviews.filter((r) => r.is_verified).length;
+    publicStats.trust_score != null
+      ? publicStats.trust_score.toFixed(1)
+      : null;
+  const displayCount = publicStats.review_count;
+  const verifiedCount = visibleReviews.filter((r) => r.is_verified).length;
   const scoreStars = displayScore ? Math.round(Number(displayScore)) : 5;
 
   if (isLanding) {
@@ -167,7 +164,7 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
 
           {loading ? (
             <div className="rg-tp-empty">Loading reviews…</div>
-          ) : reviews.length === 0 ? (
+          ) : visibleReviews.length === 0 ? (
             <div className="rg-tp-empty">
               <p>
                 Reviews appear here once synced from Trustpilot. You can still leave a review on
@@ -193,7 +190,7 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
                   className="rg-tp-track"
                   style={{ transform: `translateX(-${currentIndex * (100 / reviewsPerView)}%)` }}
                 >
-                  {reviews.map((review) => (
+                  {visibleReviews.map((review) => (
                     <div
                       key={review.id}
                       className="rg-tp-slide"
@@ -344,7 +341,7 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
           <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.45)] p-10 text-center text-sm text-[#A9B3C7]">
             Loading reviews…
           </div>
-        ) : reviews.length === 0 ? (
+        ) : visibleReviews.length === 0 ? (
           <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.45)] p-8 text-center">
             <p className="text-sm text-[#A9B3C7] mb-4 leading-relaxed">
               Reviews will appear here after the next Trustpilot sync from admin. You can still leave
@@ -376,7 +373,7 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
                 className="flex transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentIndex * (100 / reviewsPerView)}%)` }}
               >
-                {reviews.map((review) => (
+                {visibleReviews.map((review) => (
                   <div
                     key={review.id}
                     className="w-full sm:w-1/2 lg:w-1/4 flex-shrink-0 px-2"
