@@ -411,6 +411,55 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * `/` on peplab.com.au:
+ * - guests see the lock/login UI with homepage SEO (indexable, no redirect)
+ * - members see the shop catalogue
+ */
+function HomeGate() {
+  const [ready, setReady] = useState(false);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const sync = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      setAuthed(Boolean(session?.user));
+      setReady(true);
+    };
+
+    sync();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
+      setAuthed(Boolean(session?.user));
+      setReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  if (!ready) {
+    return (
+      <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (authed) return <ShopRoute />;
+  return <LoginGateway asHomepage />;
+}
+
 function LoginOnlyApp() {
   return (
     <CartProvider>
@@ -447,15 +496,8 @@ function LoginOnlyApp() {
                 <Route path="/coa" element={<CoaArchive />} />
                 <Route path="/track-order" element={<TrackOrder />} />
 
-                {/* Shop — members only; same catalogue homepage as peplab.ai */}
-                <Route
-                  path="/"
-                  element={
-                    <RequireAuth>
-                      <ShopRoute />
-                    </RequireAuth>
-                  }
-                />
+                {/* `/` is indexable: lock page for guests, shop for members. `/login` + `/signup` stay unchanged. */}
+                <Route path="/" element={<HomeGate />} />
                 <Route
                   path="/shop"
                   element={
