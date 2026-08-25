@@ -361,7 +361,6 @@ export default function LoginGateway({ asHomepage = false }: LoginGatewayProps) 
             </div>
 
             <div className="mb-5 space-y-2.5">
-              {!asHomepage && (
               <a
                 href={MAIN_APP_ORIGIN}
                 className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-[rgba(46,209,180,0.16)] border border-[rgba(46,209,180,0.4)] text-[#F4F6FA] hover:bg-[rgba(46,209,180,0.24)] transition-colors"
@@ -369,7 +368,6 @@ export default function LoginGateway({ asHomepage = false }: LoginGatewayProps) 
                 <ShoppingBag className="w-4 h-4 text-[#2ED1B4] shrink-0" />
                 Shop now
               </a>
-              )}
               <div className="grid grid-cols-2 gap-2.5">
                 <a
                   href={LOGIN_COMMUNITY_TELEGRAM}
