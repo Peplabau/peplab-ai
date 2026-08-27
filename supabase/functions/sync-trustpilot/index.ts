@@ -34,10 +34,10 @@ type MappedReview = {
   raw: Record<string, unknown>;
 };
 
-const GHK_CU_PATTERN = /ghk[\s._\-/:]*cu\b/i;
+const GHK_PATTERN = /\bghk(?:[\s._\-/:]*cu)?\b/i;
 
 function reviewMentionsGhkCu(row: Pick<MappedReview, "title" | "body" | "author_name">): boolean {
-  return GHK_CU_PATTERN.test([row.title, row.body, row.author_name].filter(Boolean).join(" "));
+  return GHK_PATTERN.test([row.title, row.body, row.author_name].filter(Boolean).join(" "));
 }
 
 function jsonResponse(body: unknown, status = 200) {

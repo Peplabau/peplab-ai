@@ -31,6 +31,8 @@ import { sendSignUpWelcome } from '@/lib/email';
 import { resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
 import { LOGIN_GATEWAY_PAGE_TITLE, MAIN_APP_ORIGIN } from '@/lib/domain';
+import { SITE_SEO_DESCRIPTION, SITE_SEO_KEYWORDS, SITE_SEO_TITLE } from '@/lib/seo-keywords';
+import { HOMEPAGE_SEO_DESCRIPTION } from '@/lib/seo-constants';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { validateSignupReferralCode } from '@/lib/signup-referral';
 import { CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
@@ -57,7 +59,12 @@ function friendlyAuthErrorMessage(raw: string | undefined | null): string {
   return m || 'Something went wrong. Please try again.';
 }
 
-export default function LoginGateway() {
+type LoginGatewayProps = {
+  /** Rendered at `/` for guests — same lock UI, homepage SEO so Google can index `/`. */
+  asHomepage?: boolean;
+};
+
+export default function LoginGateway({ asHomepage = false }: LoginGatewayProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isSignUp =
@@ -309,14 +316,25 @@ export default function LoginGateway() {
     );
   }
 
-  const pageTitle = isSignUp ? 'PEPLAB | Create account' : LOGIN_GATEWAY_PAGE_TITLE;
-  const pageDescription = isSignUp
-    ? 'Create your PEPLAB account with a referral code.'
-    : 'Sign in to your PEPLAB account.';
+  const pageTitle = asHomepage
+    ? SITE_SEO_TITLE
+    : isSignUp
+      ? 'PEPLAB | Create account'
+      : LOGIN_GATEWAY_PAGE_TITLE;
+  const pageDescription = asHomepage
+    ? SITE_SEO_DESCRIPTION
+    : isSignUp
+      ? 'Create your PEPLAB account with a referral code.'
+      : 'Sign in to your PEPLAB account.';
 
   return (
     <>
-      <SEO title={pageTitle} description={pageDescription} noIndex />
+      <SEO
+        title={pageTitle}
+        description={pageDescription}
+        keywords={asHomepage ? SITE_SEO_KEYWORDS : undefined}
+        noIndex={!asHomepage}
+      />
       <div className="min-h-screen flex flex-col" style={{ background: '#070A12' }}>
         <div className="absolute inset-0 grid-overlay opacity-60" />
 
@@ -326,9 +344,20 @@ export default function LoginGateway() {
               <span className="text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
                 PEPLAB
               </span>
-              <p className="mt-3 text-sm text-[#A9B3C7]">
-                {isSignUp ? 'Create your account to get started' : 'Sign in to continue to your account'}
-              </p>
+              {asHomepage ? (
+                <>
+                  <h1 className="mt-4 text-xl sm:text-2xl font-bold text-[#F4F6FA] leading-snug">
+                    PEPLAB Australia | Research peptides &amp; COA results
+                  </h1>
+                  <p className="mt-3 text-sm text-[#A9B3C7] leading-relaxed">
+                    {HOMEPAGE_SEO_DESCRIPTION}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-3 text-sm text-[#A9B3C7]">
+                  {isSignUp ? 'Create your account to get started' : 'Sign in to continue to your account'}
+                </p>
+              )}
             </div>
 
             <div className="mb-5 space-y-2.5">
@@ -491,7 +520,11 @@ export default function LoginGateway() {
                 </>
               ) : (
                 <>
-                  <h1 className="text-xl font-semibold text-[#F4F6FA] mb-1">Welcome back</h1>
+                  {asHomepage ? (
+                    <h2 className="text-xl font-semibold text-[#F4F6FA] mb-1">Member sign in</h2>
+                  ) : (
+                    <h1 className="text-xl font-semibold text-[#F4F6FA] mb-1">Welcome back</h1>
+                  )}
                   <p className="text-sm text-[#A9B3C7] mb-6">
                     Enter the email and password for your existing account.
                   </p>
