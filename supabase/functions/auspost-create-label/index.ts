@@ -35,6 +35,7 @@ type AddressIn = {
   postcode?: string;
   phone?: string;
   email?: string;
+  type?: string;
 };
 
 type CreateLabelBody = {
@@ -105,12 +106,22 @@ function normalizePostcode(raw: string): string {
   return digits.slice(0, 4).padStart(4, "0");
 }
 
+function inferToAddressType(lines: string[], explicit?: string): string | undefined {
+  const raw = (explicit || "").trim().toUpperCase();
+  if (raw === "PARCEL_LOCKER" || raw === "PARCEL_COLLECT" || raw === "STANDARD_ADDRESS") return raw;
+  const text = lines.join(" ").toLowerCase();
+  if (/parcel\s+locker/.test(text)) return "PARCEL_LOCKER";
+  if (/parcel\s+collect/.test(text)) return "PARCEL_COLLECT";
+  return undefined;
+}
+
 /** AusPost locality matching is strict — suburb UPPERCASE, state abbrev, 4-digit postcode. */
 function normalizeAddress(addr: AddressIn, fallbackName = "Recipient"): AddressIn {
   const lines = (addr.lines || [])
     .map((l) => l.trim())
     .filter(Boolean)
     .slice(0, 3);
+  const type = inferToAddressType(lines, addr.type);
   return {
     name: (addr.name || fallbackName).trim().slice(0, 40),
     lines,
@@ -119,6 +130,7 @@ function normalizeAddress(addr: AddressIn, fallbackName = "Recipient"): AddressI
     postcode: normalizePostcode(addr.postcode || ""),
     phone: addr.phone?.trim() || undefined,
     email: addr.email?.trim() || undefined,
+    ...(type ? { type } : {}),
   };
 }
 
