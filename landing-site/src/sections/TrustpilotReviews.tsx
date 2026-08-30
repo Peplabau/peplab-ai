@@ -35,7 +35,7 @@ export default function TrustpilotReviews({ variant = 'landing' }: { variant?: '
                 View Trustpilot reviews
                 <ExternalLink className="w-4 h-4" />
               </a>
-              <a href={`${MAIN_SITE_URL}/`} className="rg-btn rg-btn--ghost">
+              <a href={`${MAIN_SITE_URL}/shop`} className="rg-btn rg-btn--ghost">
                 Visit PEPLAB shop
               </a>
             </div>

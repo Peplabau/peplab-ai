@@ -13,7 +13,7 @@ import { CONFIG } from '@/lib/config';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/auspost';
 import { DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { siteHostname } from '@/lib/domain';
-import { LANDING_SITE_URL, shopUrl, coaArchiveUrl, shopPageUrl } from '@/lib/site';
+import { shopUrl, coaArchiveUrl, shopPageUrl } from '@/lib/site';
 
 const HIGHLIGHTS = [
   {
@@ -122,7 +122,7 @@ export default function LandingFooter({ hideCta = false }: LandingFooterProps) {
 
         <div className="rg-footer-grid">
           <div className="rg-footer-brand">
-            <a href={LANDING_SITE_URL} className="rg-footer-logo">
+            <a href={shopUrl('/')} className="rg-footer-logo">
               <span className="text-2xl font-bold tracking-[0.12em] gradient-text">PEPLAB</span>
             </a>
             <p className="rg-footer-logo-sub">Peptides Australia</p>

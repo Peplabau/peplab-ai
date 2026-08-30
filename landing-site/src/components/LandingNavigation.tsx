@@ -1,164 +1,139 @@
-import { useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { ArrowRight, Menu, X } from 'lucide-react';
-import { LANDING_SITE_URL, shopPageUrl } from '@/lib/site';
+import { useEffect, useState } from 'react';
+import { Menu, Package, Trophy, User, X } from 'lucide-react';
+import { shopPageUrl, shopUrl } from '@/lib/site';
 
-type LandingNavigationProps = {
-  embedded?: boolean;
-};
+const navClassDesktop =
+  'text-sm font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300';
+const navClassMobile =
+  'block w-full text-left text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2';
 
-const NAV_LINKS = [
-  { label: 'Verification', href: '#verification' },
-  { label: 'Process', href: '#process' },
-  { label: 'FAQ', href: '#faq' },
-] as const;
-
-export default function LandingNavigation({ embedded = false }: LandingNavigationProps) {
+export default function LandingNavigation() {
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
-
-  const closeMenu = useCallback(() => setIsMobileMenuOpen(false), []);
 
   useEffect(() => {
-    setPortalReady(true);
+    const handleScroll = () => setIsScrolled(window.scrollY > 100);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (!isMobileMenuOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeMenu();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isMobileMenuOpen, closeMenu]);
+  const navEntries = [
+    { label: 'Shop', href: shopPageUrl() },
+    { label: 'Protocols', href: shopUrl('/protocols') },
+    { label: 'COA', href: shopUrl('/coa') },
+    { label: 'Calculator', href: shopUrl('/calculator') },
+    { label: 'About', href: shopUrl('/standards') },
+    { label: 'Contact', href: shopUrl('/contact-info') },
+  ] as const;
 
   return (
     <nav
       aria-label="Primary navigation"
-      className={`nl-nav ${isMobileMenuOpen ? 'nl-nav--menu-open' : ''} ${embedded ? 'relative w-full' : 'fixed top-0 left-0 right-0 z-[500]'}`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? 'bg-[#070A12] border-b border-[rgba(244,246,250,0.08)]' : 'bg-[#070A12]'
+      }`}
     >
-      <div className={embedded ? 'nl-container' : 'w-full px-4 sm:px-6 lg:px-12'}>
-        <div className={`nl-nav-bar flex items-center justify-between ${embedded ? '' : 'h-16 sm:h-20'}`}>
-          <a
-            href={LANDING_SITE_URL}
-            className="flex flex-col items-start relative z-[2]"
-            onClick={closeMenu}
-          >
-            <span
-              className={`font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-4xl' : 'text-3xl sm:text-4xl lg:text-5xl'}`}
-            >
+      <div className="w-full px-4 sm:px-6 lg:px-12">
+        <div className="nl-nav-bar flex items-center justify-between h-16 sm:h-20 lg:h-24">
+          <a href="/" className="flex flex-col items-start" aria-label="PEPLAB landing home">
+            <span className="font-bold tracking-[0.12em] gradient-text leading-none text-3xl sm:text-4xl lg:text-5xl">
               PEPLAB
             </span>
-            <span
-              className={`nl-nav-tagline font-mono uppercase text-[#8B5CF6] mt-0.5 ${embedded ? 'text-[9px] sm:text-[10px] tracking-[0.35em]' : 'text-[10px] sm:text-xs lg:text-sm tracking-[0.45em] sm:tracking-[0.5em]'}`}
-            >
+            <span className="nl-nav-tagline font-mono uppercase text-[#8B5CF6] mt-0.5 text-[10px] sm:text-xs lg:text-sm tracking-[0.45em] sm:tracking-[0.5em]">
               PEPTIDES AUSTRALIA
             </span>
           </a>
 
-          <div className="hidden lg:flex items-center gap-8">
-            {NAV_LINKS.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="text-sm font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors"
-              >
-                {item.label}
+          <div className="hidden lg:flex items-center gap-10">
+            {navEntries.map((entry) => (
+              <a key={entry.label} href={entry.href} className={navClassDesktop}>
+                {entry.label}
               </a>
             ))}
-            <a
-              href={shopPageUrl()}
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold tracking-wide uppercase text-white bg-gradient-to-r from-[#8B5CF6] to-[#EC4899] hover:opacity-90 transition-opacity shadow-[0_8px_24px_rgba(139,92,246,0.35)]"
-            >
-              Shop now
-            </a>
           </div>
 
-          <button
-            type="button"
-            className="nl-nav-menu-btn lg:hidden relative z-[2]"
-            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={isMobileMenuOpen}
-            aria-controls="nl-mobile-nav-panel"
-            onClick={() => setIsMobileMenuOpen((v) => !v)}
-          >
-            {isMobileMenuOpen ? <X size={22} strokeWidth={2} /> : <Menu size={22} strokeWidth={2} />}
-          </button>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <a
+              href={shopUrl('/leaderboard')}
+              className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
+              title="Promoter Leaderboard"
+            >
+              <Trophy className="w-5 h-5 text-amber-300" />
+            </a>
+            <a
+              href={shopUrl('/track-order')}
+              className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
+              title="Track Order"
+            >
+              <Package className="w-5 h-5 text-[#F4F6FA]" />
+            </a>
+            <a
+              href={shopUrl('/login')}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(139,92,246,0.15)] border border-[rgba(139,92,246,0.3)] text-[#8B5CF6] hover:bg-[rgba(139,92,246,0.25)] transition-colors duration-300"
+            >
+              <User className="w-4 h-4" />
+              <span className="text-sm font-medium">Login</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+              className="lg:hidden p-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6 text-[#F4F6FA]" />
+              ) : (
+                <Menu className="w-6 h-6 text-[#F4F6FA]" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {portalReady &&
-        createPortal(
-          <div
-            className={`nl-mobile-nav lg:hidden ${isMobileMenuOpen ? 'nl-mobile-nav--open' : ''}`}
-            aria-hidden={!isMobileMenuOpen}
-          >
-            <button
-              type="button"
-              className="nl-mobile-nav__backdrop"
-              aria-label="Close menu"
-              tabIndex={isMobileMenuOpen ? 0 : -1}
-              onClick={closeMenu}
-            />
-
-            <aside
-              id="nl-mobile-nav-panel"
-              className="nl-mobile-nav__panel"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Site menu"
+      <div
+        className={`lg:hidden absolute top-full left-0 right-0 bg-[#070A12] border-b border-[rgba(244,246,250,0.08)] transition-all duration-300 ${
+          isMobileMenuOpen
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 -translate-y-4 pointer-events-none'
+        }`}
+      >
+        <div className="px-6 py-6 space-y-4">
+          {navEntries.map((entry) => (
+            <a
+              key={entry.label}
+              href={entry.href}
+              className={navClassMobile}
+              onClick={() => setIsMobileMenuOpen(false)}
             >
-              <div className="nl-mobile-nav__head">
-                <div>
-                  <p className="nl-mobile-nav__eyebrow">Navigation</p>
-                  <p className="nl-mobile-nav__brand gradient-text">PEPLAB</p>
-                </div>
-                <button
-                  type="button"
-                  className="nl-mobile-nav__close"
-                  aria-label="Close menu"
-                  onClick={closeMenu}
-                >
-                  <X size={20} strokeWidth={2} />
-                </button>
-              </div>
-
-              <nav className="nl-mobile-nav__links" aria-label="Mobile">
-                <ul>
-                  {NAV_LINKS.map((item, index) => (
-                    <li key={item.href}>
-                      <a href={item.href} className="nl-mobile-nav__link" onClick={closeMenu}>
-                        <span className="nl-mobile-nav__link-index">
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
-                        <span className="nl-mobile-nav__link-label">{item.label}</span>
-                        <ArrowRight className="nl-mobile-nav__link-arrow" strokeWidth={2} aria-hidden />
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-
-              <div className="nl-mobile-nav__footer">
-                <a href={shopPageUrl()} className="nl-mobile-nav__cta" onClick={closeMenu}>
-                  Shop now
-                  <ArrowRight className="w-4 h-4" strokeWidth={2.5} aria-hidden />
-                </a>
-                <p className="nl-mobile-nav__note">Research use only · Australia-wide dispatch</p>
-              </div>
-            </aside>
-          </div>,
-          document.body,
-        )}
+              {entry.label}
+            </a>
+          ))}
+          <a
+            href={shopUrl('/track-order')}
+            className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Package className="w-5 h-5" />
+            Track Order
+          </a>
+          <a
+            href={shopUrl('/leaderboard')}
+            className="flex items-center gap-2 text-lg font-medium text-amber-300 hover:text-amber-200 transition-colors duration-300 py-2"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <Trophy className="w-5 h-5" />
+            Leaderboard
+          </a>
+          <a
+            href={shopUrl('/login')}
+            className="flex items-center gap-2 text-lg font-medium text-[#8B5CF6] hover:text-[#A78BFA] transition-colors duration-300 py-2"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <User className="w-5 h-5" />
+            Login
+          </a>
+        </div>
+      </div>
     </nav>
   );
 }

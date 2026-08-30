@@ -2,16 +2,16 @@ const trim = (url: string) => url.replace(/\/$/, '');
 
 /**
  * Standalone landing deploy:
- * - VITE_LANDING_SITE_URL = this site's public URL (e.g. https://landing.peplab.com.au)
- * - VITE_MAIN_SITE_URL    = shop / main app (e.g. https://peplab.com.au or https://peplab.ai)
+ * - VITE_LANDING_SITE_URL = this landing site's public URL
+ * - VITE_MAIN_SITE_URL    = shop (peplab.ai)
  */
 export const MAIN_SITE_URL = trim(
-  import.meta.env.VITE_MAIN_SITE_URL || 'https://peplab.com.au',
+  import.meta.env.VITE_MAIN_SITE_URL || 'https://peplab.ai',
 );
 
 export const LANDING_SITE_URL = trim(
   import.meta.env.VITE_LANDING_SITE_URL ||
-    (typeof window !== 'undefined' ? window.location.origin : 'https://peplab.com.au'),
+    (typeof window !== 'undefined' ? window.location.origin : 'https://peplab.ai'),
 );
 
 export const SHOP_URL = MAIN_SITE_URL;
