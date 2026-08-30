@@ -48,6 +48,12 @@ import {
   saveCheckoutProfile,
   type CheckoutShippingDetails,
 } from '@/lib/checkout-profile';
+import {
+  inferCheckoutAddressType,
+  validateAusPostAddress,
+  validateAusPostLocality,
+  validateCheckoutAddressFormat,
+} from '@/lib/auspost-address';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ShippingMethod {
@@ -93,6 +99,10 @@ export default function Checkout() {
   });
   /** Shown when we autofilled from saved profile / last order. */
   const [autofillNotice, setAutofillNotice] = useState<string | null>(null);
+  const [localityError, setLocalityError] = useState<string | null>(null);
+  const [localitySuggestions, setLocalitySuggestions] = useState<string[]>([]);
+  const [localityOk, setLocalityOk] = useState(false);
+  const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState<string>('express');
   const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [ageVerified, setAgeVerified] = useState(false);
@@ -254,8 +264,48 @@ export default function Checkout() {
     promoDiscountApplied: referralPromoDiscountActive,
   });
 
+  const updateShipping = (patch: Partial<CheckoutShippingDetails>) => {
+    if (patch.suburb !== undefined || patch.state !== undefined || patch.postcode !== undefined) {
+      setLocalityOk(false);
+      setLocalityError(null);
+    }
+    setShippingAddress((prev) => ({ ...prev, ...patch }));
+  };
+
+  const verifyLocality = async (
+    details = shippingAddress,
+    opts?: { quietIfIncomplete?: boolean },
+  ): Promise<{ ok: boolean; error?: string }> => {
+    const suburb = details.suburb.trim();
+    const state = details.state.trim();
+    const postcode = details.postcode.replace(/\D/g, '').slice(0, 4);
+    if (opts?.quietIfIncomplete && (suburb.length < 2 || !state || postcode.length !== 4)) {
+      return { ok: false };
+    }
+    setIsVerifyingAddress(true);
+    setLocalityError(null);
+    setLocalitySuggestions([]);
+    try {
+      const result = await validateAusPostLocality({ suburb, state, postcode });
+      setLocalitySuggestions(result.suggestions || []);
+      if (!result.valid) {
+        const message = result.error || 'This address is not recognised by Australia Post.';
+        setLocalityOk(false);
+        setLocalityError(message);
+        return { ok: false, error: message };
+      }
+      setLocalityOk(true);
+      if (result.suburb && result.suburb.toUpperCase() !== suburb.toUpperCase()) {
+        setShippingAddress((prev) => ({ ...prev, suburb: result.suburb || prev.suburb }));
+      }
+      return { ok: true };
+    } finally {
+      setIsVerifyingAddress(false);
+    }
+  };
+
   const handleSelectTier = (tier: typeof REDEMPTION_TIERS[0]) => {
-    setSelectedTier(prev => prev?.points === tier.points ? null : tier);
+    setSelectedTier((prev) => (prev?.points === tier.points ? null : tier));
   };
 
   // Auto-apply a points redemption selected from Dashboard.
@@ -287,6 +337,50 @@ export default function Checkout() {
     setOrderEmailNotice(null);
 
     try {
+      const formatErr = validateCheckoutAddressFormat(
+        shippingAddress.address,
+        shippingAddress.apartment,
+      );
+      if (formatErr) {
+        setSubmitError(formatErr);
+        return;
+      }
+      setIsVerifyingAddress(true);
+      let auspostCheck;
+      try {
+        auspostCheck = await validateAusPostAddress({
+          suburb: shippingAddress.suburb,
+          state: shippingAddress.state,
+          postcode: shippingAddress.postcode,
+          address: shippingAddress.address,
+          apartment: shippingAddress.apartment,
+          addressType: inferCheckoutAddressType(
+            `${shippingAddress.address} ${shippingAddress.apartment}`,
+          ),
+          shippingMethod: selectedShipping,
+          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
+        });
+      } finally {
+        setIsVerifyingAddress(false);
+      }
+      setLocalitySuggestions(auspostCheck.suggestions || []);
+      if (!auspostCheck.valid) {
+        setLocalityOk(false);
+        setLocalityError(auspostCheck.error || 'Australia Post could not verify this address.');
+        setSubmitError(auspostCheck.error || 'Australia Post could not verify this delivery address.');
+        return;
+      }
+      setLocalityOk(true);
+      setLocalityError(null);
+      if (auspostCheck.suburb) {
+        setShippingAddress((prev) => ({
+          ...prev,
+          suburb: auspostCheck.suburb || prev.suburb,
+          state: auspostCheck.state || prev.state,
+          postcode: auspostCheck.postcode || prev.postcode,
+        }));
+      }
+
       const wasPreorderCheckout = items.some((i) => !i.isFree && i.isPreorder);
       const newOrderNumber = wasPreorderCheckout
         ? await generatePreorderOrderNumberForCheckout()
@@ -941,7 +1035,7 @@ export default function Checkout() {
                 <input 
                   type="text" 
                   value={shippingAddress.firstName} 
-                  onChange={(e) => setShippingAddress({...shippingAddress, firstName: e.target.value})} 
+                  onChange={(e) => updateShipping({ firstName: e.target.value })} 
                   required
                   autoComplete="given-name"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
@@ -950,7 +1044,7 @@ export default function Checkout() {
                 <input 
                   type="text" 
                   value={shippingAddress.lastName} 
-                  onChange={(e) => setShippingAddress({...shippingAddress, lastName: e.target.value})} 
+                  onChange={(e) => updateShipping({ lastName: e.target.value })} 
                   required
                   autoComplete="family-name"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
@@ -960,17 +1054,19 @@ export default function Checkout() {
               <input 
                 type="text" 
                 value={shippingAddress.address} 
-                onChange={(e) => setShippingAddress({...shippingAddress, address: e.target.value})} 
+                onChange={(e) => updateShipping({ address: e.target.value })} 
                 required
-                autoComplete="street-address"
+                autoComplete="address-line1"
+                maxLength={40}
                 className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                placeholder="Street address"
+                placeholder="Street, PO Box or Parcel Locker"
               />
               <input
                 type="text"
                 value={shippingAddress.apartment}
-                onChange={(e) => setShippingAddress({ ...shippingAddress, apartment: e.target.value })}
+                onChange={(e) => updateShipping({ apartment: e.target.value })}
                 autoComplete="address-line2"
+                maxLength={40}
                 className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                 placeholder="Apartment / unit (optional)"
               />
@@ -978,7 +1074,8 @@ export default function Checkout() {
                 <input 
                   type="text" 
                   value={shippingAddress.suburb} 
-                  onChange={(e) => setShippingAddress({...shippingAddress, suburb: e.target.value})} 
+                  onChange={(e) => updateShipping({ suburb: e.target.value })} 
+                  onBlur={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
                   required
                   autoComplete="address-level2"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
@@ -987,9 +1084,12 @@ export default function Checkout() {
                 <input 
                   type="text" 
                   value={shippingAddress.postcode} 
-                  onChange={(e) => setShippingAddress({...shippingAddress, postcode: e.target.value})} 
+                  onChange={(e) => updateShipping({ postcode: e.target.value })} 
+                  onBlur={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
                   required
                   autoComplete="postal-code"
+                  inputMode="numeric"
+                  maxLength={4}
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                   placeholder="Postcode"
                 />
@@ -997,7 +1097,10 @@ export default function Checkout() {
               <div className="grid grid-cols-2 gap-2">
                 <select 
                   value={shippingAddress.state} 
-                  onChange={(e) => setShippingAddress({...shippingAddress, state: e.target.value})} 
+                  onChange={(e) => {
+                    updateShipping({ state: e.target.value });
+                    void verifyLocality({ ...shippingAddress, state: e.target.value }, { quietIfIncomplete: true });
+                  }} 
                   required
                   autoComplete="address-level1"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
@@ -1015,13 +1118,46 @@ export default function Checkout() {
                 <input 
                   type="tel" 
                   value={shippingAddress.phone} 
-                  onChange={(e) => setShippingAddress({...shippingAddress, phone: e.target.value})} 
+                  onChange={(e) => updateShipping({ phone: e.target.value })} 
                   required
                   autoComplete="tel"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                   placeholder="Phone"
                 />
               </div>
+              {isVerifyingAddress && (
+                <p className="text-[11px] text-[#A9B3C7] flex items-center gap-1.5">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Checking address with Australia Post…
+                </p>
+              )}
+              {localityOk && !localityError && (
+                <p className="text-[11px] text-[#22C55E] flex items-center gap-1.5">
+                  <Check className="w-3 h-3" />
+                  Address looks good for Australia Post
+                </p>
+              )}
+              {localityError && (
+                <p className="text-[11px] text-red-400 leading-snug">{localityError}</p>
+              )}
+              {localitySuggestions.length > 0 && !localityOk && (
+                <div className="flex flex-wrap gap-1">
+                  {localitySuggestions.map((suburb) => (
+                    <button
+                      key={suburb}
+                      type="button"
+                      onClick={() => {
+                        const next = { ...shippingAddress, suburb };
+                        updateShipping({ suburb });
+                        void verifyLocality(next);
+                      }}
+                      className="px-2 py-0.5 rounded-md border border-white/15 text-[10px] text-[#F4F6FA] hover:border-[#2ED1B4]"
+                    >
+                      {suburb}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

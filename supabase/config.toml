@@ -10,6 +10,9 @@ verify_jwt = true
 [functions.auspost-create-label]
 verify_jwt = true
 
+[functions.auspost-validate-address]
+verify_jwt = false
+
 # -----------------------------------------------------------------------------
 # Auth — frictionless signup (no email verification)
 # -----------------------------------------------------------------------------
