@@ -1445,6 +1445,45 @@ export const invokeSyncTrustpilot = async (): Promise<{
   };
 };
 
+/** Poll AusPost Track Items and mark shipped orders as delivered when AusPost says so. */
+export const invokeAusPostSyncDelivered = async (opts?: {
+  sendReviewEmails?: boolean;
+}): Promise<{
+  ok?: boolean;
+  checked?: number;
+  tracking_ids_queried?: number;
+  delivered?: number;
+  delivered_orders?: string[];
+  review_emails_sent?: number;
+  review_email_failed?: number;
+  track_errors?: string[];
+  message?: string;
+  error?: string;
+}> => {
+  const { data, error } = await supabase.functions.invoke('auspost-sync-delivered', {
+    body: { send_review_emails: opts?.sendReviewEmails !== false },
+  });
+  if (error) {
+    const message =
+      (data as { error?: string } | null)?.error ||
+      error.message ||
+      'AusPost delivery sync failed';
+    return { error: message };
+  }
+  return (data || {}) as {
+    ok?: boolean;
+    checked?: number;
+    tracking_ids_queried?: number;
+    delivered?: number;
+    delivered_orders?: string[];
+    review_emails_sent?: number;
+    review_email_failed?: number;
+    track_errors?: string[];
+    message?: string;
+    error?: string;
+  };
+};
+
 export const updateTrustpilotReview = async (
   id: string,
   patch: {

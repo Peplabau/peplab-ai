@@ -1,0 +1,32 @@
+-- Optional: schedule AusPost delivery sync via pg_cron + pg_net (Pro+).
+-- Prefer Supabase Dashboard → Edge Functions → Schedules if available.
+--
+-- Before running, replace:
+--   <PROJECT_REF>              e.g. dbhoyrqehxbjvdvddixc
+--   <AUSPOST_SYNC_CRON_SECRET> same value as Edge Function secret
+--
+-- Enable extensions (once):
+--   create extension if not exists pg_net with schema extensions;
+--   create extension if not exists pg_cron with schema extensions;
+--
+-- Example job (every 3 hours):
+--
+-- select cron.schedule(
+--   'auspost-sync-delivered',
+--   '0 */3 * * *',
+--   $$
+--   select net.http_post(
+--     url := 'https://<PROJECT_REF>.supabase.co/functions/v1/auspost-sync-delivered',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'x-cron-secret', '<AUSPOST_SYNC_CRON_SECRET>'
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
+--
+-- Unschedule:
+--   select cron.unschedule('auspost-sync-delivered');
+
+select 1;

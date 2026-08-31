@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cached, invalidateCache, setCache, TTL_ADMIN_OVERVIEW, TTL_ADMIN_ORDERS, TTL_ADMIN_PRODUCTS } from '@/lib/cache';
 import { CONFIG } from '@/lib/config';
 import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS } from '@/lib/settings';
-import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, type PointsEvent } from '@/lib/supabase-db';
+import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, invokeAusPostSyncDelivered, type PointsEvent } from '@/lib/supabase-db';
 import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-reward';
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
 import TrustpilotAdminSection from '@/components/admin/TrustpilotAdminSection';
@@ -1653,6 +1653,7 @@ function OrdersSection() {
   const [copiedShippingField, setCopiedShippingField] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCreatingAusPostLabel, setIsCreatingAusPostLabel] = useState(false);
+  const [isSyncingDeliveries, setIsSyncingDeliveries] = useState(false);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBulkSendingReviewEmails, setIsBulkSendingReviewEmails] = useState(false);
@@ -1885,6 +1886,39 @@ function OrdersSection() {
     alert(
       `Bulk deliver complete:\n• ${delivered} marked delivered\n• ${reviewSent} review email(s) sent${reviewFailed ? `\n• ${reviewFailed} review email(s) failed — retry from order detail` : ''}${failed ? `\n• ${failed} update(s) failed` : ''}`,
     );
+  };
+
+  /** Poll AusPost Track Items and auto-mark delivered shipments. */
+  const syncAusPostDeliveries = async () => {
+    const confirmed = window.confirm(
+      'Check Australia Post tracking for all Shipped orders and mark Delivered when AusPost reports delivery?\n\nEligible customers will also get the Trustpilot review email.',
+    );
+    if (!confirmed) return;
+
+    setIsSyncingDeliveries(true);
+    try {
+      const result = await invokeAusPostSyncDelivered({ sendReviewEmails: true });
+      if (result.error) {
+        alert(`AusPost delivery sync failed:\n\n${result.error}`);
+        return;
+      }
+      await loadOrders(true);
+      const list =
+        result.delivered_orders?.length
+          ? `\n\nOrders:\n${result.delivered_orders.map((n) => `• ${formatOrderNumberDisplay(n)}`).join('\n')}`
+          : '';
+      const errs =
+        result.track_errors?.length
+          ? `\n\nNotes:\n${result.track_errors.slice(0, 5).join('\n')}`
+          : '';
+      alert(
+        `AusPost delivery sync complete:\n• Checked ${result.checked ?? 0} shipped order(s)\n• Marked ${result.delivered ?? 0} delivered\n• Review emails sent: ${result.review_emails_sent ?? 0}${result.review_email_failed ? `\n• Review emails failed: ${result.review_email_failed}` : ''}${list}${errs}`,
+      );
+    } catch (err) {
+      alert(`AusPost delivery sync failed:\n\n${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsSyncingDeliveries(false);
+    }
   };
 
   useEffect(() => {
@@ -2849,6 +2883,16 @@ function OrdersSection() {
                       : 'No shipped orders selected'}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => void syncAusPostDeliveries()}
+                disabled={isSyncingDeliveries || isUpdating}
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 py-2 rounded-xl bg-[rgba(46,209,180,0.15)] border border-[rgba(46,209,180,0.35)] text-[#2ED1B4] text-sm font-semibold hover:bg-[rgba(46,209,180,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Poll AusPost tracking and auto-mark delivered orders"
+              >
+                <Truck className="w-4 h-4" />
+                {isSyncingDeliveries ? 'Syncing AusPost…' : 'Sync AusPost deliveries'}
+              </button>
             </div>
           )}
           {/* Desktop table */}
