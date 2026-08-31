@@ -3,7 +3,7 @@
  * Homepage design language (Sora/Inter/IBM Plex Mono, dark grid bg, brand violet accent)
  * with a bento proof grid, batch marquee, and oversized display type.
  */
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -14,27 +14,17 @@ import {
   ShieldCheck,
   Truck,
 } from 'lucide-react';
-import CountUp from '@/components/new-landing/CountUp';
 import OzcaniumAnalyticsName from '@/components/OzcaniumAnalyticsName';
 import { SEO } from '@/components/SEO';
 import { RESEARCH_GATEWAY_SEO } from '@/lib/seo-keywords';
 import LandingFooter from '@/components/LandingFooter';
 import { coaArchiveUrl, shopPageUrl } from '@/lib/site';
 import TrustpilotReviews from '@/sections/TrustpilotReviews';
+import MarketingLanding from '@/pages/MarketingLanding';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const BATCH_NO = 'BN88LAB';
-const LAB_TAB_ADVANCE_MS = 6000;
-
-const TICKER = [
-  { id: 'BN88LAB · Lot A', v: 'HPLC 99.20% · LC-MS pass · 10.2mg' },
-  { id: 'BN88LAB · Lot B', v: 'HPLC 99.42% · LC-MS pass · 10.1mg' },
-  { id: 'BN88LAB · Lot C', v: 'HPLC 99.68% · LC-MS pass · 10.3mg' },
-  { id: 'BN88LAB · Lot D', v: 'HPLC 99.31% · LC-MS pass · 10.0mg' },
-  { id: 'BN88LAB · Lot E', v: 'HPLC 99.55% · LC-MS pass · 10.2mg' },
-] as const;
-
 const PROCESS = [
   { n: '01', title: 'Sampled', text: 'Material pulled from the production lot before it is ever listed.' },
   { n: '02', title: 'Tested', text: 'HPLC purity, LC-MS identity, and content assay — independent lab.' },
@@ -64,319 +54,6 @@ const FAQ = [
     a: 'No. These materials are for in-vitro laboratory research only. COAs support lab documentation, not medical claims.',
   },
 ] as const;
-
-/* ————— Lab data panel — tabbed charts ————— */
-const LAB_TABS = [
-  { id: 'hplc', label: 'HPLC', figure: '99.20', unit: '%', note: 'Main peak area · RT 5.63 min' },
-  { id: 'lcms', label: 'LC-MS', figure: 'Pass', unit: '', note: 'Observed MW matches expected sequence' },
-  { id: 'assay', label: 'Assay', figure: '10.2', unit: 'mg', note: 'Net peptide vs 10 mg label claim' },
-] as const;
-
-/** RP-HPLC chromatogram — dominant main peak + trace impurities. */
-function HplcChart() {
-  return (
-    <svg className="ra-chart" viewBox="0 0 480 210" preserveAspectRatio="none" aria-hidden>
-      <defs>
-        <linearGradient id="ra-hplc-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(139,92,246,0.35)" />
-          <stop offset="100%" stopColor="rgba(139,92,246,0)" />
-        </linearGradient>
-      </defs>
-      {[40, 80, 120, 160].map((y) => (
-        <line key={y} x1="0" y1={y} x2="480" y2={y} className="ra-chart-grid" />
-      ))}
-      <path
-        className="ra-chart-area"
-        fill="url(#ra-hplc-fill)"
-        stroke="none"
-        d="M0,186 L58,186 C70,186 74,170 84,170 C94,170 98,186 112,186 L166,186 C180,186 186,26 202,26 C218,26 224,186 240,186 L280,186 C290,186 294,174 302,174 C310,174 314,186 326,186 L362,186 C370,186 374,179 381,179 C388,179 392,186 402,186 L480,186 L480,210 L0,210 Z"
-      />
-      <path
-        className="ra-chart-line"
-        fill="none"
-        d="M0,186 L58,186 C70,186 74,170 84,170 C94,170 98,186 112,186 L166,186 C180,186 186,26 202,26 C218,26 224,186 240,186 L280,186 C290,186 294,174 302,174 C310,174 314,186 326,186 L362,186 C370,186 374,179 381,179 C388,179 392,186 402,186 L480,186"
-      />
-      <line x1="202" y1="26" x2="202" y2="186" className="ra-chart-marker" />
-      <g className="ra-chart-tag" transform="translate(214, 34)">
-        <rect x="0" y="0" width="122" height="20" rx="4" />
-        <text x="61" y="13.5" textAnchor="middle">Peak 1 · 99.20%</text>
-      </g>
-      <text x="6" y="204" className="ra-chart-axis">0 min</text>
-      <text x="474" y="204" textAnchor="end" className="ra-chart-axis">12 min</text>
-    </svg>
-  );
-}
-
-/** Mass spectrum — main m/z stick highlighted. */
-function LcmsChart() {
-  const sticks: Array<[number, number, boolean?]> = [
-    [46, 34], [88, 22], [128, 52], [168, 30], [206, 150, true], [252, 44],
-    [296, 26], [338, 38], [382, 18], [424, 28],
-  ];
-  return (
-    <svg className="ra-chart" viewBox="0 0 480 210" preserveAspectRatio="none" aria-hidden>
-      {[40, 80, 120, 160].map((y) => (
-        <line key={y} x1="0" y1={y} x2="480" y2={y} className="ra-chart-grid" />
-      ))}
-      <line x1="0" y1="186" x2="480" y2="186" className="ra-chart-base" />
-      {sticks.map(([x, h, main]) => (
-        <line
-          key={x}
-          x1={x}
-          x2={x}
-          y1={186}
-          y2={186 - h}
-          className={`ra-chart-stick${main ? ' is-main' : ''}`}
-        />
-      ))}
-      <g className="ra-chart-tag" transform="translate(218, 24)">
-        <rect x="0" y="0" width="150" height="20" rx="4" />
-        <text x="75" y="13.5" textAnchor="middle">m/z match · identity pass</text>
-      </g>
-      <text x="6" y="204" className="ra-chart-axis">m/z</text>
-      <text x="474" y="204" textAnchor="end" className="ra-chart-axis">rel. intensity</text>
-    </svg>
-  );
-}
-
-/** Assay — label claim vs measured, horizontal bars. */
-function AssayChart() {
-  return (
-    <svg className="ra-chart" viewBox="0 0 480 210" preserveAspectRatio="none" aria-hidden>
-      {[40, 80, 120, 160].map((y) => (
-        <line key={y} x1="0" y1={y} x2="480" y2={y} className="ra-chart-grid" />
-      ))}
-      <text x="6" y="62" className="ra-chart-label">Label claim</text>
-      <rect x="6" y="72" width="404" height="26" rx="6" className="ra-chart-bar ra-chart-bar--ghost" />
-      <text x="422" y="90" className="ra-chart-value">10.0 mg</text>
-
-      <text x="6" y="136" className="ra-chart-label">Measured</text>
-      <rect x="6" y="146" width="412" height="26" rx="6" className="ra-chart-bar" />
-      <text x="426" y="164" className="ra-chart-value is-main">10.2 mg</text>
-    </svg>
-  );
-}
-
-function LabPanel() {
-  const [tab, setTab] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  useEffect(() => {
-    if (paused) return;
-    let reduced = false;
-    try {
-      reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    } catch {
-      /* ignore */
-    }
-    if (reduced) return;
-    const id = window.setInterval(() => setTab((t) => (t + 1) % LAB_TABS.length), LAB_TAB_ADVANCE_MS);
-    return () => window.clearInterval(id);
-  }, [paused]);
-
-  const active = LAB_TABS[tab];
-
-  return (
-    <div className="ra-lab" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div className="ra-lab-chrome">
-        <span className="ra-lab-chrome-dot" aria-hidden />
-        <span className="ra-lab-mark">Live batch data</span>
-        <span className="ra-lab-batch">{BATCH_NO}</span>
-      </div>
-
-      <div className="ra-lab-tabs" role="tablist" aria-label="Lab tests">
-        {LAB_TABS.map((t, i) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={i === tab}
-            className={`ra-lab-tab${i === tab ? ' is-active' : ''}`}
-            onClick={() => {
-              setTab(i);
-              setPaused(true);
-            }}
-          >
-            <span className="ra-lab-tab-n">{String(i + 1).padStart(2, '0')}</span>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="ra-lab-body">
-        <div className="ra-lab-readout">
-          <p className="ra-lab-figure" key={active.id}>
-            {active.figure}
-            {active.unit && <span>{active.unit}</span>}
-          </p>
-          <p className="ra-lab-note">{active.note}</p>
-        </div>
-
-        <div className="ra-lab-chart" aria-hidden>
-          <div className={`ra-lab-pane${tab === 0 ? ' is-active' : ''}`} key={`hplc-${tab === 0}`}>
-            {tab === 0 && <HplcChart />}
-          </div>
-          <div className={`ra-lab-pane${tab === 1 ? ' is-active' : ''}`} key={`lcms-${tab === 1}`}>
-            {tab === 1 && <LcmsChart />}
-          </div>
-          <div className={`ra-lab-pane${tab === 2 ? ' is-active' : ''}`} key={`assay-${tab === 2}`}>
-            {tab === 2 && <AssayChart />}
-          </div>
-        </div>
-      </div>
-
-      <div className="ra-lab-foot">
-        <span className="ra-lab-foot-lab">
-          Tested by <OzcaniumAnalyticsName />
-        </span>
-        <span className="ra-lab-foot-status">
-          <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-          Released
-        </span>
-        <a href={coaArchiveUrl()} className="ra-lab-foot-link">
-          Full COA <ArrowUpRight className="w-3.5 h-3.5" />
-        </a>
-      </div>
-    </div>
-  );
-}
-
-/* ————— Batch marquee ————— */
-function BatchMarquee() {
-  const items = [...TICKER, ...TICKER];
-  return (
-    <div className="ra-marquee" aria-hidden>
-      <div className="ra-marquee-track">
-        {items.map((item, i) => (
-          <span key={`${item.id}-${i}`} className="ra-marquee-item">
-            <Check className="w-3 h-3" strokeWidth={2.5} />
-            <span className="ra-marquee-id">{item.id}</span>
-            <span className="ra-marquee-v">{item.v}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ————— Hero ————— */
-function Hero() {
-  const ref = useRef<HTMLElement>(null);
-
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let reduced = false;
-    try {
-      reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    } catch {
-      /* ignore */
-    }
-
-    const ctx = gsap.context(() => {
-      const words = el.querySelectorAll('.ra-display-word');
-      const fades = el.querySelectorAll('.ra-hero-fade');
-      const cert = el.querySelector('.ra-lab');
-
-      if (reduced) {
-        gsap.set([words, fades, cert], { clearProps: 'all', opacity: 1 });
-        return;
-      }
-
-      gsap.set(words, { yPercent: 110 });
-      gsap.to(words, { yPercent: 0, duration: 0.9, stagger: 0.09, ease: 'power4.out', delay: 0.1 });
-      gsap.fromTo(
-        fades,
-        { y: 24, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.85, stagger: 0.1, delay: 0.5, ease: 'power2.out' },
-      );
-      gsap.fromTo(
-        cert,
-        { y: 56, opacity: 0, rotate: 1.2 },
-        { y: 0, opacity: 1, rotate: 0, duration: 1.2, delay: 0.35, ease: 'power3.out' },
-      );
-    }, el);
-
-    return () => ctx.revert();
-  }, []);
-
-  return (
-    <section ref={ref} className="ra-hero">
-      <div className="ra-bg" aria-hidden>
-        <div className="ra-bg-glow ra-bg-glow--teal" />
-        <div className="ra-bg-glow ra-bg-glow--violet" />
-      </div>
-
-      <div className="ra-shell ra-hero-inner">
-        <p className="ra-hero-eyebrow ra-hero-fade">
-          <span className="ra-live-dot" aria-hidden />
-          Peptides Australia — research use only
-        </p>
-
-        <h1 className="ra-display">
-          <span className="ra-display-row">
-            <span className="ra-display-clip">
-              <span className="ra-display-word">PEPLAB AUSTRALIA</span>
-            </span>
-          </span>
-          <span className="ra-display-row">
-            <span className="ra-display-clip">
-              <span className="ra-display-word ra-display-word--ghost">RESEARCH PEPTIDES</span>
-            </span>
-          </span>
-        </h1>
-        <p className="ra-hero-tagline ra-hero-fade text-sm text-[#A9B3C7] mt-2">
-          Lab proof. Not promises.
-        </p>
-
-        <div className="ra-hero-split">
-          <div className="ra-hero-copy ra-hero-fade">
-            <p className="ra-hero-lead">
-              Every research lot ships with a published certificate — HPLC purity, LC-MS identity, and content
-              assay under one batch ID you can audit before you order.
-            </p>
-            <div className="ra-hero-cta">
-              <a href={shopPageUrl()} className="ra-btn ra-btn--solid">
-                Shop research materials
-                <ArrowRight className="w-4 h-4" />
-              </a>
-              <a href={coaArchiveUrl()} className="ra-btn ra-btn--ghost">
-                Browse COA archive
-              </a>
-            </div>
-
-            <dl className="ra-hero-stats ra-hero-fade">
-              <div>
-                <dd>
-                  <CountUp end={99} prefix="≥" suffix="%" delay={0.9} />
-                </dd>
-                <dt>HPLC purity floor</dt>
-              </div>
-              <div>
-                <dd>
-                  <CountUp end={3} delay={1.0} />
-                </dd>
-                <dt>Tests per batch</dt>
-              </div>
-              <div>
-                <dd>
-                  <CountUp end={60} suffix="+" delay={1.1} />
-                </dd>
-                <dt>Published batches</dt>
-              </div>
-            </dl>
-          </div>
-
-          <div className="ra-hero-visual">
-            <LabPanel />
-          </div>
-        </div>
-      </div>
-
-      <BatchMarquee />
-    </section>
-  );
-}
 
 /* ————— Bento proof grid ————— */
 function ProofBento() {
@@ -678,7 +355,7 @@ export default function ResearchGateway() {
       />
 
       <main id="main-content" className="ra-main">
-        <Hero />
+        <MarketingLanding />
         <ProofBento />
         <Process />
         <SiteExplore />
