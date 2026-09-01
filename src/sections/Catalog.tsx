@@ -281,7 +281,7 @@ export default function Catalog() {
           <h1 className="mb-4 text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA]">
             Shop{' '}
             {peptideCount > 0 && (
-              <span className="tabular-nums">{peptideCount}</span>
+              <span className="tabular-nums">{peptideCount}+</span>
             )}{' '}
             <span className="gradient-text">peptides</span>
           </h1>
