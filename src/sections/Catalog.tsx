@@ -156,6 +156,9 @@ export default function Catalog() {
   const otherCategories = filteredProducts.filter(
     (p) => !['best-seller', 'high-popularity', 'popular', 'essentials'].includes(p.category)
   );
+  const peptideCount = products.filter(
+    (p) => p.category !== 'essentials' && p.type !== 'essentials',
+  ).length;
 
   const renderProductCard = (product: Product) => {
     const priority = cardRenderIndex.current < 6;
@@ -275,8 +278,12 @@ export default function Catalog() {
 
         {/* Header */}
         <div ref={headerRef} className="mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA] mb-4">
-            Shop <span className="gradient-text">peptides</span>
+          <h1 className="mb-4 text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA]">
+            Shop{' '}
+            {peptideCount > 0 && (
+              <span className="tabular-nums">{peptideCount}</span>
+            )}{' '}
+            <span className="gradient-text">peptides</span>
           </h1>
 
           {/* Search */}
