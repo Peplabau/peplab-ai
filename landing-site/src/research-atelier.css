@@ -82,6 +82,12 @@
   background: radial-gradient(circle, rgba(139, 92, 246, 0.07), transparent 65%);
 }
 
+@media (max-width: 1023px) {
+  .ra-bg-glow {
+    display: none;
+  }
+}
+
 /* Gradient word */
 .ra-grad {
   background: var(--ra-gradient);
@@ -94,7 +100,7 @@
 .ra-hero {
   position: relative;
   isolation: isolate;
-  padding: 6.5rem 0 0;
+  padding: 2.5rem 0 0;
   overflow: hidden;
 }
 
@@ -149,6 +155,20 @@
   text-wrap: balance;
 }
 
+.ra-display--lead {
+  font-size: clamp(2.15rem, 7.6vw, 5.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  margin-bottom: 2.25rem;
+}
+
+.ra-hero-tagline {
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--ra-ink);
+}
+
 .ra-display-row {
   display: block;
 }
@@ -161,7 +181,6 @@
 
 .ra-display-word {
   display: inline-block;
-  will-change: transform;
 }
 
 /* Outlined ghost line — premium editorial contrast */
@@ -704,6 +723,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ra-live-dot {
+    animation: none;
+  }
+
   .ra-marquee-track {
     animation: none;
   }

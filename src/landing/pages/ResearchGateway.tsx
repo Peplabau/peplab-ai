@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   Truck,
 } from 'lucide-react';
-import CountUp from '@/landing/components/new-landing/CountUp';
 import OzcaniumAnalyticsName from '@/components/OzcaniumAnalyticsName';
 import { SEO } from '@/components/SEO';
 import { JsonLd } from '@/components/JsonLd';
@@ -171,6 +170,7 @@ function LabPanel() {
       /* ignore */
     }
     if (reduced) return;
+    if (window.matchMedia('(max-width: 1023px)').matches) return;
     const id = window.setInterval(() => setTab((t) => (t + 1) % LAB_TABS.length), LAB_TAB_ADVANCE_MS);
     return () => window.clearInterval(id);
   }, [paused]);
@@ -262,83 +262,35 @@ function BatchMarquee() {
 
 /* ————— Hero ————— */
 function Hero() {
-  const ref = useRef<HTMLElement>(null);
-
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let reduced = false;
-    try {
-      reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    } catch {
-      /* ignore */
-    }
-
-    const ctx = gsap.context(() => {
-      const words = el.querySelectorAll('.ra-display-word');
-      const fades = el.querySelectorAll('.ra-hero-fade');
-      const cert = el.querySelector('.ra-lab');
-
-      if (reduced) {
-        gsap.set([words, fades, cert], { clearProps: 'all', opacity: 1 });
-        return;
-      }
-
-      gsap.set(words, { yPercent: 110 });
-      gsap.to(words, { yPercent: 0, duration: 0.9, stagger: 0.09, ease: 'power4.out', delay: 0.1 });
-      gsap.fromTo(
-        fades,
-        { y: 24, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.85, stagger: 0.1, delay: 0.5, ease: 'power2.out' },
-      );
-      gsap.fromTo(
-        cert,
-        { y: 56, opacity: 0, rotate: 1.2 },
-        { y: 0, opacity: 1, rotate: 0, duration: 1.2, delay: 0.35, ease: 'power3.out' },
-      );
-    }, el);
-
-    return () => ctx.revert();
-  }, []);
-
   return (
-    <section ref={ref} className="ra-hero">
+    <section className="ra-hero">
       <div className="ra-bg" aria-hidden>
         <div className="ra-bg-glow ra-bg-glow--teal" />
         <div className="ra-bg-glow ra-bg-glow--violet" />
       </div>
 
       <div className="ra-shell ra-hero-inner">
-        <p className="ra-hero-eyebrow ra-hero-fade">
+        <p className="ra-hero-eyebrow">
           <span className="ra-live-dot" aria-hidden />
           Peptides Australia — research use only
         </p>
 
-        <h1 className="ra-display">
+        <h1 className="ra-display ra-display--lead">
           <span className="ra-display-row">
-            <span className="ra-display-clip">
-              <span className="ra-display-word">PEPLAB AUSTRALIA</span>
-            </span>
+            Buy Premium <span className="ra-grad">Peptides</span>
           </span>
-          <span className="ra-display-row">
-            <span className="ra-display-clip">
-              <span className="ra-display-word ra-display-word--ghost">RESEARCH PEPTIDES</span>
-            </span>
-          </span>
+          <span className="ra-display-row">in Australia.</span>
         </h1>
-        <p className="ra-hero-tagline ra-hero-fade text-sm text-[#A9B3C7] mt-2">
-          Lab proof. Not promises.
-        </p>
 
         <div className="ra-hero-split">
-          <div className="ra-hero-copy ra-hero-fade">
+          <div className="ra-hero-copy">
             <p className="ra-hero-lead">
               Every research lot ships with a published certificate — HPLC purity, LC-MS identity, and content
               assay under one batch ID you can audit before you order.
             </p>
             <div className="ra-hero-cta">
               <a href={shopPageUrl()} className="ra-btn ra-btn--solid">
-                Shop research materials
+                Shop Peptides
                 <ArrowRight className="w-4 h-4" />
               </a>
               <a href={coaArchiveUrl()} className="ra-btn ra-btn--ghost">
@@ -346,23 +298,17 @@ function Hero() {
               </a>
             </div>
 
-            <dl className="ra-hero-stats ra-hero-fade">
+            <dl className="ra-hero-stats">
               <div>
-                <dd>
-                  <CountUp end={99} prefix="≥" suffix="%" delay={0.9} />
-                </dd>
+                <dd>≥99%</dd>
                 <dt>HPLC purity floor</dt>
               </div>
               <div>
-                <dd>
-                  <CountUp end={3} delay={1.0} />
-                </dd>
+                <dd>3</dd>
                 <dt>Tests per batch</dt>
               </div>
               <div>
-                <dd>
-                  <CountUp end={60} suffix="+" delay={1.1} />
-                </dd>
+                <dd>60+</dd>
                 <dt>Published batches</dt>
               </div>
             </dl>
