@@ -359,6 +359,7 @@ export default function Checkout() {
           ),
           shippingMethod: selectedShipping,
           name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
+          email: contactEmail.trim(),
         });
       } finally {
         setIsVerifyingAddress(false);

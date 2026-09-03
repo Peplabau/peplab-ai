@@ -11,6 +11,12 @@ export function inferCheckoutAddressType(address: string): CheckoutAddressType {
   return 'street';
 }
 
+/** AusPost locker/collect emails — checkout Contact already collects this. */
+function isLockerRecipientEmailError(message?: string): boolean {
+  const t = (message || '').toLowerCase();
+  return t.includes('email') && (t.includes('parcel locker') || t.includes('parcel collect'));
+}
+
 /** AusPost allows 1–3 lines, each max 40 characters. */
 export function validateCheckoutAddressFormat(address: string, apartment = ''): string | null {
   const line1 = address.trim();
@@ -55,6 +61,7 @@ export async function validateAusPostAddress(input: {
   addressType?: CheckoutAddressType;
   shippingMethod?: string;
   name?: string;
+  email?: string;
 }): Promise<AusPostLocalityResult> {
   const suburb = input.suburb.trim();
   const state = input.state.trim();
@@ -78,6 +85,7 @@ export async function validateAusPostAddress(input: {
         address_type: input.addressType || inferCheckoutAddressType(input.address || ''),
         shipping_method: input.shippingMethod,
         name: input.name,
+        email: input.email?.trim() || undefined,
       },
     });
     if (error) {
@@ -87,7 +95,7 @@ export async function validateAusPostAddress(input: {
       };
     }
     const res = (data || {}) as AusPostLocalityResult & { error?: string };
-    if (res.valid) {
+    if (res.valid || isLockerRecipientEmailError(res.error)) {
       return {
         valid: true,
         suburb: res.suburb,

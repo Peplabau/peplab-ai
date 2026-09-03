@@ -39,6 +39,7 @@ type Address = {
   state: string;
   postcode: string;
   type?: string;
+  email?: string;
 };
 
 function jsonOk(body: Record<string, unknown>, status = 200): Response {
@@ -141,11 +142,19 @@ function toAddressErrors(json: Record<string, unknown>): string[] {
     const message = String(row.message || row.code || "").trim();
     if (field.includes(".from") || field.includes("addresses.from")) continue;
     if (!message) continue;
+    if (isLockerRecipientEmailError(message)) continue;
     out.push(message);
   }
   if (out.length) return out;
   const fallback = formatAusPostErrors(json);
-  return fallback ? [fallback] : [];
+  if (fallback && !isLockerRecipientEmailError(fallback)) return [fallback];
+  return [];
+}
+
+/** AusPost requires locker recipient email; checkout already has Contact email — do not block. */
+function isLockerRecipientEmailError(message: string): boolean {
+  const t = message.toLowerCase();
+  return t.includes("email") && (t.includes("parcel locker") || t.includes("parcel collect"));
 }
 
 function inferType(lines: string[], addressType?: string): string | undefined {
@@ -343,6 +352,7 @@ async function validateShipment(to: Address, shippingMethod?: string): Promise<{
   if (validated.ok || validated.status === 200) return { ok: true };
 
   const messages = toAddressErrors(validated.json);
+  if (!messages.length) return { ok: true };
   const joined = messages.join(" ");
   if (/suburb|state|postcode|address|parcel locker|parcel collect|po box/i.test(joined) || messages.length) {
     return {
@@ -367,6 +377,7 @@ Deno.serve(async (req: Request) => {
     address_type?: string;
     shipping_method?: string;
     name?: string;
+    email?: string;
   };
   try {
     body = (await req.json()) as typeof body;
@@ -421,6 +432,8 @@ Deno.serve(async (req: Request) => {
       state: locality.state,
       postcode: locality.postcode,
     };
+    const email = (body.email || "").trim();
+    if (email) to.email = email;
     const type = inferType(lines, body.address_type);
     if (type) to.type = type;
 
