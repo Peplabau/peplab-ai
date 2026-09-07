@@ -74,7 +74,7 @@ export default function Dashboard() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const nextUser = session?.user ?? null;
       setUser(nextUser);
-      if (!nextUser) navigate('/login');
+      if (!nextUser) navigate('/login?redirect=/dashboard');
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -83,7 +83,7 @@ export default function Dashboard() {
     const currentUser = await getCurrentUser();
     setUser(currentUser);
     if (!currentUser) {
-      navigate('/login');
+      navigate('/login?redirect=/dashboard');
       return;
     }
     const admin = await checkIsAdmin(currentUser.id);
@@ -92,6 +92,12 @@ export default function Dashboard() {
     else localStorage.removeItem('peplab_is_admin');
     setIsLoading(false);
   };
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (window.location.hash !== '#rewards') return;
+    document.getElementById('rewards')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [isLoading]);
 
   // Note: Signup bonus (50 pts) is awarded automatically by a DB trigger on auth.users INSERT.
   // No client-side bonus award needed here.
@@ -619,7 +625,7 @@ export default function Dashboard() {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-4 lg:gap-6 mb-5 lg:mb-8">
-            <div className="lg:col-span-2 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[rgba(139,92,246,0.15)] to-[rgba(46,209,180,0.15)] border border-[rgba(139,92,246,0.3)]">
+            <div id="rewards" className="lg:col-span-2 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[rgba(139,92,246,0.15)] to-[rgba(46,209,180,0.15)] border border-[rgba(139,92,246,0.3)]">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#2ED1B4] flex items-center justify-center shrink-0">

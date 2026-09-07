@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Link } from 'react-router-dom';
 import { Search, Truck, Gift, Beaker, Award, TrendingUp, MessageCircle } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
@@ -218,8 +219,8 @@ export default function Catalog() {
         </div>
 
         {/* PEPLAB Rewards Banner - Compact on mobile */}
-        <a
-          href="/login"
+        <Link
+          to="/dashboard#rewards"
           className="block mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#1b1634] to-[#0d282a] border border-[rgba(139,92,246,0.3)] hover:border-[rgba(139,92,246,0.5)] transition-colors"
         >
           <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
@@ -243,7 +244,7 @@ export default function Catalog() {
               </div>
             </div>
           </div>
-        </a>
+        </Link>
 
         {/* Support chips — forced single row on mobile (no wrap); abbreviated labels below sm */}
         <div className="flex flex-nowrap items-stretch gap-2 sm:gap-3 mb-4 sm:mb-6 w-full">

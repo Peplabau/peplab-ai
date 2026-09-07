@@ -7,7 +7,7 @@ import {
   CreditCard, Box, Send, Ban, Save, Tag, Gift, X, Pencil, Trash2,
   ChevronUp, ChevronDown, Star, MessageSquare, Upload, Image as ImageIcon,
   Printer, ArrowUp, ArrowDown, MinusCircle, PlusCircle, Link2, Copy, Check,
-  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square, Clock
+  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square, Clock, CalendarDays
 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,10 +45,12 @@ import { createAusPostLabel } from '@/lib/auspost-shipping';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { SEO } from '@/components/SEO';
 import {
+  aggregateWeeklyRevenue,
   canonicalBestSellerProductKey,
   formatAdminDosageDisplay,
   normalizeAdminDosageKey,
   preferAdminDisplayName,
+  type WeeklyRevenueRow,
 } from '@/lib/admin-analytics';
 
 // Types
@@ -894,6 +896,7 @@ function OverviewSection() {
   const [stockFilter, setStockFilter] = useState<StockFilter>('needs');
   const [stockExpanded, setStockExpanded] = useState(false);
   const [sellersExpanded, setSellersExpanded] = useState(false);
+  const [weeklyRevenue, setWeeklyRevenue] = useState<WeeklyRevenueRow[]>([]);
 
   const PREVIEW_ROWS = 12;
 
@@ -907,10 +910,10 @@ function OverviewSection() {
   }, []);
 
   const loadStats = async (bust = false) => {
-    if (bust) invalidateCache('admin:overview:v3');
+    if (bust) invalidateCache('admin:overview:v4');
     setLoading(true);
     try {
-      const result = await cached('admin:overview:v3', async () => {
+      const result = await cached('admin:overview:v4', async () => {
         const [
           orderStatusTotals,
           { data: recent },
@@ -921,7 +924,7 @@ function OverviewSection() {
           { data: productsWithStock },
         ] = await Promise.all([
           fetchSupabasePages((from, to) =>
-            supabase.from('orders').select('status, total').order('id', { ascending: true }).range(from, to),
+            supabase.from('orders').select('status, total, created_at').order('id', { ascending: true }).range(from, to),
           ),
           supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(5),
           fetchOrdersCount(),
@@ -960,6 +963,7 @@ function OverviewSection() {
       });
       setRecentOrders(result.recent);
       setAllOrderItems(result.itemOrders as Array<{ items: any[]; created_at: string; status: string }>);
+      setWeeklyRevenue(aggregateWeeklyRevenue(result.orderStatusTotals, 8));
 
       const rows: StockWatchRow[] = [];
       for (const product of result.productsWithStock as Array<{
@@ -1062,6 +1066,15 @@ function OverviewSection() {
   const visibleBestSellers = sellersExpanded ? bestSellers : bestSellers.slice(0, PREVIEW_ROWS);
   const visibleStockRows = stockExpanded ? filteredStockRows : filteredStockRows.slice(0, PREVIEW_ROWS);
 
+  const thisWeek = weeklyRevenue[0];
+  const lastWeek = weeklyRevenue[1];
+  const weeklyMax = Math.max(...weeklyRevenue.map((row) => row.revenue), 1);
+  const weekChange =
+    thisWeek && lastWeek && lastWeek.revenue > 0
+      ? ((thisWeek.revenue - lastWeek.revenue) / lastWeek.revenue) * 100
+      : null;
+  const formatAud = (value: number) => `$${Math.round(value).toLocaleString('en-AU')}`;
+
   if (loading) {
     return (
       <div className="space-y-5">
@@ -1093,6 +1106,76 @@ function OverviewSection() {
 
   return (
     <div className="space-y-5">
+      {thisWeek && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[rgba(34,197,94,0.12)] to-[rgba(46,209,180,0.08)] border border-[rgba(34,197,94,0.28)]">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-base font-semibold text-[#F4F6FA] flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-[#22C55E]" />
+                Weekly earnings
+              </h3>
+              <p className="text-[11px] text-[#6B7280] mt-1">
+                Paid orders · Monday–Sunday · Australia/Sydney
+              </p>
+            </div>
+            {weekChange != null && (
+              <span
+                className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
+                  weekChange >= 0
+                    ? 'bg-[rgba(34,197,94,0.15)] text-[#22C55E]'
+                    : 'bg-[rgba(239,68,68,0.15)] text-[#EF4444]'
+                }`}
+              >
+                {weekChange >= 0 ? '+' : ''}
+                {weekChange.toFixed(0)}% vs last week
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="p-3 rounded-xl bg-[rgba(7,10,18,0.45)]">
+              <p className="text-[11px] text-[#A9B3C7]">This week</p>
+              <p className="text-2xl sm:text-3xl font-bold text-[#F4F6FA] leading-tight mt-0.5">
+                {formatAud(thisWeek.revenue)}
+              </p>
+              <p className="text-[11px] text-[#6B7280] mt-1">
+                {thisWeek.orders} order{thisWeek.orders === 1 ? '' : 's'} · {thisWeek.label}
+              </p>
+            </div>
+            {lastWeek && (
+              <div className="p-3 rounded-xl bg-[rgba(7,10,18,0.45)]">
+                <p className="text-[11px] text-[#A9B3C7]">Last week</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#F4F6FA] leading-tight mt-0.5">
+                  {formatAud(lastWeek.revenue)}
+                </p>
+                <p className="text-[11px] text-[#6B7280] mt-1">
+                  {lastWeek.orders} order{lastWeek.orders === 1 ? '' : 's'} · {lastWeek.label}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {weeklyRevenue.map((row) => (
+              <div key={row.weekStart} className="flex items-center gap-3">
+                <p className={`w-[7.5rem] sm:w-44 shrink-0 text-[11px] sm:text-xs ${row.isCurrent ? 'text-[#F4F6FA] font-medium' : 'text-[#A9B3C7]'}`}>
+                  {row.isCurrent ? 'This week' : row.label}
+                </p>
+                <div className="flex-1 h-2 rounded-full bg-[rgba(244,246,250,0.08)] overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#22C55E]"
+                    style={{ width: `${Math.max((row.revenue / weeklyMax) * 100, row.revenue > 0 ? 4 : 0)}%` }}
+                  />
+                </div>
+                <p className="w-16 sm:w-20 text-right text-xs font-semibold text-[#F4F6FA] tabular-nums">
+                  {formatAud(row.revenue)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard label="Total Orders" value={stats.totalOrders.toString()} icon={ShoppingCart} color="#8B5CF6" />

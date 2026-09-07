@@ -2,7 +2,8 @@
  * PEPLAB domain routing — split deployments (recommended for SEO):
  *
  *   peplab.com.au  → This repo / Vercel project #1
- *                    Login entry + public SEO pages; shop requires sign-in.
+ *                    Login entry + public SEO pages. After sign-in, members
+ *                    are handed off to peplab.ai (the shop is not on this host).
  *                    index.html, sitemap, robots all use peplab.com.au.
  *
  *   peplab.ai      → Separate repo (peplab-ai) / Vercel project #2

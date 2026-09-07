@@ -2,10 +2,10 @@
  * LoginGateway — entry pages on the login-only host (peplab.com.au / staging.*).
  *
  * Sign-in for returning members; sign-up with referral verification for new members.
- * After auth, members stay on this domain with full shop access.
+ * After auth, members are handed off to peplab.ai (the shop is not on this domain).
  */
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Mail,
   Lock,
@@ -28,7 +28,7 @@ import {
 import { supabase, signIn, signUp, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
 import { sendSignUpWelcome } from '@/lib/email';
-import { resolvePostLoginPath } from '@/lib/login-redirect';
+import { handoffToMainApp, resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
 import { LOGIN_GATEWAY_PAGE_TITLE, MAIN_APP_ORIGIN } from '@/lib/domain';
 import { SITE_SEO_DESCRIPTION, SITE_SEO_KEYWORDS, SITE_SEO_TITLE } from '@/lib/seo-keywords';
@@ -65,7 +65,6 @@ type LoginGatewayProps = {
 };
 
 export default function LoginGateway({ asHomepage = false }: LoginGatewayProps) {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isSignUp =
     (typeof window !== 'undefined' && window.location.pathname === '/signup') ||
@@ -117,7 +116,6 @@ export default function LoginGateway({ asHomepage = false }: LoginGatewayProps) 
   };
 
   const redirectAfterAuth = useCallback(async () => {
-    const destination = await resolvePostLoginPath(searchParams.get('redirect'));
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -128,8 +126,9 @@ export default function LoginGateway({ asHomepage = false }: LoginGatewayProps) 
       return;
     }
 
-    navigate(destination, { replace: true });
-  }, [navigate, searchParams]);
+    const destination = await resolvePostLoginPath(searchParams.get('redirect'));
+    await handoffToMainApp(destination);
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;

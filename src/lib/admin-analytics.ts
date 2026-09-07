@@ -627,3 +627,115 @@ export function inventoryLedgerToCsv(rows: InventoryLedgerRow[]): string {
   );
   return [header.join(','), ...lines].join('\n');
 }
+
+/** Paid / in-fulfilment statuses used for "how much am I making" totals. */
+export const PAID_REVENUE_STATUSES = new Set([
+  'payment_received',
+  'processing',
+  'finalised',
+  'shipped',
+  'delivered',
+]);
+
+const AU_TZ = 'Australia/Sydney';
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+function ymd(y: number, m: number, d: number): string {
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function addDaysYmd(value: string, days: number): string {
+  const [y, m, d] = value.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  return dt.toISOString().slice(0, 10);
+}
+
+function calendarDateInZone(date: Date, timeZone = AU_TZ): { ymd: string; weekday: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return {
+    ymd: ymd(Number(get('year')), Number(get('month')), Number(get('day'))),
+    weekday: WEEKDAY_INDEX[get('weekday')] ?? 1,
+  };
+}
+
+function mondayOf(ymdValue: string, weekday: number): string {
+  const offset = weekday === 0 ? -6 : 1 - weekday;
+  return addDaysYmd(ymdValue, offset);
+}
+
+export function startOfCurrentWeekYmd(now = new Date(), timeZone = AU_TZ): string {
+  const { ymd: today, weekday } = calendarDateInZone(now, timeZone);
+  return mondayOf(today, weekday);
+}
+
+export interface WeeklyRevenueRow {
+  weekStart: string;
+  label: string;
+  revenue: number;
+  orders: number;
+  isCurrent: boolean;
+}
+
+function formatWeekRangeLabel(weekStart: string): string {
+  const start = new Date(`${weekStart}T00:00:00Z`);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  const startLabel = start.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const endLabel = end.toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+  return `${startLabel} – ${endLabel}`;
+}
+
+export function aggregateWeeklyRevenue(
+  orders: Array<{ total?: number | string | null; status?: string | null; created_at?: string | null }>,
+  weeks = 8,
+  now = new Date(),
+): WeeklyRevenueRow[] {
+  const currentWeekStart = startOfCurrentWeekYmd(now);
+  const rows: WeeklyRevenueRow[] = [];
+  for (let i = 0; i < weeks; i += 1) {
+    const weekStart = addDaysYmd(currentWeekStart, -7 * i);
+    rows.push({
+      weekStart,
+      label: formatWeekRangeLabel(weekStart),
+      revenue: 0,
+      orders: 0,
+      isCurrent: i === 0,
+    });
+  }
+  const byWeek = new Map(rows.map((row) => [row.weekStart, row]));
+  const oldest = rows[rows.length - 1]?.weekStart;
+
+  for (const order of orders) {
+    const status = (order.status || '').toLowerCase();
+    if (!PAID_REVENUE_STATUSES.has(status) || !order.created_at) continue;
+    const { ymd: orderDay, weekday } = calendarDateInZone(new Date(order.created_at));
+    const weekStart = mondayOf(orderDay, weekday);
+    if (oldest && weekStart < oldest) continue;
+    const row = byWeek.get(weekStart);
+    if (!row) continue;
+    row.revenue += Number(order.total) || 0;
+    row.orders += 1;
+  }
+
+  return rows;
+}

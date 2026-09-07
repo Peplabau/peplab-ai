@@ -18,6 +18,7 @@ import { CONFIG } from '@/lib/config';
 import { SEO } from '@/components/SEO';
 import { SITE_SEO_DESCRIPTION, SITE_SEO_KEYWORDS, SITE_SEO_TITLE } from '@/lib/seo-keywords';
 import { isLoginOnlyDomain } from '@/lib/domain';
+import { handoffToMainApp } from '@/lib/login-redirect';
 
 import Catalog from '@/sections/Catalog';
 import BulkSales from '@/sections/BulkSales';
@@ -360,61 +361,25 @@ function ScrollToTop() {
 /**
  * peplab.com.au (login-gated host):
  * - Public content pages stay open for SEO (privacy, terms, COA, calculator, …)
- * - Shop / products / checkout require sign-in; after login, stay on this domain
+ * - Shop lives on peplab.ai; these routes hand the session across and leave this host
  */
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
-  const [ready, setReady] = useState(false);
-  const [authed, setAuthed] = useState(false);
-
+function RedirectToMainShop() {
   useEffect(() => {
-    let cancelled = false;
-
-    const sync = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (cancelled) return;
-      setAuthed(Boolean(session?.user));
-      setReady(true);
-    };
-
-    sync();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled) return;
-      setAuthed(Boolean(session?.user));
-      setReady(true);
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
+    const next = `${window.location.pathname}${window.location.search}`;
+    void handoffToMainApp(next);
   }, []);
 
-  if (!ready) {
-    return (
-      <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!authed) {
-    const redirect = encodeURIComponent(`${location.pathname}${location.search}`);
-    return <Navigate to={`/login?redirect=${redirect}`} replace />;
-  }
-
-  return <>{children}</>;
+  return (
+    <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 }
 
 /**
  * `/` on peplab.com.au:
  * - guests see the lock/login UI with homepage SEO (indexable, no redirect)
- * - members see the shop catalogue
+ * - members are handed off to peplab.ai
  */
 function HomeGate() {
   const [ready, setReady] = useState(false);
@@ -456,7 +421,7 @@ function HomeGate() {
     );
   }
 
-  if (authed) return <ShopRoute />;
+  if (authed) return <RedirectToMainShop />;
   return <LoginGateway asHomepage />;
 }
 
@@ -498,54 +463,13 @@ function LoginOnlyApp() {
 
                 {/* `/` is indexable: lock page for guests, shop for members. `/login` + `/signup` stay unchanged. */}
                 <Route path="/" element={<HomeGate />} />
-                <Route
-                  path="/shop"
-                  element={
-                    <RequireAuth>
-                      <ShopRoute />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/product/:slug"
-                  element={
-                    <RequireAuth>
-                      <ProductPage />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/checkout"
-                  element={
-                    <RequireAuth>
-                      <Checkout />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <RequireAuth>
-                      <Dashboard />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <RequireAuth>
-                      <Settings />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/promoter"
-                  element={
-                    <RequireAuth>
-                      <PromoterDashboard />
-                    </RequireAuth>
-                  }
-                />
+                {/* Shop lives on peplab.ai — hand off session and leave this host */}
+                <Route path="/shop" element={<RedirectToMainShop />} />
+                <Route path="/product/:slug" element={<RedirectToMainShop />} />
+                <Route path="/checkout" element={<RedirectToMainShop />} />
+                <Route path="/dashboard" element={<RedirectToMainShop />} />
+                <Route path="/settings" element={<RedirectToMainShop />} />
+                <Route path="/promoter" element={<RedirectToMainShop />} />
 
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
