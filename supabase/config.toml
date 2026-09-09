@@ -17,6 +17,10 @@ verify_jwt = false
 [functions.auspost-sync-delivered]
 verify_jwt = false
 
+# Public Track Order — verifies via track_order RPC then AusPost Track Items
+[functions.auspost-track-public]
+verify_jwt = false
+
 # -----------------------------------------------------------------------------
 # Auth — frictionless signup (no email verification)
 # -----------------------------------------------------------------------------
