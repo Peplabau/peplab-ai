@@ -474,6 +474,20 @@ export default function TrackOrder() {
   );
 }
 
+function formatAusPostStatusLabel(status: string | null | undefined): string | null {
+  const raw = (status || '').trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+  if (lower === 'none' || lower === 'unknown' || lower === 'not found') return 'Pending';
+  return raw;
+}
+
+function isAusPostAwaitingDetails(status: string | null | undefined, eventCount: number): boolean {
+  if (eventCount > 0) return false;
+  const lower = (status || '').trim().toLowerCase();
+  return !lower || lower === 'none' || lower === 'pending' || lower === 'unknown' || lower === 'not found';
+}
+
 function AusPostLiveTracking({
   loading,
   track,
@@ -533,17 +547,24 @@ function AusPostLiveTracking({
       </div>
 
       <div className="space-y-6">
-        {parcels.map((parcel) => (
+        {parcels.map((parcel) => {
+          const statusLabel = formatAusPostStatusLabel(parcel.status);
+          const awaitingDetails = isAusPostAwaitingDetails(
+            parcel.status,
+            parcel.events?.length || 0,
+          );
+
+          return (
           <div key={parcel.tracking_number}>
             {parcels.length > 1 && (
               <p className="text-xs font-mono text-[#2ED1B4] mb-2 break-all">
                 {parcel.tracking_number}
               </p>
             )}
-            {parcel.status && (
-              <p className="text-sm font-semibold text-[#F4F6FA] mb-3">{parcel.status}</p>
+            {statusLabel && (
+              <p className="text-sm font-semibold text-[#F4F6FA] mb-3">{statusLabel}</p>
             )}
-            {parcel.errors?.length > 0 && !parcel.events?.length && (
+            {parcel.errors?.length > 0 && !parcel.events?.length && !awaitingDetails && (
               <p className="text-sm text-[#A9B3C7] mb-2">{parcel.errors.join(' · ')}</p>
             )}
             {parcel.events?.length > 0 ? (
@@ -587,10 +608,16 @@ function AusPostLiveTracking({
                 })}
               </ol>
             ) : (
-              !parcel.errors?.length && (
-                <p className="text-sm text-[#A9B3C7]">
-                  No scan events yet — check back after the parcel is lodged.
-                </p>
+              awaitingDetails && (
+                <div className="rounded-xl bg-[rgba(46,209,180,0.06)] border border-[rgba(46,209,180,0.18)] p-4">
+                  <p className="text-sm font-semibold text-[#F4F6FA]">
+                    Try checking again in 24 hours
+                  </p>
+                  <p className="mt-1.5 text-sm text-[#A9B3C7] leading-relaxed">
+                    Australia Post hasn’t received the full parcel details from the sender yet.
+                    Tracking updates will appear here once the parcel is scanned into their network.
+                  </p>
+                </div>
               )
             )}
             <a
@@ -603,7 +630,8 @@ function AusPostLiveTracking({
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

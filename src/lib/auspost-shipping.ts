@@ -4,6 +4,8 @@
  */
 import { supabase } from './supabase';
 
+export type AusPostAddressType = 'street' | 'po_box' | 'parcel_locker' | 'parcel_collect';
+
 export type AusPostCreateLabelInput = {
   order_number: string;
   shipping_method?: string | null;
@@ -15,6 +17,8 @@ export type AusPostCreateLabelInput = {
   shipping_suburb: string;
   shipping_state: string;
   shipping_postcode: string;
+  /** Force AusPost address type (use parcel_locker for locker orders). */
+  address_type?: AusPostAddressType | null;
   /** Optional parcel overrides (defaults applied server-side). */
   weight_kg?: number;
   length_cm?: number;
@@ -33,11 +37,11 @@ export type AusPostCreateLabelResult = {
 };
 
 function splitAddressLines(address: string): string[] {
-  const trimmed = (address || "").trim();
+  const trimmed = (address || '').trim();
   if (!trimmed) return [];
   // Prefer newline-separated lines; otherwise keep as a single AusPost address line
   // (do not split on commas — "Unit 1, 22 Main St" is one line).
-  if (trimmed.includes("\n")) {
+  if (trimmed.includes('\n')) {
     return trimmed
       .split(/\n/)
       .map((s) => s.trim())
@@ -45,6 +49,17 @@ function splitAddressLines(address: string): string[] {
       .slice(0, 3);
   }
   return [trimmed];
+}
+
+/** Detect Parcel Locker / Collect from free-text shipping address. */
+export function looksLikeParcelLockerAddress(address: string): boolean {
+  const t = (address || '').toLowerCase();
+  return (
+    /parcel\s*locker/.test(t) ||
+    /mypost\s*locker/.test(t) ||
+    /australia\s*post\s*locker/.test(t) ||
+    /parcel\s*collect/.test(t)
+  );
 }
 
 export async function createAusPostLabel(
@@ -56,6 +71,25 @@ export async function createAusPostLabel(
   if (!lines.length) return { success: false, error: 'Shipping street address is required.' };
   if (!input.shipping_suburb?.trim() || !input.shipping_state?.trim() || !input.shipping_postcode?.trim()) {
     return { success: false, error: 'Suburb, state, and postcode are required.' };
+  }
+
+  const addressType =
+    input.address_type ||
+    (looksLikeParcelLockerAddress(input.shipping_address)
+      ? /parcel\s*collect/i.test(input.shipping_address)
+        ? 'parcel_collect'
+        : 'parcel_locker'
+      : undefined);
+
+  if (
+    (addressType === 'parcel_locker' || addressType === 'parcel_collect') &&
+    !input.customer_email?.trim()
+  ) {
+    return {
+      success: false,
+      error:
+        'Parcel Locker / Parcel Collect labels need the customer email on the order (AusPost requirement).',
+    };
   }
 
   try {
@@ -75,6 +109,14 @@ export async function createAusPostLabel(
           postcode: input.shipping_postcode.trim(),
           phone: input.customer_phone?.trim() || undefined,
           email: input.customer_email?.trim() || undefined,
+          type:
+            addressType === 'parcel_locker'
+              ? 'PARCEL_LOCKER'
+              : addressType === 'parcel_collect'
+                ? 'PARCEL_COLLECT'
+                : addressType === 'street' || addressType === 'po_box'
+                  ? 'STANDARD_ADDRESS'
+                  : undefined,
         },
       },
     });

@@ -107,11 +107,23 @@ function normalizePostcode(raw: string): string {
 }
 
 function inferToAddressType(lines: string[], explicit?: string): string | undefined {
+  const rawLower = (explicit || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (rawLower === "parcel_locker") return "PARCEL_LOCKER";
+  if (rawLower === "parcel_collect") return "PARCEL_COLLECT";
+  if (rawLower === "standard_address" || rawLower === "street" || rawLower === "po_box") {
+    return "STANDARD_ADDRESS";
+  }
+
   const raw = (explicit || "").trim().toUpperCase();
-  if (raw === "PARCEL_LOCKER" || raw === "PARCEL_COLLECT" || raw === "STANDARD_ADDRESS") return raw;
+  if (raw === "PARCEL_LOCKER" || raw === "PARCEL_COLLECT" || raw === "STANDARD_ADDRESS") {
+    return raw;
+  }
+
   const text = lines.join(" ").toLowerCase();
-  if (/parcel\s+locker/.test(text)) return "PARCEL_LOCKER";
-  if (/parcel\s+collect/.test(text)) return "PARCEL_COLLECT";
+  if (/parcel\s*locker|mypost\s*locker|australia\s*post\s*locker/.test(text)) {
+    return "PARCEL_LOCKER";
+  }
+  if (/parcel\s*collect/.test(text)) return "PARCEL_COLLECT";
   return undefined;
 }
 
@@ -455,17 +467,31 @@ Deno.serve(async (req: Request) => {
       lines: toLines,
     });
 
+    const isLockerOrCollect =
+      to.type === "PARCEL_LOCKER" || to.type === "PARCEL_COLLECT";
+
+    if (isLockerOrCollect && !to.email) {
+      return jsonError(
+        `Australia Post requires the customer's email for ${to.type === "PARCEL_COLLECT" ? "Parcel Collect" : "Parcel Locker"} labels. Add the email on the order and try again.`,
+        400,
+      );
+    }
+
     const weight = Math.min(Math.max(Number(body.weight_kg) || 0.5, 0.01), 22);
     const length = Math.min(Math.max(Number(body.length_cm) || 20, 1), 105);
     const width = Math.min(Math.max(Number(body.width_cm) || 15, 1), 105);
     const height = Math.min(Math.max(Number(body.height_cm) || 10, 1), 105);
+
+    // Lockers/collect: ATL + safe-drop are for street delivery and often rejected by AusPost.
+    const authorityToLeave = isLockerOrCollect ? false : true;
+    const safeDropEnabled = isLockerOrCollect ? false : true;
 
     const buildPayload = (fromAddr: AddressIn) => ({
       shipments: [
         {
           shipment_reference: orderNumber.slice(0, 50),
           customer_reference_1: orderNumber.slice(0, 50),
-          email_tracking_enabled: true,
+          email_tracking_enabled: Boolean(to.email),
           from: fromAddr,
           to,
           items: [
@@ -476,9 +502,8 @@ Deno.serve(async (req: Request) => {
               width: String(width),
               height: String(height),
               weight: String(weight),
-              // Standard Parcel/Express: allow ATL + safe drop (not Identity-on-Delivery).
-              authority_to_leave: true,
-              safe_drop_enabled: true,
+              authority_to_leave: authorityToLeave,
+              safe_drop_enabled: safeDropEnabled,
               allow_partial_delivery: false,
             },
           ],
@@ -512,11 +537,19 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!created.ok) {
+      const hint = /email/i.test(formatAusPostErrors(created.json))
+        ? " Tip: Parcel Locker / Parcel Collect labels require the recipient email on the order."
+        : !to.type && /locker|collect|address type|delivery address/i.test(formatAusPostErrors(created.json))
+        ? " Tip: use “Create Parcel Locker Label” so AusPost gets address type PARCEL_LOCKER."
+        : isLockerOrCollect
+        ? " Tip: confirm the address lines match a real Australia Post Parcel Locker / Collect location."
+        : "";
       return jsonError(
         `Create shipment failed: ${formatAusPostErrors(created.json)}. ` +
           `Using product ${picked.productId} (available: ${picked.available.join(", ")}). ` +
-          `From: ${from.suburb} ${from.state} ${from.postcode}. To: ${to.suburb} ${to.state} ${to.postcode}. ` +
-          `Fix mismatched suburb/state/postcode on the order or AUSPOST_FROM_* secrets.`,
+          `From: ${from.suburb} ${from.state} ${from.postcode}. To: ${to.suburb} ${to.state} ${to.postcode}` +
+          `${to.type ? ` (${to.type})` : ""}. ` +
+          `Fix mismatched suburb/state/postcode on the order or AUSPOST_FROM_* secrets.${hint}`,
         created.status || 502,
       );
     }
