@@ -3950,6 +3950,61 @@
   }
 }
 
+/* Catalog Halloween promo strip — seasonal pumpkin drift (remove after Oct) */
+.catalog-halloween-strip {
+  position: relative;
+  overflow: hidden;
+}
+
+.catalog-halloween-pumpkin {
+  position: absolute;
+  top: 0.35rem;
+  left: 0;
+  z-index: 2;
+  width: 1.65rem;
+  height: 1.65rem;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.55));
+  animation: catalog-halloween-drift 9s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (min-width: 640px) {
+  .catalog-halloween-pumpkin {
+    width: 2rem;
+    height: 2rem;
+    top: 0.55rem;
+  }
+}
+
+@keyframes catalog-halloween-drift {
+  0% {
+    transform: translate3d(-10%, 0, 0) rotate(-8deg) scale(0.92);
+  }
+  20% {
+    transform: translate3d(22vw, 10px, 0) rotate(12deg) scale(1);
+  }
+  45% {
+    transform: translate3d(48vw, -4px, 0) rotate(-10deg) scale(1.05);
+  }
+  70% {
+    transform: translate3d(72vw, 12px, 0) rotate(14deg) scale(0.98);
+  }
+  100% {
+    transform: translate3d(105%, 2px, 0) rotate(-6deg) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-halloween-pumpkin {
+    animation: none;
+    left: auto;
+    right: 0.75rem;
+    top: 0.5rem;
+    opacity: 0.85;
+  }
+}
+
 .coa-archive-hero {
   --coa-rg-purple: #8b5cf6;
   --coa-rg-pink: #ec4899;

@@ -184,66 +184,85 @@ export default function Catalog() {
       className="relative z-60 pt-16 sm:pt-20 lg:pt-24 pb-16 lg:pb-24"
     >
       <div className="relative z-10 px-4 sm:px-6 lg:px-12">
-        {/* Promotional Banner - Compact on mobile */}
-        <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
-          <div className="grid grid-cols-3 gap-1 sm:gap-4">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-              <div className="p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
-                <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#2ED1B4]" />
-              </div>
-              <div>
-                <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Free Shipping</p>
-                <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Over $250</p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-              <div className="p-1.5 sm:p-2 rounded-full bg-[#2a2050] flex-shrink-0">
-                <Gift className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#8B5CF6]" />
-              </div>
-              <div>
-                <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Special Offer</p>
-                <p className="text-[8px] sm:text-xs text-[#A9B3C7]">$300 = Free BAC</p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-              <div className="p-1.5 sm:p-2 rounded-full bg-[#3d1a30] flex-shrink-0">
-                <Beaker className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#EC4899]" />
-              </div>
-              <div>
-                <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">HPLC-Verified</p>
-                <p className="text-[8px] sm:text-xs text-[#A9B3C7]">≥99% Pure</p>
-              </div>
-            </div>
+        {/* Promo + Rewards — Halloween pumpkin drift overlay */}
+        <div className="catalog-halloween-strip mb-3 sm:mb-4">
+          <div
+            className="catalog-halloween-pumpkin"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+              <ellipse cx="32" cy="38" rx="22" ry="18" fill="#F97316" />
+              <ellipse cx="22" cy="38" rx="10" ry="16" fill="#EA580C" opacity="0.85" />
+              <ellipse cx="42" cy="38" rx="10" ry="16" fill="#FB923C" opacity="0.9" />
+              <path d="M32 14c0 6 2 10 0 14" stroke="#166534" strokeWidth="3" strokeLinecap="round" />
+              <ellipse cx="32" cy="16" rx="4" ry="3" fill="#22C55E" />
+              <path d="M24 34l4 3 4-5 4 5 4-3" stroke="#1C1917" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="24" cy="32" r="2.2" fill="#1C1917" />
+              <circle cx="40" cy="32" r="2.2" fill="#1C1917" />
+            </svg>
           </div>
-        </div>
 
-        {/* PEPLAB Rewards Banner - Compact on mobile */}
-        <Link
-          to="/dashboard#rewards"
-          className="block mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#1b1634] to-[#0d282a] border border-[rgba(139,92,246,0.3)] hover:border-[rgba(139,92,246,0.5)] transition-colors"
-        >
-          <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#2ED1B4]">
-                <Award className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+          {/* Promotional Banner - Compact on mobile */}
+          <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
+            <div className="grid grid-cols-3 gap-1 sm:gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
+                  <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#2ED1B4]" />
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Free Shipping</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Over $250</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm sm:text-lg font-semibold text-[#F4F6FA]">PEPLAB Rewards</p>
-                <p className="hidden sm:block text-sm text-[#A9B3C7]">Earn points with every purchase and redeem for discounts</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-full bg-[#2a2050] flex-shrink-0">
+                  <Gift className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#8B5CF6]" />
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Special Offer</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">$300 = Free BAC</p>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-6 text-[10px] sm:text-sm">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[#22C55E]" />
-                <span className="text-[#A9B3C7]">1pt/$1</span>
-              </div>
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-[#8B5CF6]" />
-                <span className="text-[#A9B3C7]">Redeem $150+</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-full bg-[#3d1a30] flex-shrink-0">
+                  <Beaker className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#EC4899]" />
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">HPLC-Verified</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">≥99% Pure</p>
+                </div>
               </div>
             </div>
           </div>
-        </Link>
+
+          {/* PEPLAB Rewards Banner - Compact on mobile */}
+          <Link
+            to="/dashboard#rewards"
+            className="block p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#1b1634] to-[#0d282a] border border-[rgba(139,92,246,0.3)] hover:border-[rgba(139,92,246,0.5)] transition-colors"
+          >
+            <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#2ED1B4]">
+                  <Award className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm sm:text-lg font-semibold text-[#F4F6FA]">PEPLAB Rewards</p>
+                  <p className="hidden sm:block text-sm text-[#A9B3C7]">Earn points with every purchase and redeem for discounts</p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-6 text-[10px] sm:text-sm">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[#22C55E]" />
+                  <span className="text-[#A9B3C7]">1pt/$1</span>
+                </div>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-[#8B5CF6]" />
+                  <span className="text-[#A9B3C7]">Redeem $150+</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
 
         {/* Support chips — forced single row on mobile (no wrap); abbreviated labels below sm */}
         <div className="flex flex-nowrap items-stretch gap-2 sm:gap-3 mb-4 sm:mb-6 w-full">
