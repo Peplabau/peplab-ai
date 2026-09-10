@@ -2352,8 +2352,14 @@ function OrdersSection() {
   /** Create AusPost shipment + label, save tracking, mark shipped, email customer. */
   const createAusPostLabelForOrder = async (
     order: Order,
-    opts?: { addressType?: 'parcel_locker' | 'parcel_collect' | 'street' },
+    opts?: {
+      addressType?: 'parcel_locker' | 'parcel_collect' | 'street';
+      /** Declared parcel weight for the AusPost label (e.g. 0.25 or 0.5). */
+      weightKg?: number;
+    },
   ) => {
+    const weightKg = opts?.weightKg && opts.weightKg > 0 ? opts.weightKg : 0.5;
+    const weightLabel = weightKg < 1 ? `${weightKg.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}kg` : `${weightKg}kg`;
     const forceLocker =
       opts?.addressType === 'parcel_locker' ||
       opts?.addressType === 'parcel_collect' ||
@@ -2366,14 +2372,14 @@ function OrdersSection() {
 
     if (order.tracking_number?.trim()) {
       const reuse = window.confirm(
-        `This order already has tracking ${order.tracking_number}.\n\nCreate another AusPost label anyway?`,
+        `This order already has tracking ${order.tracking_number}.\n\nCreate another AusPost label (${weightLabel}) anyway?`,
       );
       if (!reuse) return;
     } else {
       const ok = window.confirm(
         forceLocker
-          ? `Create Australia Post ${lockerType === 'parcel_collect' ? 'Parcel Collect' : 'Parcel Locker'} label for #${formatOrderNumberDisplay(order.order_number)}?\n\nThis sends address type ${lockerType === 'parcel_collect' ? 'PARCEL_COLLECT' : 'PARCEL_LOCKER'} to AusPost, generates tracking, marks Shipped, and emails the customer.`
-          : `Create Australia Post label for #${formatOrderNumberDisplay(order.order_number)}?\n\nThis will generate tracking, mark the order Shipped, and email the customer.`,
+          ? `Create Australia Post ${lockerType === 'parcel_collect' ? 'Parcel Collect' : 'Parcel Locker'} label (${weightLabel}) for #${formatOrderNumberDisplay(order.order_number)}?\n\nThis sends address type ${lockerType === 'parcel_collect' ? 'PARCEL_COLLECT' : 'PARCEL_LOCKER'} to AusPost, generates tracking, marks Shipped, and emails the customer.`
+          : `Create Australia Post label (${weightLabel}) for #${formatOrderNumberDisplay(order.order_number)}?\n\nThis will generate tracking, mark the order Shipped, and email the customer.`,
       );
       if (!ok) return;
     }
@@ -2392,6 +2398,7 @@ function OrdersSection() {
         shipping_state: order.shipping_state,
         shipping_postcode: order.shipping_postcode,
         address_type: forceLocker ? lockerType : opts?.addressType === 'street' ? 'street' : undefined,
+        weight_kg: weightKg,
       });
 
       if (!result.success || !result.tracking_number) {
@@ -3369,18 +3376,31 @@ function OrdersSection() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => void createAusPostLabelForOrder(selectedOrder)}
+                    onClick={() => void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.25 })}
                     disabled={isCreatingAusPostLabel || isUpdating}
                     className="px-4 py-2 rounded-lg bg-[#F59E0B] text-[#070A12] text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
-                    title="Create Australia Post shipment, tracking number, and printable label"
+                    title="Create Australia Post label at 0.250 kg"
                   >
                     <Truck className="w-4 h-4" />
-                    {isCreatingAusPostLabel ? 'Creating AusPost label…' : 'Create AusPost Label'}
+                    {isCreatingAusPostLabel ? 'Creating…' : 'Label 0.250kg'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.5 })}
+                    disabled={isCreatingAusPostLabel || isUpdating}
+                    className="px-4 py-2 rounded-lg bg-[#F59E0B] text-[#070A12] text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                    title="Create Australia Post label at 0.5 kg"
+                  >
+                    <Truck className="w-4 h-4" />
+                    {isCreatingAusPostLabel ? 'Creating…' : 'Label 0.5kg'}
                   </button>
                   <button
                     type="button"
                     onClick={() =>
-                      void createAusPostLabelForOrder(selectedOrder, { addressType: 'parcel_locker' })
+                      void createAusPostLabelForOrder(selectedOrder, {
+                        addressType: 'parcel_locker',
+                        weightKg: 0.5,
+                      })
                     }
                     disabled={isCreatingAusPostLabel || isUpdating}
                     className="px-4 py-2 rounded-lg bg-[#0EA5E9] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
@@ -3590,22 +3610,36 @@ function OrdersSection() {
                 {!selectedOrder.tracking_number &&
                   (selectedOrder.status === 'processing' || selectedOrder.status === 'finalised') && (
                   <div className="mb-3 space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => void createAusPostLabelForOrder(selectedOrder)}
-                      disabled={isCreatingAusPostLabel || isUpdating}
-                      className="w-full px-4 py-3 rounded-xl bg-[#F59E0B] text-[#070A12] font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      <Truck className="w-5 h-5" />
-                      {isCreatingAusPostLabel
-                        ? 'Creating AusPost label…'
-                        : 'Create AusPost Label + Tracking'}
-                    </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.25 })
+                        }
+                        disabled={isCreatingAusPostLabel || isUpdating}
+                        className="w-full px-4 py-3 rounded-xl bg-[#F59E0B] text-[#070A12] font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <Truck className="w-5 h-5" />
+                        {isCreatingAusPostLabel ? 'Creating…' : 'Label 0.250kg + Tracking'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.5 })
+                        }
+                        disabled={isCreatingAusPostLabel || isUpdating}
+                        className="w-full px-4 py-3 rounded-xl bg-[#F59E0B] text-[#070A12] font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <Truck className="w-5 h-5" />
+                        {isCreatingAusPostLabel ? 'Creating…' : 'Label 0.5kg + Tracking'}
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={() =>
                         void createAusPostLabelForOrder(selectedOrder, {
                           addressType: 'parcel_locker',
+                          weightKg: 0.5,
                         })
                       }
                       disabled={isCreatingAusPostLabel || isUpdating}
@@ -3619,7 +3653,7 @@ function OrdersSection() {
                     <p className="text-[11px] text-[#A9B3C7] mt-2 text-center">
                       {looksLikeParcelLockerAddress(selectedOrder.shipping_address || '')
                         ? 'This address looks like a Parcel Locker — use the blue button so AusPost gets the correct address type.'
-                        : 'Use the blue Parcel Locker button when the customer chose a Parcel Locker / MyPost Locker.'}
+                        : 'Pick 0.250kg or 0.5kg for the declared weight on the AusPost label. Use Parcel Locker when shipping to a locker.'}
                     </p>
                   </div>
                 )}
