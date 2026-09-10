@@ -157,8 +157,8 @@ export default function Catalog() {
   const otherCategories = filteredProducts.filter(
     (p) => !['best-seller', 'high-popularity', 'popular', 'essentials'].includes(p.category)
   );
-  /** Marketing headline count (client: show 50+, not live catalogue total). */
-  const shopPeptideHeadlineCount = 50;
+  /** Marketing headline count (client: show 60+, not live catalogue total). */
+  const shopPeptideHeadlineCount = 60;
 
   const renderProductCard = (product: Product) => {
     const priority = cardRenderIndex.current < 6;

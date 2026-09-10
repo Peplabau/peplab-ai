@@ -1576,8 +1576,37 @@ function formatOrderShippingAddressOneLine(
   return `${street}, ${suburbLine}`;
 }
 
+function formatAdminLabelMoney(value: number | string | null | undefined): string {
+  const n = Number(value);
+  return Number.isFinite(n) ? `$${n.toFixed(2)}` : '$0.00';
+}
+
+function buildAdminLabelItemsHtml(order: Order): string {
+  const items = Array.isArray(order.items) ? order.items : [];
+  if (items.length === 0) {
+    return '<p style="margin:0;color:#555;">No items</p>';
+  }
+  const rows = items
+    .map((item: any) => {
+      const name = escapeAdminLabelHtml(String(item?.name ?? 'Item').trim() || 'Item');
+      const dosageRaw = String(item?.dosage ?? '').trim();
+      const dosage = dosageRaw ? ` (${escapeAdminLabelHtml(dosageRaw)})` : '';
+      const qty = Number(item?.quantity) || 1;
+      const price = Number(item?.price) || 0;
+      const lineTotal = formatAdminLabelMoney(price * qty);
+      return `<tr>
+        <td style="padding:4px 0;vertical-align:top;">${name}${dosage}</td>
+        <td style="padding:4px 8px;text-align:center;white-space:nowrap;">×${qty}</td>
+        <td style="padding:4px 0;text-align:right;white-space:nowrap;">${lineTotal}</td>
+      </tr>`;
+    })
+    .join('');
+  return `<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4;">${rows}</table>`;
+}
+
 /**
- * Opens a printable shipping label in a new window.
+ * Opens a printable packing / shipping label in a new window.
+ * Shows customer name, ordered items, and total (plus address for fulfilment).
  * - `print: true` — after load, the popup runs `print()` (system dialog). The
  *   popup also has a **Print Label** button if the browser blocks auto-print.
  * - `edit: true` — label is `contentEditable` for quick fixes before printing.
@@ -1586,7 +1615,7 @@ function openAdminShippingLabelWindow(
   order: Order,
   options?: { print?: boolean; edit?: boolean },
 ): void {
-  const labelWindow = window.open('', '_blank', 'width=420,height=640');
+  const labelWindow = window.open('', '_blank', 'width=420,height=720');
   if (!labelWindow) {
     alert('Please allow pop‑ups to print labels');
     return;
@@ -1600,6 +1629,8 @@ function openAdminShippingLabelWindow(
   const trackingHtml = o.tracking_number
     ? escapeAdminLabelHtml(o.tracking_number)
     : '—';
+  const itemsHtml = buildAdminLabelItemsHtml(o);
+  const totalHtml = formatAdminLabelMoney(o.total);
 
   const autoPrintScript =
     options?.print === true
@@ -1607,7 +1638,7 @@ function openAdminShippingLabelWindow(
       : '';
 
   labelWindow.document.write(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Shipping Label - ${ordDisplay}</title>
+    `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Order Label - ${ordDisplay}</title>
 <style>
   body { font-family: Arial, Helvetica, sans-serif; padding: 20px; max-width: 420px; margin: 0 auto; color: #111; }
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
@@ -1616,12 +1647,14 @@ function openAdminShippingLabelWindow(
   .btn-edit { background: #8B5CF6; color: #fff; }
   .label { border: 2px solid #000; padding: 16px 18px; }
   .section-title { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #555; }
+  .customer-name { margin: 0 0 4px; font-size: 18px; font-weight: 700; line-height: 1.25; }
   .lines { font-size: 14px; line-height: 1.45; }
   .lines p { margin: 0 0 3px; }
   hr.sep { border: none; border-top: 1px solid #000; margin: 14px 0; }
   .meta { font-size: 13px; line-height: 1.55; color: #333; }
   .meta strong { color: #111; }
   .tracking { font-family: ui-monospace, monospace; font-size: 13px; }
+  .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; font-size: 16px; font-weight: 700; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
 </style></head><body>
 <div class="no-print toolbar">
@@ -1629,20 +1662,26 @@ function openAdminShippingLabelWindow(
   <button type="button" class="btn-edit" onclick="(function(){var el=document.querySelector('.label');if(el){el.contentEditable='true';el.focus();}})()">Edit Label</button>
 </div>
 <div class="label">
+  <div class="to-block">
+    <p class="section-title">Customer</p>
+    <p class="customer-name">${toName}</p>
+    <div class="lines">
+      <p>${fullAddress}</p>
+      ${phoneLine ? `<p>${phoneLine}</p>` : ''}
+    </div>
+  </div>
+  <hr class="sep" />
+  <div class="items-block">
+    <p class="section-title">Ordered</p>
+    ${itemsHtml}
+    <div class="total-row"><span>Total</span><span>${totalHtml}</span></div>
+  </div>
+  <hr class="sep" />
   <div class="from-block">
     <p class="section-title">From</p>
     <div class="lines">
       <p>${ADMIN_SHIPPING_LABEL_FROM.line1}</p>
       <p>${ADMIN_SHIPPING_LABEL_FROM.line2}</p>
-    </div>
-  </div>
-  <hr class="sep" />
-  <div class="to-block">
-    <p class="section-title">To</p>
-    <div class="lines">
-      <p><strong>${toName}</strong></p>
-      <p>${fullAddress}</p>
-      ${phoneLine ? `<p>${phoneLine}</p>` : ''}
     </div>
   </div>
   <hr class="sep" />
