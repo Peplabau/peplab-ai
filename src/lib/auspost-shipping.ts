@@ -96,7 +96,8 @@ export async function createAusPostLabel(
     const { data, error } = await supabase.functions.invoke('auspost-create-label', {
       body: {
         order_number: input.order_number,
-        shipping_method: input.shipping_method || 'standard',
+        // Always book Express with AusPost (checkout may still show Standard for pricing).
+        shipping_method: 'express',
         weight_kg: input.weight_kg,
         length_cm: input.length_cm,
         width_cm: input.width_cm,

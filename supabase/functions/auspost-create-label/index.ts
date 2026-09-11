@@ -287,13 +287,15 @@ function isParcelPostProduct(p: AccountProduct): boolean {
 /**
  * Prefer simple Parcel Post / Express (e.g. 7E55, 3K55).
  * Never default to Identity-on-Delivery (XID2) — those need extra features.
+ *
+ * Business rule (Sep 2026): always book Express Post products with AusPost,
+ * even when the customer selected Standard at checkout (pricing may still differ).
  */
 function pickProductId(
   products: AccountProduct[],
-  shippingMethod?: string,
+  _shippingMethod?: string,
 ): { productId: string; group: string; available: string[] } {
-  const method = (shippingMethod || "standard").toLowerCase();
-  const wantExpress = method.includes("express");
+  const wantExpress = true;
   const envExpress = Deno.env.get("AUSPOST_PRODUCT_ID_EXPRESS")?.trim();
   const envStandard = Deno.env.get("AUSPOST_PRODUCT_ID_STANDARD")?.trim();
   const available = products.map((p) => p.product_id);

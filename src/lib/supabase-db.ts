@@ -861,6 +861,9 @@ export interface OrderFromDB {
   total: number;
   status: string;
   created_at: string;
+  /** Points + promo discounts applied at checkout (AUD). */
+  discount_amount?: number | null;
+  affiliate_discount?: number | null;
 }
 
 export const createOrder = async (orderData: Partial<OrderFromDB>): Promise<string | null> => {
