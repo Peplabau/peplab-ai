@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
@@ -20,6 +20,94 @@ const cachedCatalogSales = getCache<Record<string, number>>('products:homepage-s
 
 /** Catalog-only community invite with admin approval (not the site-wide support Telegram setting). */
 const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
+
+/** Same pumpkin mark used in Free Shipping chip + Halloween Treat banner. */
+function HalloweenPumpkinIcon({ className }: { className?: string }) {
+  // Gradient/filter ids must stay unique — the icon renders several times per page.
+  const uid = useId().replace(/:/g, '');
+  const bodyId = `pk-body-${uid}`;
+  const stemId = `pk-stem-${uid}`;
+  const faceId = `pk-face-${uid}`;
+  const glowId = `pk-glow-${uid}`;
+  const carveId = `pk-carve-${uid}`;
+
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      className={className}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id={bodyId} cx="38%" cy="26%" r="80%">
+          <stop offset="0%" stopColor="#FDBA74" />
+          <stop offset="45%" stopColor="#F97316" />
+          <stop offset="100%" stopColor="#B03C06" />
+        </radialGradient>
+        <linearGradient id={stemId} x1="29" y1="9" x2="35" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#86EFAC" />
+          <stop offset="100%" stopColor="#15803D" />
+        </linearGradient>
+        <radialGradient id={faceId} cx="50%" cy="42%" r="62%">
+          <stop offset="0%" stopColor="#FEF9C3" />
+          <stop offset="100%" stopColor="#FACC15" />
+        </radialGradient>
+        <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="1.8" />
+        </filter>
+        <g id={carveId}>
+          <path d="M19.5 29.5 27 30.5 22.8 37.5Z" />
+          <path d="M44.5 29.5 37 30.5 41.2 37.5Z" />
+          <path d="M32 33.5 34.8 38.2 29.2 38.2Z" />
+          <path d="M20.5 41.5c1.3-.3 2.6-.2 3.9.2l1.1 2.6 2.5-2.2c2.7-.3 5.3-.3 8 0l2.5 2.2 1.1-2.6c1.3-.4 2.6-.5 3.9-.2-2.4 6.4-7 9.6-11.5 9.6s-9.1-3.2-11.5-9.6Z" />
+        </g>
+      </defs>
+
+      <path
+        d="M29.6 21.4c-.8-4.1.2-8.3 2.6-10.7 1.5 1 2.3 2.7 2.3 4.7 0 2.2-.6 4.2-.6 6.2Z"
+        fill={`url(#${stemId})`}
+      />
+      <path
+        d="M31.7 11.6c-.6 3-.8 6.3-.6 9.3"
+        stroke="#14532D"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
+
+      <ellipse cx="32" cy="39" rx="24" ry="19.5" fill={`url(#${bodyId})`} />
+      <ellipse cx="19.5" cy="39" rx="8" ry="17.5" fill="#EA580C" opacity="0.28" />
+      <ellipse cx="44.5" cy="39" rx="8" ry="17.5" fill="#FDBA74" opacity="0.18" />
+      <path
+        d="M21.5 22.6C17.6 27.6 16 33.1 16 39c0 5.7 1.5 11 5 15.9"
+        stroke="#B03C06"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+      <path
+        d="M42.5 22.6C46.4 27.6 48 33.1 48 39c0 5.7-1.5 11-5 15.9"
+        stroke="#B03C06"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+      <ellipse
+        cx="23"
+        cy="28"
+        rx="6.5"
+        ry="3.8"
+        fill="#FFFFFF"
+        opacity="0.22"
+        transform="rotate(-22 23 28)"
+      />
+
+      <use href={`#${carveId}`} fill="#FDE047" opacity="0.9" filter={`url(#${glowId})`} />
+      <use href={`#${carveId}`} fill={`url(#${faceId})`} />
+    </svg>
+  );
+}
 
 export default function Catalog() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -186,21 +274,17 @@ export default function Catalog() {
       <div className="relative z-10 px-4 sm:px-6 lg:px-12">
         {/* Promo chips + Rewards / Halloween Treat strip */}
         <div className="catalog-halloween-strip mb-3 sm:mb-4">
+          {/* Drift pumpkin — same icon as Free Shipping, rotating like the old promo animation */}
+          <div className="catalog-halloween-pumpkin" aria-hidden="true">
+            <HalloweenPumpkinIcon className="w-full h-full" />
+          </div>
+
           {/* Promotional Banner - Compact on mobile */}
           <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
             <div className="grid grid-cols-3 gap-1 sm:gap-4">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
                 <div className="p-1.5 sm:p-2 rounded-full bg-[rgba(249,115,22,0.18)] flex-shrink-0" aria-hidden="true">
-                  <svg viewBox="0 0 64 64" className="w-3.5 h-3.5 sm:w-5 sm:h-5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="32" cy="38" rx="22" ry="18" fill="#F97316" />
-                    <ellipse cx="22" cy="38" rx="10" ry="16" fill="#EA580C" opacity="0.85" />
-                    <ellipse cx="42" cy="38" rx="10" ry="16" fill="#FB923C" opacity="0.9" />
-                    <path d="M32 14c0 6 2 10 0 14" stroke="#166534" strokeWidth="3" strokeLinecap="round" />
-                    <ellipse cx="32" cy="16" rx="4" ry="3" fill="#22C55E" />
-                    <circle cx="24" cy="32" r="2.2" fill="#1C1917" />
-                    <circle cx="40" cy="32" r="2.2" fill="#1C1917" />
-                    <path d="M24 34l4 3 4-5 4 5 4-3" stroke="#1C1917" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <HalloweenPumpkinIcon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                 </div>
                 <div>
                   <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Free Shipping</p>
@@ -253,8 +337,12 @@ export default function Catalog() {
             >
               <div className="catalog-halloween-web" aria-hidden="true" />
               <div className="catalog-halloween-jacks" aria-hidden="true">
-                <span className="catalog-halloween-jack catalog-halloween-jack--a">🎃</span>
-                <span className="catalog-halloween-jack catalog-halloween-jack--b">🎃</span>
+                <span className="catalog-halloween-jack catalog-halloween-jack--a">
+                  <HalloweenPumpkinIcon className="w-full h-full" />
+                </span>
+                <span className="catalog-halloween-jack catalog-halloween-jack--b">
+                  <HalloweenPumpkinIcon className="w-full h-full" />
+                </span>
               </div>
               <div className="catalog-halloween-copy">
                 <p className="catalog-halloween-title">HALLOWEEN TREAT</p>
