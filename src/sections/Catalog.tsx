@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
-import { Search, Gift, Beaker, Award, MessageCircle } from 'lucide-react';
+import { Search, Truck, Gift, Beaker, Award, MessageCircle } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
@@ -21,7 +21,7 @@ const cachedCatalogSales = getCache<Record<string, number>>('products:homepage-s
 /** Catalog-only community invite with admin approval (not the site-wide support Telegram setting). */
 const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
 
-/** Same pumpkin mark used in Free Shipping chip + Halloween Treat banner. */
+/** Pumpkin mark for the Halloween Treat banner and the drifting promo pumpkin. */
 function HalloweenPumpkinIcon({ className }: { className?: string }) {
   // Gradient/filter ids must stay unique — the icon renders several times per page.
   const uid = useId().replace(/:/g, '');
@@ -274,7 +274,7 @@ export default function Catalog() {
       <div className="relative z-10 px-4 sm:px-6 lg:px-12">
         {/* Promo chips + Rewards / Halloween Treat strip */}
         <div className="catalog-halloween-strip mb-3 sm:mb-4">
-          {/* Drift pumpkin — same icon as Free Shipping, rotating like the old promo animation */}
+          {/* Drift pumpkin — rotates across the strip like the old promo animation */}
           <div className="catalog-halloween-pumpkin" aria-hidden="true">
             <HalloweenPumpkinIcon className="w-full h-full" />
           </div>
@@ -283,8 +283,8 @@ export default function Catalog() {
           <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
             <div className="grid grid-cols-3 gap-1 sm:gap-4">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[rgba(249,115,22,0.18)] flex-shrink-0" aria-hidden="true">
-                  <HalloweenPumpkinIcon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                <div className="p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
+                  <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#2ED1B4]" />
                 </div>
                 <div>
                   <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Free Shipping</p>
