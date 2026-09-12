@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
-import { Search, Truck, Gift, Beaker, Award, TrendingUp, MessageCircle } from 'lucide-react';
+import { Search, Gift, Beaker, Award, MessageCircle } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
@@ -184,30 +184,23 @@ export default function Catalog() {
       className="relative z-60 pt-16 sm:pt-20 lg:pt-24 pb-16 lg:pb-24"
     >
       <div className="relative z-10 px-4 sm:px-6 lg:px-12">
-        {/* Promo + Rewards — Halloween pumpkin drift overlay */}
+        {/* Promo chips + Rewards / Halloween Treat strip */}
         <div className="catalog-halloween-strip mb-3 sm:mb-4">
-          <div
-            className="catalog-halloween-pumpkin"
-            aria-hidden="true"
-          >
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-              <ellipse cx="32" cy="38" rx="22" ry="18" fill="#F97316" />
-              <ellipse cx="22" cy="38" rx="10" ry="16" fill="#EA580C" opacity="0.85" />
-              <ellipse cx="42" cy="38" rx="10" ry="16" fill="#FB923C" opacity="0.9" />
-              <path d="M32 14c0 6 2 10 0 14" stroke="#166534" strokeWidth="3" strokeLinecap="round" />
-              <ellipse cx="32" cy="16" rx="4" ry="3" fill="#22C55E" />
-              <path d="M24 34l4 3 4-5 4 5 4-3" stroke="#1C1917" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="24" cy="32" r="2.2" fill="#1C1917" />
-              <circle cx="40" cy="32" r="2.2" fill="#1C1917" />
-            </svg>
-          </div>
-
           {/* Promotional Banner - Compact on mobile */}
           <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
             <div className="grid grid-cols-3 gap-1 sm:gap-4">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
-                  <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#2ED1B4]" />
+                <div className="p-1.5 sm:p-2 rounded-full bg-[rgba(249,115,22,0.18)] flex-shrink-0" aria-hidden="true">
+                  <svg viewBox="0 0 64 64" className="w-3.5 h-3.5 sm:w-5 sm:h-5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="32" cy="38" rx="22" ry="18" fill="#F97316" />
+                    <ellipse cx="22" cy="38" rx="10" ry="16" fill="#EA580C" opacity="0.85" />
+                    <ellipse cx="42" cy="38" rx="10" ry="16" fill="#FB923C" opacity="0.9" />
+                    <path d="M32 14c0 6 2 10 0 14" stroke="#166534" strokeWidth="3" strokeLinecap="round" />
+                    <ellipse cx="32" cy="16" rx="4" ry="3" fill="#22C55E" />
+                    <circle cx="24" cy="32" r="2.2" fill="#1C1917" />
+                    <circle cx="40" cy="32" r="2.2" fill="#1C1917" />
+                    <path d="M24 34l4 3 4-5 4 5 4-3" stroke="#1C1917" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </div>
                 <div>
                   <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Free Shipping</p>
@@ -220,7 +213,7 @@ export default function Catalog() {
                 </div>
                 <div>
                   <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Special Offer</p>
-                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">$300 = Free BAC</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Free BAC all orders</p>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
@@ -235,33 +228,41 @@ export default function Catalog() {
             </div>
           </div>
 
-          {/* PEPLAB Rewards Banner - Compact on mobile */}
-          <Link
-            to="/dashboard#rewards"
-            className="block p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#1b1634] to-[#0d282a] border border-[rgba(139,92,246,0.3)] hover:border-[rgba(139,92,246,0.5)] transition-colors"
-          >
-            <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#2ED1B4]">
-                  <Award className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm sm:text-lg font-semibold text-[#F4F6FA]">PEPLAB Rewards</p>
-                  <p className="hidden sm:block text-sm text-[#A9B3C7]">Earn points with every purchase and redeem for discounts</p>
-                </div>
+          {/* Rewards + Halloween Treat (side-by-side like promo screen) */}
+          <div className="catalog-halloween-promo grid grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] sm:grid-cols-2 overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.35)] bg-gradient-to-r from-[#16122a] via-[#12101f] to-[#1a1220] shadow-[0_0_24px_rgba(139,92,246,0.18)]">
+            <Link
+              to="/dashboard#rewards"
+              className="relative z-10 flex items-center gap-2 sm:gap-3 p-2.5 sm:p-4 hover:bg-[rgba(139,92,246,0.08)] transition-colors"
+            >
+              <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#6366F1] shrink-0">
+                <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white" />
               </div>
-              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-6 text-[10px] sm:text-sm">
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[#22C55E]" />
-                  <span className="text-[#A9B3C7]">1pt/$1</span>
-                </div>
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-[#8B5CF6]" />
-                  <span className="text-[#A9B3C7]">Redeem $150+</span>
-                </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-base font-semibold text-[#F4F6FA] leading-tight whitespace-nowrap">
+                  PEPLAB Rewards
+                </p>
+                <p className="mt-0.5 text-[9px] sm:text-xs text-[#C4B5FD] leading-snug">1pt/$1</p>
+                <p className="text-[9px] sm:text-xs text-[#A9B3C7] leading-snug">Redeem $150+</p>
+              </div>
+            </Link>
+
+            <div
+              className="catalog-halloween-treat relative overflow-hidden px-2 py-2.5 sm:px-4 sm:py-4"
+              role="region"
+              aria-label="Halloween Treat — Free BAC Water on all orders"
+            >
+              <div className="catalog-halloween-web" aria-hidden="true" />
+              <div className="catalog-halloween-jacks" aria-hidden="true">
+                <span className="catalog-halloween-jack catalog-halloween-jack--a">🎃</span>
+                <span className="catalog-halloween-jack catalog-halloween-jack--b">🎃</span>
+              </div>
+              <div className="catalog-halloween-copy">
+                <p className="catalog-halloween-title">HALLOWEEN TREAT</p>
+                <p className="catalog-halloween-offer">FREE BAC WATER</p>
+                <p className="catalog-halloween-note">ON ALL ORDERS</p>
               </div>
             </div>
-          </Link>
+          </div>
         </div>
 
         {/* Support chips — forced single row on mobile (no wrap); abbreviated labels below sm */}

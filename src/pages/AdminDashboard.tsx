@@ -82,6 +82,7 @@ interface Order {
   notes: string;
   created_at: string;
   paid_at: string;
+  shipped_at?: string | null;
   payment_email_sent?: boolean;
   shipped_email_sent?: boolean;
   confirmation_email_sent?: boolean;
@@ -2114,6 +2115,72 @@ function OrdersSection() {
     await updateOrderStatus(orderId, 'finalised');
   };
 
+  /** Mark shipped for pickup / hand delivery — no AusPost label or tracking email. */
+  const markShippedWithoutLabel = async (order: Order) => {
+    if (order.status === 'shipped' || order.status === 'delivered') {
+      alert('This order is already marked as shipped or delivered.');
+      return;
+    }
+    const displayNo = formatOrderNumberDisplay(order.order_number);
+    const ok = window.confirm(
+      `Mark #${displayNo} as Shipped without creating a label?\n\nUse this for pickup or hand delivery.\nNo AusPost label or tracking email will be sent.`,
+    );
+    if (!ok) return;
+
+    setIsUpdating(true);
+    try {
+      const shippedAt = new Date().toISOString();
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          status: 'shipped',
+          shipped_at: shippedAt,
+          updated_at: shippedAt,
+        })
+        .eq('id', order.id);
+      if (error) throw error;
+
+      await loadOrders(true);
+      setSelectedOrder((prev) =>
+        prev && prev.id === order.id
+          ? { ...prev, status: 'shipped', shipped_at: shippedAt }
+          : prev,
+      );
+
+      // Award points in background (same as label / manual tracking flows).
+      void (async () => {
+        try {
+          const alreadyAwarded = await getOrderPointsAwarded(order.id);
+          if (!alreadyAwarded && order.user_id && order.subtotal > 0) {
+            const points = calculatePurchasePoints(order.subtotal, {
+              promoDiscountApplied: Number(order.affiliate_discount) > 0,
+            });
+            const earnedCountBefore = await getEarnedTransactionsCount(order.user_id);
+            await addUserPoints(
+              order.user_id,
+              points,
+              'purchase',
+              `Order ${displayNo}`,
+              order.id,
+            );
+            if (earnedCountBefore === 0) {
+              await addUserPoints(order.user_id, BONUS_POINTS.FIRST_PURCHASE, 'first_order', 'First order bonus', null);
+            }
+          }
+        } catch (pointsErr) {
+          console.error('[markShippedWithoutLabel] points award failed', pointsErr);
+        } finally {
+          window.dispatchEvent(new Event('peplab:points-updated'));
+        }
+      })();
+    } catch (error) {
+      console.error('Error marking shipped without label:', error);
+      alert('Failed to mark as shipped: ' + adminRequestErrorMessage(error));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   /** Manual single-order Trustpilot review email (never bulk). Surfaces Resend/edge errors. */
   const sendReviewEmailForOrder = async (order: Order) => {
     const email = order.customer_email?.trim();
@@ -3464,6 +3531,20 @@ function OrdersSection() {
                     <Pencil className="w-4 h-4" />
                     Edit Label
                   </button>
+                  {(selectedOrder.status === 'processing' ||
+                    selectedOrder.status === 'finalised' ||
+                    selectedOrder.status === 'pending_payment') && (
+                    <button
+                      type="button"
+                      onClick={() => void markShippedWithoutLabel(selectedOrder)}
+                      disabled={isCreatingAusPostLabel || isUpdating}
+                      className="px-4 py-2 rounded-lg bg-[#22C55E] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                      title="Mark shipped for pickup or hand delivery — no AusPost label"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      {isUpdating ? 'Updating…' : 'Shipped'}
+                    </button>
+                  )}
                 </div>
                 {selectedOrder.auspost_label_url ? (
                   <a
@@ -3804,12 +3885,13 @@ function OrdersSection() {
               )}
               {(selectedOrder.status === 'processing' || selectedOrder.status === 'finalised') && !selectedOrder.tracking_number && (
                 <button
-                  onClick={() => updateOrderStatus(selectedOrder.id, 'shipped')}
+                  onClick={() => void markShippedWithoutLabel(selectedOrder)}
                   disabled={isUpdating}
-                  className="flex-1 px-4 py-3 rounded-xl bg-[#2ED1B4] text-white hover:bg-[#25b89d] disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 rounded-xl bg-[#22C55E] text-white hover:bg-[#16A34A] disabled:opacity-50 flex items-center justify-center gap-2"
+                  title="Pickup or hand delivery — no AusPost label"
                 >
-                  <Truck className="w-5 h-5" />
-                  Mark as Shipped (No Tracking)
+                  <CheckCircle className="w-5 h-5" />
+                  {isUpdating ? 'Updating…' : 'Shipped (Pickup / Hand Delivery)'}
                 </button>
               )}
               {selectedOrder.status === 'shipped' && (

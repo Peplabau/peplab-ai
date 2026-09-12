@@ -3950,58 +3950,131 @@
   }
 }
 
-/* Catalog Halloween promo strip — seasonal pumpkin drift (remove after Oct) */
+/* Catalog Halloween promo strip — seasonal (remove after Oct) */
 .catalog-halloween-strip {
   position: relative;
-  overflow: hidden;
 }
 
-.catalog-halloween-pumpkin {
+.catalog-halloween-treat {
+  background:
+    radial-gradient(ellipse 80% 120% at 100% 0%, rgba(139, 92, 246, 0.22), transparent 55%),
+    radial-gradient(ellipse 70% 90% at 90% 100%, rgba(249, 115, 22, 0.16), transparent 50%),
+    linear-gradient(135deg, rgba(20, 12, 28, 0.95), rgba(12, 18, 28, 0.9));
+}
+
+.catalog-halloween-web {
   position: absolute;
-  top: 0.35rem;
-  left: 0;
-  z-index: 2;
-  width: 1.65rem;
-  height: 1.65rem;
+  top: -0.55rem;
+  right: -0.55rem;
+  width: 4rem;
+  height: 4rem;
+  opacity: 0.85;
   pointer-events: none;
-  filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.55));
-  animation: catalog-halloween-drift 9s ease-in-out infinite;
-  will-change: transform;
+  background:
+    radial-gradient(circle at 100% 0%, transparent 34%, rgba(167, 139, 250, 0.75) 35%, transparent 37%),
+    radial-gradient(circle at 100% 0%, transparent 56%, rgba(167, 139, 250, 0.6) 57%, transparent 59%),
+    radial-gradient(circle at 100% 0%, transparent 78%, rgba(167, 139, 250, 0.45) 79%, transparent 81%),
+    repeating-conic-gradient(from 90deg at 100% 0%, rgba(167, 139, 250, 0.55) 0deg 0.6deg, transparent 0.6deg 15deg);
+  mask-image: radial-gradient(circle at 100% 0%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle at 100% 0%, #000 30%, transparent 100%);
 }
 
 @media (min-width: 640px) {
-  .catalog-halloween-pumpkin {
-    width: 2rem;
-    height: 2rem;
-    top: 0.55rem;
+  .catalog-halloween-web {
+    width: 5.5rem;
+    height: 5.5rem;
   }
 }
 
-@keyframes catalog-halloween-drift {
-  0% {
-    transform: translate3d(-10%, 0, 0) rotate(-8deg) scale(0.92);
+.catalog-halloween-jacks {
+  position: absolute;
+  right: 0.1rem;
+  bottom: -0.1rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.05rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.catalog-halloween-jack {
+  display: inline-block;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.7));
+  animation: catalog-halloween-bob 2.8s ease-in-out infinite;
+}
+
+.catalog-halloween-jack--a {
+  font-size: 1.05rem;
+}
+
+.catalog-halloween-jack--b {
+  font-size: 1.4rem;
+  animation-delay: 0.45s;
+}
+
+@media (min-width: 640px) {
+  .catalog-halloween-jack--a {
+    font-size: 1.5rem;
   }
-  20% {
-    transform: translate3d(22vw, 10px, 0) rotate(12deg) scale(1);
+  .catalog-halloween-jack--b {
+    font-size: 2rem;
   }
-  45% {
-    transform: translate3d(48vw, -4px, 0) rotate(-10deg) scale(1.05);
+}
+
+.catalog-halloween-copy {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding-right: 1.35rem;
+}
+
+@media (min-width: 640px) {
+  .catalog-halloween-copy {
+    padding-right: 2.25rem;
   }
-  70% {
-    transform: translate3d(72vw, 12px, 0) rotate(14deg) scale(0.98);
-  }
+}
+
+.catalog-halloween-title {
+  font-weight: 800;
+  font-size: clamp(0.78rem, 3.4vw, 1.4rem);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: #f59e0b;
+  text-shadow: 0 0 10px rgba(249, 115, 22, 0.45);
+}
+
+.catalog-halloween-offer {
+  margin-top: 0.1rem;
+  font-weight: 900;
+  font-size: clamp(0.88rem, 4vw, 1.75rem);
+  line-height: 1.05;
+  color: #3ce85a;
+  text-shadow: 0 0 14px rgba(60, 232, 90, 0.5);
+}
+
+.catalog-halloween-note {
+  margin-top: 0.15rem;
+  font-weight: 700;
+  font-size: clamp(0.55rem, 2.2vw, 0.95rem);
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  color: #f4f6fa;
+}
+
+@keyframes catalog-halloween-bob {
+  0%,
   100% {
-    transform: translate3d(105%, 2px, 0) rotate(-6deg) scale(0.9);
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(6deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .catalog-halloween-pumpkin {
+  .catalog-halloween-jack {
     animation: none;
-    left: auto;
-    right: 0.75rem;
-    top: 0.5rem;
-    opacity: 0.85;
   }
 }
 

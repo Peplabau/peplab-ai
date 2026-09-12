@@ -50,9 +50,9 @@ const COA_LANDING_SEO_KEYWORDS = [
 ] as const;
 
 export const RESEARCH_GATEWAY_SEO = {
-  title: 'PEPLAB Australia | Research Peptides & COA Results',
+  title: 'PEPLAB | Peptides Australia',
   description:
-    'PEPLAB Australia supplies research peptides with independent HPLC testing and published COA results. Browse certificates, quality standards, and lab documentation. Research use only.',
+    "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.",
   keywords: mergeSeoKeywords(
     PEPTIDE_AUSTRALIA_SEO_KEYWORDS,
     CORE_SITE_SEO_KEYWORDS,

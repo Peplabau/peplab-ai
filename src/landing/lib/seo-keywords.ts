@@ -84,9 +84,7 @@ export const RESEARCH_GATEWAY_SEO = {
 } as const;
 
 export const NEW_LANDING_SEO = {
-  title:
-    "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.",
-  description:
-    "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.",
+  title: HOMEPAGE_SEO_TITLE,
+  description: HOMEPAGE_SEO_DESCRIPTION,
   keywords: SITE_SEO_KEYWORDS,
 } as const;

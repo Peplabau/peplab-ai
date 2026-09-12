@@ -11,7 +11,7 @@ interface SEOProps {
 }
 
 export function SEO({
-  title = "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.",
+  title = 'PEPLAB | Peptides Australia',
   description = "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.",
   keywords = SITE_SEO_KEYWORDS,
   ogImage = `${CONFIG.SITE_URL}${CONFIG.SHARE_PREVIEW_IMAGE_PATH}`,
@@ -45,7 +45,7 @@ export function SEO({
       { property: 'og:image', content: ogImage },
       { property: 'og:url', content: CONFIG.SITE_URL },
       { property: 'og:type', content: 'website' },
-      { property: 'og:site_name', content: 'PEPLAB' },
+      { property: 'og:site_name', content: 'PEPLAB | Peptides Australia' },
       { property: 'og:locale', content: 'en_AU' },
       { property: 'og:image:width', content: '1200' },
       { property: 'og:image:height', content: '630' },
