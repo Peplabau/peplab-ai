@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
-import { Search, Truck, Gift, Beaker, Award, MessageCircle } from 'lucide-react';
+import { Search, Truck, Gift, Tag, Award, MessageCircle } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
@@ -302,11 +302,11 @@ export default function Catalog() {
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
                 <div className="p-1.5 sm:p-2 rounded-full bg-[#3d1a30] flex-shrink-0">
-                  <Beaker className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#EC4899]" />
+                  <Tag className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#EC4899]" />
                 </div>
                 <div>
-                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">HPLC-Verified</p>
-                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">≥99% Pure</p>
+                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">PRICE MATCH</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Find it cheaper? We&apos;ll match it.</p>
                 </div>
               </div>
             </div>
