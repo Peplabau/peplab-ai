@@ -297,7 +297,7 @@ export default function Catalog() {
                 </div>
                 <div>
                   <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Special Offer</p>
-                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Free BAC all orders</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">$300 = Free BAC</p>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
