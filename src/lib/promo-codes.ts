@@ -222,3 +222,59 @@ export function promoCodeTypeLabel(row: PromoCode): string {
   if (row.max_uses == null) return 'Custom';
   return `Limited (${row.max_uses})`;
 }
+
+/** Shared 50% email-campaign code. One row in promo_codes; all storefronts read the same backend. */
+export const EMAIL_CAMPAIGN_PROMO_CODE = 'SALE50';
+export const EMAIL_CAMPAIGN_DISCOUNT_PERCENT = 50;
+export const EMAIL_CAMPAIGN_LABEL = '50% off email campaign';
+
+export function isEmailCampaignPromoCode(code: string): boolean {
+  return normalizePromoCodeInput(code) === EMAIL_CAMPAIGN_PROMO_CODE;
+}
+
+export async function setEmailCampaignPromoActive(
+  active: boolean,
+  existing?: PromoCode | null,
+): Promise<{ ok: boolean; error?: string; promoCode?: PromoCode }> {
+  let row = existing ?? null;
+  if (!row) {
+    const { data, error } = await supabase
+      .from('promo_codes')
+      .select('*')
+      .ilike('code', EMAIL_CAMPAIGN_PROMO_CODE)
+      .maybeSingle();
+    if (error) {
+      console.error('setEmailCampaignPromoActive lookup error:', error);
+      return { ok: false, error: error.message || 'Failed to load campaign code' };
+    }
+    row = (data as PromoCode | null) ?? null;
+  }
+
+  if (!row) {
+    if (!active) return { ok: true };
+    return createPromoCode({
+      code: EMAIL_CAMPAIGN_PROMO_CODE,
+      discount_percent: EMAIL_CAMPAIGN_DISCOUNT_PERCENT,
+      max_uses: null,
+      label: EMAIL_CAMPAIGN_LABEL,
+    });
+  }
+
+  const { error } = await supabase
+    .from('promo_codes')
+    .update({
+      is_active: active,
+      discount_percent: EMAIL_CAMPAIGN_DISCOUNT_PERCENT,
+      max_uses: null,
+      expires_at: active ? null : row.expires_at,
+      label: row.label?.trim() || EMAIL_CAMPAIGN_LABEL,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', row.id);
+
+  if (error) {
+    console.error('setEmailCampaignPromoActive update error:', error);
+    return { ok: false, error: error.message || 'Failed to update campaign code' };
+  }
+  return { ok: true, promoCode: { ...row, is_active: active } };
+}
