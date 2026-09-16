@@ -3,18 +3,23 @@
  *
  * Dashboard: Edge Functions → Create → name: send-email → paste this file.
  * Secrets (Edge Functions → send-email → Secrets, or Project Settings → Edge Functions):
- *   RESEND_API_KEY       = re_...
- *   RESEND_FROM_EMAIL    = noreply@peplab.ai   (default for all mail)
+ *   RESEND_API_KEY       = re_...   (the peplab.ai Resend account — checkout/payment mail)
+ *   RESEND_FROM_EMAIL    = noreply@peplab.ai   (default: checkout, payment, shipping)
  *   RESEND_FROM_NAME     = PEPLAB   (optional — defaults to PEPLAB)
  *   RESEND_REVIEW_FROM_EMAIL = contact@peplab.ai  (optional; Trustpilot review mail only)
+ *   RESEND_MARKETING_FROM_EMAIL = hello@peplab.com.au  (optional allowlist for promo mail)
  *
- * After changing the from address you must:
+ * Do not point RESEND_FROM_EMAIL at @peplab.com.au. That would switch checkout and
+ * payment confirmation mail. One-off marketing (PEP50 etc.) is sent from Resend
+ * using a verified peplab.com.au domain, not by changing this default.
+ *
+ * After changing the transactional from address you must:
  *   1. Verify peplab.ai as a sending domain in Resend (SPF/DKIM DNS records).
  *   2. Update the RESEND_FROM_EMAIL secret above in Supabase — the code cannot
  *      change production secrets; that step is manual in the dashboard.
  *
- * Optional body.from may override the default From for review emails only.
- * Overrides are allowlisted to RESEND_REVIEW_FROM_EMAIL / contact@peplab.ai.
+ * Optional body.from may override the default From for review or marketing mail.
+ * Overrides are allowlisted to RESEND_REVIEW_FROM_EMAIL / RESEND_MARKETING_FROM_EMAIL.
  *
  * Settings: allow unauthenticated invoke if you use guest checkout
  *   (CLI: supabase/config.toml verify_jwt = false for this function)
@@ -45,8 +50,8 @@ function resolveDefaultFromAddress(): string | null {
 }
 
 /**
- * Optional client From override — only contact@ (review mail) is allowed.
- * Falls back to default noreply if override missing/invalid.
+ * Optional client From override — review (contact@peplab.ai) or marketing
+ * (@peplab.com.au). Checkout/payment omit `from` and stay on noreply@peplab.ai.
  */
 function resolveFromAddress(requestedFrom?: string | null): string | null {
   const defaultFrom = resolveDefaultFromAddress();
@@ -57,8 +62,11 @@ function resolveFromAddress(requestedFrom?: string | null): string | null {
 
   const allowedReview =
     Deno.env.get("RESEND_REVIEW_FROM_EMAIL")?.trim() || "contact@peplab.ai";
+  const allowedMarketing =
+    Deno.env.get("RESEND_MARKETING_FROM_EMAIL")?.trim() || "hello@peplab.com.au";
   const allowedAddrs = new Set([
     extractEmailAddress(allowedReview),
+    extractEmailAddress(allowedMarketing),
     extractEmailAddress(defaultFrom),
   ]);
 

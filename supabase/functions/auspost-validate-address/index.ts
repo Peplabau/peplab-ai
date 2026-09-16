@@ -2,8 +2,9 @@
  * Edge Function: auspost-validate-address
  *
  * Checkout uses this before an order is created.
- * 1) Suburb/state/postcode against AusPost locality data
- * 2) If street/PO Box/locker lines are sent, Validate Shipments
+ * 1) Optional suburb/postcode autocomplete: POST { q } → PAC search.json
+ * 2) Suburb/state/postcode against AusPost locality data
+ * 3) If street/PO Box/locker lines are sent, Validate Shipments
  *    (POST /shipments/validation) — the same Shipping API as labels
  */
 const corsHeaders: Record<string, string> = {
@@ -221,11 +222,12 @@ function parsePacLocalities(json: Record<string, unknown>): Locality[] {
     .filter((row) => row.suburb && row.postcode);
 }
 
-async function pacPostcodeLookup(postcode: string): Promise<Locality[]> {
-  const apiKey = Deno.env.get("AUSPOST_API_KEY")?.trim();
+async function pacPostcodeLookup(query: string): Promise<Locality[]> {
+  const apiKey =
+    Deno.env.get("AUSPOST_PAC_API_KEY")?.trim() || Deno.env.get("AUSPOST_API_KEY")?.trim();
   if (!apiKey) return [];
   const res = await fetch(
-    `https://digitalapi.auspost.com.au/postcode/search.json?q=${encodeURIComponent(postcode)}`,
+    `https://digitalapi.auspost.com.au/postcode/search.json?q=${encodeURIComponent(query)}`,
     { headers: { Accept: "application/json", "AUTH-KEY": apiKey } },
   );
   if (!res.ok) return [];
@@ -368,6 +370,7 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return jsonOk({ error: "Method not allowed" }, 405);
 
   let body: {
+    q?: string;
     suburb?: string;
     state?: string;
     postcode?: string;
@@ -383,6 +386,36 @@ Deno.serve(async (req: Request) => {
     body = (await req.json()) as typeof body;
   } catch {
     return jsonOk({ valid: false, error: "Invalid JSON" }, 400);
+  }
+
+  const suggestQuery = (body.q || "").trim();
+  if (suggestQuery) {
+    if (suggestQuery.length < 2) return jsonOk({ suggestions: [] });
+    try {
+      const localities = await pacPostcodeLookup(suggestQuery);
+      const seen = new Set<string>();
+      const suggestions: Array<{ suburb: string; state: string; postcode: string; label: string }> = [];
+      for (const row of localities) {
+        const suburbName = row.suburb.trim();
+        const stateCode = normalizeState(row.state);
+        const postcode = normalizePostcode(row.postcode);
+        if (!suburbName || !stateCode || !/^\d{4}$/.test(postcode)) continue;
+        const key = `${normalizeSuburb(suburbName)}|${stateCode}|${postcode}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        suggestions.push({
+          suburb: suburbName,
+          state: stateCode,
+          postcode,
+          label: `${suburbName}, ${stateCode} ${postcode}`,
+        });
+        if (suggestions.length >= 8) break;
+      }
+      return jsonOk({ suggestions });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Australia Post lookup failed";
+      return jsonOk({ suggestions: [], error: message }, 502);
+    }
   }
 
   const suburb = normalizeSuburb(body.suburb || "");
