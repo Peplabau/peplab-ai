@@ -15,6 +15,11 @@ import {
   X,
   Lock,
   Tag,
+  Plus,
+  Minus,
+  ChevronDown,
+  ChevronUp,
+  Zap,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useRewards, REDEMPTION_TIERS } from '@/context/RewardsContext';
@@ -36,7 +41,6 @@ import { SEO } from '@/components/SEO';
 import { generateOrderNumberForCheckout, generatePreorderOrderNumberForCheckout } from '@/lib/orderNumber';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
-import { trackGoogleAdsPurchase } from '@/lib/google-ads';
 import { getMarketingBundleOffLabel, productExcludesVolumeBundle } from '@/utils/pricing';
 import {
   calculatePurchasePoints,
@@ -70,6 +74,9 @@ const shippingMethods: ShippingMethod[] = [
   { id: 'standard', name: 'Standard Shipping', description: 'Reliable tracked delivery', price: 10, estimatedDays: '5-8 business days' }
 ];
 
+type DeliveryMode = 'simple' | 'manual' | 'collection';
+type CollectionType = 'parcel_locker' | 'parcel_collect';
+
 /** Address lines for order-confirmation email — phone is passed separately. */
 function formatShippingForEmail(
   a: { firstName: string; lastName: string; address: string; apartment: string; suburb: string; state: string; postcode: string }
@@ -80,14 +87,58 @@ function formatShippingForEmail(
   return [name, street, locality].filter(Boolean).join('\n');
 }
 
+function composeCollectionAddress(type: CollectionType, number: string): string {
+  const n = number.trim();
+  const label = type === 'parcel_collect' ? 'Parcel Collect' : 'Parcel Locker';
+  return n ? `${label} ${n}` : label;
+}
+
+/** Detect AusPost collection-point addresses from saved profile / last order. */
+function parseCollectionFromAddress(address: string): {
+  mode: DeliveryMode;
+  type: CollectionType;
+  number: string;
+} | null {
+  const t = (address || '').trim();
+  if (!t) return null;
+  const collectMatch = t.match(/^parcel\s*collect\s*(.*)$/i);
+  if (collectMatch) {
+    return { mode: 'collection', type: 'parcel_collect', number: (collectMatch[1] || '').trim() };
+  }
+  const lockerMatch = t.match(/^(?:parcel\s*locker|mypost\s*locker|australia\s*post\s*locker)\s*(.*)$/i);
+  if (lockerMatch) {
+    return { mode: 'collection', type: 'parcel_locker', number: (lockerMatch[1] || '').trim() };
+  }
+  if (/parcel\s*collect/i.test(t)) {
+    return {
+      mode: 'collection',
+      type: 'parcel_collect',
+      number: t.replace(/parcel\s*collect/gi, '').replace(/^[\s,:-]+/, '').trim(),
+    };
+  }
+  if (/parcel\s*locker|mypost\s*locker|australia\s*post\s*locker/i.test(t)) {
+    return {
+      mode: 'collection',
+      type: 'parcel_locker',
+      number: t
+        .replace(/parcel\s*locker|mypost\s*locker|australia\s*post\s*locker/gi, '')
+        .replace(/^[\s,:-]+/, '')
+        .trim(),
+    };
+  }
+  return null;
+}
+
 export default function Checkout() {
-  const { items, paidItemsTotal, clearCart, isLoading: isCartLoading } = useCart();
+  const { items, paidItemsTotal, clearCart, isLoading: isCartLoading, updateQuantity } = useCart();
   const { balance, redeemPoints } = useRewards();
   const { appliedCode, appliedPromotion, applyCode, clearCode } = useAffiliate();
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   /** False until auth + saved shipping are resolved — prevents empty→filled flash. */
   const [isCheckoutReady, setIsCheckoutReady] = useState(false);
+  /** Mobile order-summary accordion (desktop always shows full left panel). */
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
 
   // Affiliate code input state
   const [affiliateInput, setAffiliateInput] = useState('');
@@ -98,6 +149,10 @@ export default function Checkout() {
   const [shippingAddress, setShippingAddress] = useState<CheckoutShippingDetails>({
     ...EMPTY_CHECKOUT_SHIPPING,
   });
+  /** Default: compact address. Manual expands suburb/state; collection = locker/collect. */
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>('simple');
+  const [collectionType, setCollectionType] = useState<CollectionType>('parcel_locker');
+  const [collectionNumber, setCollectionNumber] = useState('');
   /** Shown when we autofilled from saved profile / last order. */
   const [autofillNotice, setAutofillNotice] = useState<string | null>(null);
   const [localityError, setLocalityError] = useState<string | null>(null);
@@ -172,6 +227,30 @@ export default function Checkout() {
         setContactEmail(nextEmail);
         setShippingAddress(nextShipping);
         setAutofillNotice(nextNotice);
+        const parsedCollection = parseCollectionFromAddress(nextShipping.address);
+        if (parsedCollection) {
+          setDeliveryMode('collection');
+          setCollectionType(parsedCollection.type);
+          setCollectionNumber(parsedCollection.number);
+          setShippingAddress({
+            ...nextShipping,
+            address: composeCollectionAddress(parsedCollection.type, parsedCollection.number).slice(0, 40),
+          });
+        } else if (
+          nextShipping.address.trim() &&
+          nextShipping.suburb.trim() &&
+          nextShipping.state.trim() &&
+          nextShipping.postcode.trim()
+        ) {
+          // Saved full street address — open manual so suburb/state stay visible/editable.
+          setDeliveryMode('manual');
+          setCollectionType('parcel_locker');
+          setCollectionNumber('');
+        } else {
+          setDeliveryMode('simple');
+          setCollectionType('parcel_locker');
+          setCollectionNumber('');
+        }
       } catch (err) {
         console.warn('Checkout prepare failed:', err);
       } finally {
@@ -243,7 +322,9 @@ export default function Checkout() {
     setAffiliateLoading(false);
   };
 
-  const shippingCost = paidItemsTotal >= 250 ? 0 : shippingMethods.find(m => m.id === selectedShipping)?.price || 15;
+  const FREE_SHIPPING_THRESHOLD = 250;
+  const shippingCost = paidItemsTotal >= FREE_SHIPPING_THRESHOLD ? 0 : shippingMethods.find(m => m.id === selectedShipping)?.price || 15;
+  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - paidItemsTotal);
 
   // Cap the tier's $-discount at the items total *after* the affiliate
   // discount so the order can never go negative on the items line. The
@@ -271,6 +352,44 @@ export default function Checkout() {
       setLocalityError(null);
     }
     setShippingAddress((prev) => ({ ...prev, ...patch }));
+  };
+
+  const applyCollectionLine = (type: CollectionType, number: string) => {
+    const composed = composeCollectionAddress(type, number).slice(0, 40);
+    updateShipping({ address: composed });
+  };
+
+  const switchToCollectionMode = () => {
+    setDeliveryMode('collection');
+    const nextNumber = collectionNumber.trim()
+      ? collectionNumber
+      : (parseCollectionFromAddress(shippingAddress.address)?.number || '');
+    setCollectionNumber(nextNumber);
+    applyCollectionLine(collectionType, nextNumber);
+  };
+
+  const switchToManualMode = () => {
+    setDeliveryMode('manual');
+    if (parseCollectionFromAddress(shippingAddress.address)) {
+      updateShipping({ address: '' });
+    }
+  };
+
+  const switchToSimpleMode = () => {
+    setDeliveryMode('simple');
+    if (parseCollectionFromAddress(shippingAddress.address)) {
+      updateShipping({ address: '' });
+    }
+  };
+
+  const updateCollectionType = (type: CollectionType) => {
+    setCollectionType(type);
+    applyCollectionLine(type, collectionNumber);
+  };
+
+  const updateCollectionNumber = (value: string) => {
+    setCollectionNumber(value);
+    applyCollectionLine(collectionType, value);
   };
 
   const verifyLocality = async (
@@ -306,7 +425,7 @@ export default function Checkout() {
   };
 
   const handleSelectTier = (tier: typeof REDEMPTION_TIERS[0]) => {
-    setSelectedTier(prev => prev?.points === tier.points ? null : tier);
+    setSelectedTier((prev) => (prev?.points === tier.points ? null : tier));
   };
 
   // Auto-apply a points redemption selected from Dashboard.
@@ -338,10 +457,39 @@ export default function Checkout() {
     setOrderEmailNotice(null);
 
     try {
-      const formatErr = validateCheckoutAddressFormat(
-        shippingAddress.address,
-        shippingAddress.apartment,
-      );
+      if (deliveryMode === 'collection') {
+        if (!collectionNumber.trim()) {
+          setSubmitError(
+            collectionType === 'parcel_collect'
+              ? 'Enter your Parcel Collect number.'
+              : 'Enter your Parcel Locker number.',
+          );
+          return;
+        }
+        applyCollectionLine(collectionType, collectionNumber);
+      }
+
+      if (deliveryMode === 'simple') {
+        const missingLocality =
+          shippingAddress.suburb.trim().length < 2 ||
+          !shippingAddress.state.trim() ||
+          shippingAddress.postcode.replace(/\D/g, '').length !== 4;
+        if (missingLocality) {
+          setDeliveryMode('manual');
+          setSubmitError(
+            'Please enter your address manually so we can capture suburb, state & postcode.',
+          );
+          return;
+        }
+      }
+
+      const addressLine =
+        deliveryMode === 'collection'
+          ? composeCollectionAddress(collectionType, collectionNumber).slice(0, 40)
+          : shippingAddress.address;
+      const apartmentLine = shippingAddress.apartment;
+
+      const formatErr = validateCheckoutAddressFormat(addressLine, apartmentLine);
       if (formatErr) {
         setSubmitError(formatErr);
         return;
@@ -353,11 +501,9 @@ export default function Checkout() {
           suburb: shippingAddress.suburb,
           state: shippingAddress.state,
           postcode: shippingAddress.postcode,
-          address: shippingAddress.address,
-          apartment: shippingAddress.apartment,
-          addressType: inferCheckoutAddressType(
-            `${shippingAddress.address} ${shippingAddress.apartment}`,
-          ),
+          address: addressLine,
+          apartment: apartmentLine,
+          addressType: inferCheckoutAddressType(`${addressLine} ${apartmentLine}`),
           shippingMethod: selectedShipping,
           name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
           email: contactEmail.trim(),
@@ -377,11 +523,23 @@ export default function Checkout() {
       if (auspostCheck.suburb) {
         setShippingAddress((prev) => ({
           ...prev,
+          address: addressLine,
           suburb: auspostCheck.suburb || prev.suburb,
           state: auspostCheck.state || prev.state,
           postcode: auspostCheck.postcode || prev.postcode,
         }));
+      } else if (deliveryMode === 'collection') {
+        setShippingAddress((prev) => ({ ...prev, address: addressLine }));
       }
+
+      const shippingForOrder = {
+        ...shippingAddress,
+        address: addressLine,
+        apartment: apartmentLine,
+        suburb: auspostCheck.suburb || shippingAddress.suburb,
+        state: auspostCheck.state || shippingAddress.state,
+        postcode: auspostCheck.postcode || shippingAddress.postcode,
+      };
 
       const wasPreorderCheckout = items.some((i) => !i.isFree && i.isPreorder);
       const newOrderNumber = wasPreorderCheckout
@@ -391,19 +549,19 @@ export default function Checkout() {
       setOrderNumber(newOrderNumber);
       setOrderTotal(finalOrderTotal);
       setCompletedOrderWasPreorder(wasPreorderCheckout);
-      const shippingForEmail = formatShippingForEmail(shippingAddress);
+      const shippingForEmail = formatShippingForEmail(shippingForOrder);
 
       const orderPayload: Record<string, unknown> = {
         order_number: newOrderNumber,
         user_id: userId,
         customer_email: contactEmail,
-        customer_first_name: shippingAddress.firstName,
-        customer_last_name: shippingAddress.lastName,
-        customer_phone: shippingAddress.phone,
-        shipping_address: `${shippingAddress.address}${shippingAddress.apartment ? ', ' + shippingAddress.apartment : ''}`,
-        shipping_suburb: shippingAddress.suburb,
-        shipping_state: shippingAddress.state,
-        shipping_postcode: shippingAddress.postcode,
+        customer_first_name: shippingForOrder.firstName,
+        customer_last_name: shippingForOrder.lastName,
+        customer_phone: shippingForOrder.phone,
+        shipping_address: `${shippingForOrder.address}${shippingForOrder.apartment ? ', ' + shippingForOrder.apartment : ''}`,
+        shipping_suburb: shippingForOrder.suburb,
+        shipping_state: shippingForOrder.state,
+        shipping_postcode: shippingForOrder.postcode,
         shipping_method: selectedShipping,
         subtotal: paidItemsTotal,
         shipping_cost: shippingCost,
@@ -546,7 +704,7 @@ export default function Checkout() {
             total: finalOrderTotal,
             items: itemsForEmail,
             shipping_address: shippingForEmail,
-            customer_phone: shippingAddress.phone.trim() || undefined,
+            customer_phone: shippingForOrder.phone.trim() || undefined,
           },
           bankDetails,
         );
@@ -572,13 +730,12 @@ export default function Checkout() {
 
       // Save shipping to profile for next checkout (logged-in only, best-effort).
       if (!error && userId) {
-        void saveCheckoutProfile(userId, shippingAddress).catch((saveErr) => {
+        void saveCheckoutProfile(userId, shippingForOrder).catch((saveErr) => {
           console.warn('Could not save shipping to profile:', saveErr);
         });
       }
 
       clearCart();
-      trackGoogleAdsPurchase(finalOrderTotal, newOrderNumber);
       setOrderComplete(true);
     } catch (err) {
       console.error('Order submission error:', err);
@@ -856,628 +1013,872 @@ export default function Checkout() {
     );
   }
 
-  // CHECKOUT FORM
+  // CHECKOUT FORM — full-page 50/50 split (Peplab dark summary | white form)
+  const fieldClass =
+    'block w-full min-w-0 box-border h-12 px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-900 text-[15px] placeholder:text-slate-400 focus:border-[#2ED1B4] focus:ring-1 focus:ring-[#2ED1B4] outline-none transition-colors';
+  const labelClass = 'block text-[13px] font-semibold text-slate-800 mb-2';
+  const sectionTitleClass = 'text-xs font-bold uppercase tracking-[0.14em] text-slate-900 mb-5';
+  const fieldWrapClass = 'w-full min-w-0';
+  const halfFieldWrapClass = 'min-w-0 w-full';
+
   return (
     <>
       <SEO title="Checkout | PEPLAB" noIndex />
-    <div className="min-h-screen bg-[#070A12]">
-      {/* Header */}
-      <nav className="px-4 py-4 border-b border-white/10 flex items-center justify-between">
-        <a href="/" className="text-xl font-bold tracking-wider gradient-text">PEPLAB</a>
-        <a href="/" className="text-sm text-gray-400 flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </a>
-      </nav>
-
-      <main className="px-4 py-3 max-w-lg mx-auto">
-        {/* Title */}
-        <h1 className="text-lg font-bold text-white mb-3">Complete Your Order</h1>
-
-        {submitError && (
-          <div className="mb-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-            <p className="text-xs text-red-400">{submitError}</p>
-          </div>
-        )}
-
-        {items.some((i) => !i.isFree && i.isPreorder) && (
-          <div className="mb-3 p-3 rounded-xl bg-rose-950/40 border border-red-500/35">
-            <p className="text-[11px] text-rose-100/95 leading-relaxed">
-              <span className="font-semibold text-rose-200">Preorder checkout:</span> your payment reference will be a <span className="font-mono font-bold">PRE-</span> number. Pricing matches the storefront — no preorder markup.
-            </p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Order Summary */}
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-            <h2 className="text-xs font-semibold text-white mb-2 flex items-center gap-2">
-              <ShoppingBag className="w-3.5 h-3.5 text-[#2ED1B4]" />
-              Order ({items.length} items)
-            </h2>
-            <div className="space-y-1.5 mb-2">
-              {items.map((item) => (
-                <div key={`${item.productId}-${item.dosage}-${item.isPreorder ? 'p' : ''}`} className="flex items-center gap-2">
-                  <img
-                    src={getOptimizedProductImageUrl(item.image, { width: 96 })}
-                    alt={item.name}
-                    className="w-10 h-10 object-contain rounded bg-black/30"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <p className="text-xs text-white truncate">{item.name}</p>
-                      {!item.isFree && item.isPreorder && (
-                        <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#7F1D1D] text-[#FECACA] border border-red-500/40">
-                          Preorder
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-gray-400 flex items-center gap-1.5 flex-wrap">
-                      <span>
-                        {item.dosage} x{item.quantity}
-                      </span>
-                      {!item.isFree && !productExcludesVolumeBundle(item.productId, item.name) && (
-                        <span className="text-[9px] font-bold text-[#22C55E] px-1 py-0.5 rounded bg-[#22C55E]/15">
-                          {getMarketingBundleOffLabel(item.quantity)}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <span className="text-xs text-[#2ED1B4]">{item.isFree ? 'FREE' : `$${(item.price * item.quantity).toFixed(2)}`}</span>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-white/10 pt-2 space-y-0.5">
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-400">Subtotal</span>
-                <span className="text-white">${paidItemsTotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-gray-400">Shipping</span>
-                <span className={paidItemsTotal >= 250 ? 'text-green-400' : 'text-white'}>
-                  {paidItemsTotal >= 250 ? 'FREE' : `$${shippingCost.toFixed(2)}`}
+      <div className="min-h-svh w-full md:grid md:grid-cols-2">
+        {/* ── Left half: order summary (Peplab dark + Aussie spacing) ── */}
+        <aside className="bg-[#070A12] border-b md:border-b-0 md:h-svh md:overflow-y-auto">
+          <div className="w-full max-w-[22rem] mx-auto px-6 py-12 md:py-16">
+            {/* Centered brand — same gradient wordmark as site nav */}
+            <div className="text-center mb-14 md:mb-16 relative">
+              <a
+                href={HOME_PATH}
+                className="inline-flex flex-col items-center hover:opacity-90"
+                aria-label="PEPLAB Australia home"
+              >
+                <span className="text-3xl md:text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
+                  PEPLAB
                 </span>
+                <span className="mt-1.5 font-mono uppercase text-[10px] md:text-xs tracking-[0.45em] text-[#8B5CF6]">
+                  PEPTIDES AUSTRALIA
+                </span>
+              </a>
+              <a
+                href={SHOP_PATH}
+                className="md:hidden absolute right-0 top-1 text-xs text-white/70 flex items-center gap-1 hover:text-white"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Shop
+              </a>
+            </div>
+
+            {/* Mobile accordion toggle */}
+            <button
+              type="button"
+              className="md:hidden w-full flex items-center justify-between gap-3 mb-8 p-3 rounded-xl bg-white/5 border border-white/10"
+              onClick={() => setMobileSummaryOpen((o) => !o)}
+              aria-expanded={mobileSummaryOpen}
+            >
+              <span className="text-sm text-white font-medium flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-[#2ED1B4]" />
+                Order summary ({items.length})
+              </span>
+              <span className="flex items-center gap-2 text-white font-semibold tabular-nums">
+                ${finalTotal.toFixed(2)}
+                {mobileSummaryOpen ? <ChevronUp className="w-4 h-4 text-white/60" /> : <ChevronDown className="w-4 h-4 text-white/60" />}
+              </span>
+            </button>
+
+            <div className={`${mobileSummaryOpen ? 'block' : 'hidden'} md:block`}>
+              {/* Line items */}
+              <div className="space-y-8 mb-6">
+                {items.map((item) => {
+                  const lineKey = `${item.productId}-${item.dosage}-${item.isPreorder ? 'p' : ''}`;
+                  return (
+                    <div key={lineKey} className="flex items-start gap-4">
+                      <div className="shrink-0 w-14 h-14 rounded-md overflow-hidden bg-black/25 border border-white/10 flex items-center justify-center">
+                        <img
+                          src={getOptimizedProductImageUrl(item.image, { width: 112 })}
+                          alt={item.name}
+                          className="w-full h-full object-contain p-0.5"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[15px] text-white font-medium leading-snug">
+                              {item.name}
+                              {item.dosage ? (
+                                <span className="text-white/70 font-normal"> {item.dosage}</span>
+                              ) : null}
+                            </p>
+                            {!item.isFree && item.isPreorder && (
+                              <span className="inline-block mt-1.5 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#7F1D1D] text-[#FECACA] border border-red-500/40">
+                                Preorder
+                              </span>
+                            )}
+                            {!item.isFree && !productExcludesVolumeBundle(item.productId, item.name) && (
+                              <span className="inline-block mt-1.5 ml-1 text-[9px] font-bold text-[#86EFAC] px-1 py-0.5 rounded bg-[#22C55E]/20">
+                                {getMarketingBundleOffLabel(item.quantity)}
+                              </span>
+                            )}
+                            {!item.isFree ? (
+                              <div className="mt-3.5 inline-flex items-center h-8 rounded-full bg-[#2F3A4D] border border-white/10">
+                                <button
+                                  type="button"
+                                  aria-label="Decrease quantity"
+                                  className="px-2.5 h-full text-white/75 hover:text-white disabled:opacity-35"
+                                  disabled={item.quantity <= 1}
+                                  onClick={() => updateQuantity(item.productId, item.dosage, item.quantity - 1, item.isPreorder)}
+                                >
+                                  <Minus className="w-3.5 h-3.5" />
+                                </button>
+                                <span className="w-6 text-center text-sm text-white tabular-nums">{item.quantity}</span>
+                                <button
+                                  type="button"
+                                  aria-label="Increase quantity"
+                                  className="px-2.5 h-full text-white/75 hover:text-white"
+                                  onClick={() => updateQuantity(item.productId, item.dosage, item.quantity + 1, item.isPreorder)}
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <p className="mt-3 text-xs text-white/50">Free gift</p>
+                            )}
+                          </div>
+                          <span className="text-[15px] text-white font-medium tabular-nums shrink-0 pt-0.5">
+                            {item.isFree ? 'FREE' : `$${(item.price * item.quantity).toFixed(2)}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              {appliedPromotion?.valid && !referralBenefitsActive && (
-                <div className="flex justify-between text-[10px] text-amber-200/90 gap-2">
-                  <span className="flex items-center gap-1">
-                    <Tag className="w-3 h-3 shrink-0 text-amber-400" />
-                    Referral code — ${REFERRAL_MIN_ORDER_SUBTOTAL_USD}+ subtotal for discount and referrer points
-                  </span>
-                  <span className="shrink-0 text-amber-300/90">Need ${referralSubtotalShortfall.toFixed(2)}</span>
+
+              <a
+                href={SHOP_PATH}
+                className="inline-flex items-center gap-1 text-[15px] text-white/90 hover:text-white mb-8"
+              >
+                + Add more items
+              </a>
+
+              {/* Totals — flow under items (no mt-auto / no huge middle gap) */}
+              <div className="pt-2">
+                {remainingForFreeShipping > 0 && (
+                  <p className="text-xs text-white/55 mb-5">
+                    Add ${remainingForFreeShipping.toFixed(2)} more for free shipping
+                  </p>
+                )}
+                <div className="border-t border-white/25 pt-5 space-y-3.5">
+                  <div className="flex justify-between text-[15px]">
+                    <span className="text-white/80">Subtotal</span>
+                    <span className="text-white tabular-nums">${paidItemsTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[15px]">
+                    <span className="text-white/80">Shipping</span>
+                    <span className="text-white tabular-nums">
+                      {paidItemsTotal >= FREE_SHIPPING_THRESHOLD ? 'Free' : `$${shippingCost.toFixed(2)}`}
+                    </span>
+                  </div>
+                  {affiliateDiscountAmount > 0 && (
+                    <div className="flex justify-between text-[15px]">
+                      <span className="text-[#86EFAC]">Code {appliedCode}</span>
+                      <span className="text-[#86EFAC] tabular-nums">−${affiliateDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {pointsDiscount > 0 && (
+                    <div className="flex justify-between text-[15px]">
+                      <span className="text-[#C4B5FD]">Points</span>
+                      <span className="text-[#C4B5FD] tabular-nums">−${pointsDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              {affiliateDiscountAmount > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="flex items-center gap-1 text-[#22C55E]">
-                    <Tag className="w-3 h-3" />
-                    Code {appliedCode} ({affiliateDiscountPercent}%)
-                  </span>
-                  <span className="text-[#22C55E] font-medium">−${affiliateDiscountAmount.toFixed(2)}</span>
+                <div className="border-t border-white/25 mt-5 pt-6">
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-white/70 mb-2.5">Total due</p>
+                  <p className="text-[2.35rem] font-bold text-white tabular-nums tracking-tight leading-none">
+                    A${finalTotal.toFixed(2)}
+                  </p>
+                  {isLoggedIn && estimatedPurchaseRewardPts > 0 && (
+                    <p className="text-xs text-white/55 mt-3.5">
+                      After payment: <span className="text-[#86EFAC]">{estimatedPurchaseRewardPts} pts</span>
+                    </p>
+                  )}
                 </div>
-              )}
-              {pointsDiscount > 0 && (
-                <div className="flex justify-between text-xs">
-                  <span className="flex items-center gap-1 text-[#8B5CF6]">
-                    <Gift className="w-3 h-3" />
-                    Points ({redeemPointsAmount} pts)
-                  </span>
-                  <span className="text-[#8B5CF6] font-medium">−${pointsDiscount.toFixed(2)}</span>
-                </div>
-              )}
-              {pointsRefundEstimate > 0 && (
-                <div className="flex justify-between text-[10px] text-emerald-300/90 -mt-1">
-                  <span className="flex items-center gap-1">
-                    <Gift className="w-3 h-3 shrink-0 text-emerald-400" />
-                    Unused ${unusedTierValue.toFixed(2)} refunded as points
-                  </span>
-                  <span className="shrink-0 font-medium">+{pointsRefundEstimate} pts</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm font-bold pt-1.5 border-t border-white/10">
-                <span className="text-white">Total</span>
-                <span className="text-[#2ED1B4]">${finalTotal.toFixed(2)}</span>
               </div>
-              {isLoggedIn && estimatedPurchaseRewardPts > 0 && (
-                <p className="text-[10px] text-gray-400 mt-2 leading-snug">
-                  Purchase rewards after payment:{' '}
-                  <span className="text-[#22C55E] font-medium">{estimatedPurchaseRewardPts} pts</span>
-                  {referralPromoDiscountActive && (
+            </div>
+          </div>
+        </aside>
+
+        {/* ── Right half: white form ── */}
+        <div className="bg-white md:h-svh md:overflow-y-auto">
+          <div className="w-full px-6 py-6 sm:px-8 md:px-12 md:py-10">
+            <div className="hidden md:flex w-full justify-end mb-8">
+              <a href={SHOP_PATH} className="text-sm text-slate-500 flex items-center gap-1.5 hover:text-slate-800">
+                <ArrowLeft className="w-4 h-4" />
+                Back to shop
+              </a>
+            </div>
+
+            {submitError && (
+              <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                <p className="text-xs text-red-600">{submitError}</p>
+              </div>
+            )}
+
+            {items.some((i) => !i.isFree && i.isPreorder) && (
+              <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200">
+                <p className="text-[12px] text-rose-800 leading-relaxed">
+                  <span className="font-semibold">Preorder checkout:</span> your payment reference will be a{' '}
+                  <span className="font-mono font-bold">PRE-</span> number. Pricing matches the storefront — no preorder markup.
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="w-full space-y-10">
+              <section className="w-full space-y-5">
+                <h2 className={sectionTitleClass}>Contact</h2>
+                <div className={fieldWrapClass}>
+                  <label className={labelClass}>
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    required
+                    className={fieldClass}
+                    placeholder="email@example.com"
+                  />
+                </div>
+                <div className={fieldWrapClass}>
+                  <label className={labelClass}>
+                    Phone <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={shippingAddress.phone}
+                    onChange={(e) => updateShipping({ phone: e.target.value })}
+                    required
+                    autoComplete="tel"
+                    className={fieldClass}
+                    placeholder="04XX XXX XXX"
+                  />
+                </div>
+              </section>
+
+              <section className="w-full">
+                <h2 className={sectionTitleClass}>Delivery details</h2>
+                {autofillNotice && (
+                  <div className="mb-5 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-teal-50 border border-teal-200">
+                    <CheckCircle2 className="w-4 h-4 text-[#1FA896] shrink-0 mt-0.5" />
+                    <p className="text-[12px] text-slate-600 leading-snug flex-1">{autofillNotice}</p>
+                    <button
+                      type="button"
+                      onClick={() => setAutofillNotice(null)}
+                      className="text-slate-400 hover:text-slate-700 shrink-0"
+                      aria-label="Dismiss"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+                {!isLoggedIn && (
+                  <p className="mb-5 text-[12px] text-slate-500 leading-snug">
+                    <a href="/login" className="text-[#1FA896] hover:underline font-medium">Sign in</a>
+                    {' '}to autofill your saved address next time.
+                  </p>
+                )}
+                <div className="w-full space-y-5">
+                  <div className="w-full grid grid-cols-2 gap-4">
+                    <div className={halfFieldWrapClass}>
+                      <label className={labelClass}>
+                        First name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingAddress.firstName}
+                        onChange={(e) => updateShipping({ firstName: e.target.value })}
+                        required
+                        autoComplete="given-name"
+                        className={fieldClass}
+                        placeholder="Jane"
+                      />
+                    </div>
+                    <div className={halfFieldWrapClass}>
+                      <label className={labelClass}>
+                        Last name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingAddress.lastName}
+                        onChange={(e) => updateShipping({ lastName: e.target.value })}
+                        required
+                        autoComplete="family-name"
+                        className={fieldClass}
+                        placeholder="Smith"
+                      />
+                    </div>
+                  </div>
+
+                  {deliveryMode === 'collection' ? (
                     <>
-                      {' '}
-                      (includes −{DISCOUNT_PROMO_PURCHASE_POINTS_DEDUCTION} pts for referral code discount)
+                      <div className={fieldWrapClass}>
+                        <label className={labelClass}>
+                          Australia Post collection point <span className="text-red-500">*</span>
+                        </label>
+                        <div className="w-full rounded-xl border border-slate-200 p-4 space-y-4">
+                          <div className="w-full grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => updateCollectionType('parcel_locker')}
+                              className={`w-full py-3 px-3 rounded-xl border text-sm font-medium transition-colors ${
+                                collectionType === 'parcel_locker'
+                                  ? 'border-[#2ED1B4] bg-[#2ED1B4]/10 text-[#0F766E]'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                              }`}
+                            >
+                              Parcel Locker
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateCollectionType('parcel_collect')}
+                              className={`w-full py-3 px-3 rounded-xl border text-sm font-medium transition-colors ${
+                                collectionType === 'parcel_collect'
+                                  ? 'border-[#2ED1B4] bg-[#2ED1B4]/10 text-[#0F766E]'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                              }`}
+                            >
+                              Parcel Collect
+                            </button>
+                          </div>
+                          <div className={fieldWrapClass}>
+                            <label className={labelClass}>
+                              {collectionType === 'parcel_collect' ? 'Parcel Collect number' : 'Parcel Locker number'}{' '}
+                              <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={collectionNumber}
+                              onChange={(e) => updateCollectionNumber(e.target.value)}
+                              required
+                              maxLength={24}
+                              className={fieldClass}
+                              placeholder="e.g. 10"
+                            />
+                            <p className="mt-1.5 text-[11px] text-slate-500 leading-snug">
+                              Copy it exactly as it appears in your MyPost account. Australia Post shortened these
+                              numbers on 1 September 2026 — both the new short number and an older 10-digit one work
+                              here.
+                            </p>
+                          </div>
+                          <div className={fieldWrapClass}>
+                            <label className={labelClass}>Locker street address (optional)</label>
+                            <input
+                              type="text"
+                              value={shippingAddress.apartment}
+                              onChange={(e) => updateShipping({ apartment: e.target.value })}
+                              maxLength={40}
+                              className={fieldClass}
+                              placeholder="e.g. 245 Cowpasture Road"
+                            />
+                            <p className="mt-1.5 text-[11px] text-slate-500 leading-snug">
+                              Leave blank unless MyPost shows a street address for your locker.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={fieldWrapClass}>
+                        <button
+                          type="button"
+                          onClick={switchToSimpleMode}
+                          className="text-[13px] text-[#1FA896] hover:underline font-medium"
+                        >
+                          Use a street address instead
+                        </button>
+                      </div>
+                      <div className="w-full grid grid-cols-2 gap-4">
+                        <div className={halfFieldWrapClass}>
+                          <label className={labelClass}>
+                            Suburb <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.suburb}
+                            onChange={(e) => updateShipping({ suburb: e.target.value })}
+                            onBlur={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
+                            required
+                            autoComplete="address-level2"
+                            className={fieldClass}
+                            placeholder="Suburb"
+                          />
+                        </div>
+                        <div className={halfFieldWrapClass}>
+                          <label className={labelClass}>
+                            State <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={shippingAddress.state}
+                            onChange={(e) => {
+                              updateShipping({ state: e.target.value });
+                              void verifyLocality({ ...shippingAddress, state: e.target.value }, { quietIfIncomplete: true });
+                            }}
+                            required
+                            autoComplete="address-level1"
+                            className={`${fieldClass} appearance-none`}
+                          >
+                            <option value="">Select state</option>
+                            <option value="NSW">NSW</option>
+                            <option value="VIC">VIC</option>
+                            <option value="QLD">QLD</option>
+                            <option value="WA">WA</option>
+                            <option value="SA">SA</option>
+                            <option value="TAS">TAS</option>
+                            <option value="ACT">ACT</option>
+                            <option value="NT">NT</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="w-full grid grid-cols-2 gap-4">
+                        <div className={halfFieldWrapClass}>
+                          <label className={labelClass}>
+                            Postcode <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.postcode}
+                            onChange={(e) => updateShipping({ postcode: e.target.value })}
+                            onBlur={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
+                            required
+                            autoComplete="postal-code"
+                            inputMode="numeric"
+                            maxLength={4}
+                            className={fieldClass}
+                            placeholder="XXXX"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : deliveryMode === 'manual' ? (
+                    <>
+                      <div className={fieldWrapClass}>
+                        <label className={labelClass}>
+                          Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingAddress.address}
+                          onChange={(e) => updateShipping({ address: e.target.value })}
+                          required
+                          autoComplete="address-line1"
+                          maxLength={40}
+                          className={fieldClass}
+                          placeholder="Street address, PO Box, or Parcel Locker"
+                        />
+                      </div>
+                      <div className={`${fieldWrapClass} space-y-1.5`}>
+                        <button
+                          type="button"
+                          onClick={switchToSimpleMode}
+                          className="block text-[13px] text-[#1FA896] hover:underline font-medium"
+                        >
+                          Use address search instead
+                        </button>
+                        <p className="text-[12px] text-slate-500">Can&apos;t find your address, or shipping to a PO Box?</p>
+                        <button
+                          type="button"
+                          onClick={switchToCollectionMode}
+                          className="block text-[13px] text-[#1FA896] hover:underline font-medium"
+                        >
+                          Deliver to a Parcel Locker or Parcel Collect
+                        </button>
+                      </div>
+                      <div className={fieldWrapClass}>
+                        <label className={labelClass}>Apartment / unit (optional)</label>
+                        <input
+                          type="text"
+                          value={shippingAddress.apartment}
+                          onChange={(e) => updateShipping({ apartment: e.target.value })}
+                          autoComplete="address-line2"
+                          maxLength={40}
+                          className={fieldClass}
+                          placeholder="Apt, suite, unit..."
+                        />
+                      </div>
+                      <div className="w-full grid grid-cols-2 gap-4">
+                        <div className={halfFieldWrapClass}>
+                          <label className={labelClass}>
+                            Suburb <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.suburb}
+                            onChange={(e) => updateShipping({ suburb: e.target.value })}
+                            onBlur={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
+                            required
+                            autoComplete="address-level2"
+                            className={fieldClass}
+                            placeholder="Suburb"
+                          />
+                        </div>
+                        <div className={halfFieldWrapClass}>
+                          <label className={labelClass}>
+                            State <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={shippingAddress.state}
+                            onChange={(e) => {
+                              updateShipping({ state: e.target.value });
+                              void verifyLocality({ ...shippingAddress, state: e.target.value }, { quietIfIncomplete: true });
+                            }}
+                            required
+                            autoComplete="address-level1"
+                            className={`${fieldClass} appearance-none`}
+                          >
+                            <option value="">Select state</option>
+                            <option value="NSW">NSW</option>
+                            <option value="VIC">VIC</option>
+                            <option value="QLD">QLD</option>
+                            <option value="WA">WA</option>
+                            <option value="SA">SA</option>
+                            <option value="TAS">TAS</option>
+                            <option value="ACT">ACT</option>
+                            <option value="NT">NT</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="w-full grid grid-cols-2 gap-4">
+                        <div className={halfFieldWrapClass}>
+                          <label className={labelClass}>
+                            Postcode <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.postcode}
+                            onChange={(e) => updateShipping({ postcode: e.target.value })}
+                            onBlur={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
+                            required
+                            autoComplete="postal-code"
+                            inputMode="numeric"
+                            maxLength={4}
+                            className={fieldClass}
+                            placeholder="XXXX"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className={fieldWrapClass}>
+                        <label className={labelClass}>
+                          Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingAddress.address}
+                          onChange={(e) => updateShipping({ address: e.target.value })}
+                          required
+                          autoComplete="address-line1"
+                          maxLength={40}
+                          className={fieldClass}
+                          placeholder="Start typing your address..."
+                        />
+                        <p className="mt-1.5 text-[12px] text-slate-500 leading-snug">
+                          Enter your street address, then use manual entry so we capture suburb, state &amp; postcode.
+                        </p>
+                      </div>
+                      <div className={`${fieldWrapClass} space-y-1.5`}>
+                        <button
+                          type="button"
+                          onClick={switchToManualMode}
+                          className="block text-[13px] text-[#1FA896] hover:underline font-medium"
+                        >
+                          Enter address manually
+                        </button>
+                        <p className="text-[12px] text-slate-500">Can&apos;t find your address, or shipping to a PO Box?</p>
+                        <button
+                          type="button"
+                          onClick={switchToCollectionMode}
+                          className="block text-[13px] text-[#1FA896] hover:underline font-medium"
+                        >
+                          Deliver to a Parcel Locker or Parcel Collect
+                        </button>
+                      </div>
                     </>
                   )}
-                </p>
-              )}
-            </div>
-          </div>
 
-          {/* Contact */}
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-            <h2 className="text-xs font-semibold text-white mb-2">Contact</h2>
-            <input 
-              type="email" 
-              value={contactEmail} 
-              onChange={(e) => setContactEmail(e.target.value)} 
-              required
-              className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-              placeholder="Email"
-            />
-          </div>
-
-          {/* Delivery */}
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-            <h2 className="text-xs font-semibold text-white mb-2 flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 text-[#8B5CF6]" />
-              Delivery
-            </h2>
-            {autofillNotice && (
-              <div className="mb-2 flex items-start gap-2 px-2.5 py-2 rounded-lg bg-[rgba(46,209,180,0.1)] border border-[rgba(46,209,180,0.25)]">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#2ED1B4] shrink-0 mt-0.5" />
-                <p className="text-[11px] text-[#A9B3C7] leading-snug flex-1">{autofillNotice}</p>
-                <button
-                  type="button"
-                  onClick={() => setAutofillNotice(null)}
-                  className="text-[#6B7280] hover:text-[#F4F6FA] shrink-0"
-                  aria-label="Dismiss"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-            {!isLoggedIn && (
-              <p className="mb-2 text-[11px] text-[#6B7280] leading-snug">
-                <a href="/login" className="text-[#2ED1B4] hover:underline">Sign in</a>
-                {' '}to autofill your saved address next time.
-              </p>
-            )}
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <input 
-                  type="text" 
-                  value={shippingAddress.firstName} 
-                  onChange={(e) => updateShipping({ firstName: e.target.value })} 
-                  required
-                  autoComplete="given-name"
-                  className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                  placeholder="First name"
-                />
-                <input 
-                  type="text" 
-                  value={shippingAddress.lastName} 
-                  onChange={(e) => updateShipping({ lastName: e.target.value })} 
-                  required
-                  autoComplete="family-name"
-                  className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                  placeholder="Last name"
-                />
-              </div>
-              <input 
-                type="text" 
-                value={shippingAddress.address} 
-                onChange={(e) => updateShipping({ address: e.target.value })} 
-                required
-                autoComplete="address-line1"
-                maxLength={40}
-                className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                placeholder="Street, PO Box or Parcel Locker"
-              />
-              <input
-                type="text"
-                value={shippingAddress.apartment}
-                onChange={(e) => updateShipping({ apartment: e.target.value })}
-                autoComplete="address-line2"
-                maxLength={40}
-                className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                placeholder="Apartment / unit (optional)"
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <input 
-                  type="text" 
-                  value={shippingAddress.suburb} 
-                  onChange={(e) => updateShipping({ suburb: e.target.value })} 
-                  onBlur={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
-                  required
-                  autoComplete="address-level2"
-                  className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                  placeholder="Suburb"
-                />
-                <input 
-                  type="text" 
-                  value={shippingAddress.postcode} 
-                  onChange={(e) => updateShipping({ postcode: e.target.value })} 
-                  onBlur={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
-                  required
-                  autoComplete="postal-code"
-                  inputMode="numeric"
-                  maxLength={4}
-                  className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                  placeholder="Postcode"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <select 
-                  value={shippingAddress.state} 
-                  onChange={(e) => {
-                    updateShipping({ state: e.target.value });
-                    void verifyLocality({ ...shippingAddress, state: e.target.value }, { quietIfIncomplete: true });
-                  }} 
-                  required
-                  autoComplete="address-level1"
-                  className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                >
-                  <option value="">State</option>
-                  <option value="NSW">NSW</option>
-                  <option value="VIC">VIC</option>
-                  <option value="QLD">QLD</option>
-                  <option value="WA">WA</option>
-                  <option value="SA">SA</option>
-                  <option value="TAS">TAS</option>
-                  <option value="ACT">ACT</option>
-                  <option value="NT">NT</option>
-                </select>
-                <input 
-                  type="tel" 
-                  value={shippingAddress.phone} 
-                  onChange={(e) => updateShipping({ phone: e.target.value })} 
-                  required
-                  autoComplete="tel"
-                  className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
-                  placeholder="Phone"
-                />
-              </div>
-              {isVerifyingAddress && (
-                <p className="text-[11px] text-[#A9B3C7] flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Checking address with Australia Post…
-                </p>
-              )}
-              {localityOk && !localityError && (
-                <p className="text-[11px] text-[#22C55E] flex items-center gap-1.5">
-                  <Check className="w-3 h-3" />
-                  Address looks good for Australia Post
-                </p>
-              )}
-              {localityError && (
-                <p className="text-[11px] text-red-400 leading-snug">{localityError}</p>
-              )}
-              {localitySuggestions.length > 0 && !localityOk && (
-                <div className="flex flex-wrap gap-1">
-                  {localitySuggestions.map((suburb) => (
-                    <button
-                      key={suburb}
-                      type="button"
-                      onClick={() => {
-                        const next = { ...shippingAddress, suburb };
-                        updateShipping({ suburb });
-                        void verifyLocality(next);
-                      }}
-                      className="px-2 py-0.5 rounded-md border border-white/15 text-[10px] text-[#F4F6FA] hover:border-[#2ED1B4]"
-                    >
-                      {suburb}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Shipping */}
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-            <h2 className="text-xs font-semibold text-white mb-2 flex items-center gap-2">
-              <Truck className="w-3.5 h-3.5 text-blue-400" />
-              Shipping
-            </h2>
-            <div className="space-y-1.5">
-              {shippingMethods.map((method) => (
-                <label 
-                  key={method.id} 
-                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer ${
-                    selectedShipping === method.id ? 'border-[#2ED1B4] bg-[#2ED1B4]/5' : 'border-white/10'
-                  }`}
-                >
-                  <input 
-                    type="radio" 
-                    name="shipping" 
-                    value={method.id} 
-                    checked={selectedShipping === method.id} 
-                    onChange={() => setSelectedShipping(method.id)} 
-                    className="w-3.5 h-3.5 accent-[#2ED1B4]"
-                  />
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-white">{method.name}</span>
-                      <span className="text-xs text-[#2ED1B4]">
-                        {paidItemsTotal >= 250 ? 'FREE' : `$${method.price}`}
-                      </span>
+                  {isVerifyingAddress && (
+                    <p className="text-[12px] text-slate-500 flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Checking address with Australia Post…
+                    </p>
+                  )}
+                  {localityOk && !localityError && (
+                    <p className="text-[12px] text-emerald-600 flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5" />
+                      Address looks good for Australia Post
+                    </p>
+                  )}
+                  {localityError && (
+                    <p className="text-[12px] text-red-600 leading-snug">{localityError}</p>
+                  )}
+                  {localitySuggestions.length > 0 && !localityOk && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {localitySuggestions.map((suburb) => (
+                        <button
+                          key={suburb}
+                          type="button"
+                          onClick={() => {
+                            const next = { ...shippingAddress, suburb };
+                            updateShipping({ suburb });
+                            void verifyLocality(next);
+                          }}
+                          className="px-2.5 py-1 rounded-md border border-slate-200 text-[11px] text-slate-700 hover:border-[#2ED1B4]"
+                        >
+                          {suburb}
+                        </button>
+                      ))}
                     </div>
-                    <p className="text-[10px] text-gray-400">{method.estimatedDays}</p>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
+                  )}
+                </div>
+              </section>
 
-          {/* ── AFFILIATE / REFERRAL CODE ── */}
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-            <h2 className="text-xs font-semibold text-white mb-2 flex items-center gap-2">
-              <Tag className="w-3.5 h-3.5 text-[#22C55E]" />
-              Referral Code
-            </h2>
-            {appliedCode && appliedPromotion?.valid ? (
-              referralBenefitsActive ? (
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-green-500/10 border border-green-500/25">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-green-400" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-green-400">
-                        {appliedCode} — {affiliateDiscountPercent}% off
-                      </p>
-                      <p className="text-[10px] text-green-500/70">
-                        Saving ${affiliateDiscountAmount.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearCode}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/15 border border-red-500/20 text-[10px] text-red-400 hover:bg-red-500/25 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
-                      <Tag className="w-3 h-3 text-amber-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-amber-200">
-                        {appliedCode} applied
-                      </p>
-                      <p className="text-[10px] text-amber-200/80 leading-snug">
-                        Add <span className="font-semibold text-amber-300">${referralSubtotalShortfall.toFixed(2)}</span> to
-                        subtotal for {affiliateDiscountPercent}% off; referrer earns points at ${REFERRAL_MIN_ORDER_SUBTOTAL_USD}+ orders.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearCode}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/15 border border-red-500/20 text-[10px] text-red-400 hover:bg-red-500/25 transition-colors shrink-0"
-                  >
-                    <X className="w-3 h-3" />
-                    Remove
-                  </button>
-                </div>
-              )
-            ) : (
-              <>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={affiliateInput}
-                    onChange={(e) => { setAffiliateInput(e.target.value.toUpperCase()); setAffiliateError(null); }}
-                    placeholder="Enter code (e.g. MIKE10)"
-                    className="flex-1 px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#22C55E] outline-none uppercase"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyAffiliate}
-                    disabled={affiliateLoading || !affiliateInput.trim()}
-                    className="px-4 py-2 rounded-lg bg-[#22C55E] text-[#070A12] text-xs font-semibold hover:bg-[#16A34A] disabled:opacity-50 transition-colors"
-                  >
-                    {affiliateLoading ? '...' : 'Apply'}
-                  </button>
-                </div>
-                {affiliateError && (
-                  <p className="mt-1.5 text-[10px] text-red-400">{affiliateError}</p>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* ── REWARDS REDEMPTION ── */}
-          <div className="rounded-xl border overflow-hidden"
-            style={{ borderColor: selectedTier ? 'rgba(139,92,246,0.4)' : 'rgba(139,92,246,0.2)', background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(46,209,180,0.06) 100%)' }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#8B5CF6]/20 flex items-center justify-center">
-                  <Gift className="w-3.5 h-3.5 text-[#8B5CF6]" />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-white">Redeem Points</p>
-                  <p className="text-[10px] text-gray-400">Use your rewards for a discount</p>
-                </div>
-              </div>
-              {/* Balance badge */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#8B5CF6]/15 border border-[#8B5CF6]/25">
-                <Award className="w-3 h-3 text-[#8B5CF6]" />
-                <span className="text-xs font-bold text-[#8B5CF6]">
-                  {isLoggedIn ? `${balance} pts` : 'Login to use'}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3">
-              {/* Not logged in */}
-              {!isLoggedIn ? (
-                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-white/5">
-                  <Lock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <p className="text-[11px] text-gray-400">
-                    <a href="/login" className="text-[#8B5CF6] underline font-medium">Sign in</a> to use your reward points
-                  </p>
-                </div>
-              ) : balance === 0 ? (
-                /* No points */
-                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-white/5">
-                  <Award className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-                  <p className="text-[11px] text-gray-400">You don't have any points yet. Earn points by placing orders!</p>
-                </div>
-              ) : (
-                /* Can redeem — show tier cards */
-                <>
-                  {selectedTier ? (
-                    /* Applied state */
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-green-500/10 border border-green-500/25 mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                          <Check className="w-3.5 h-3.5 text-green-400" />
+              <section className="w-full">
+                <h2 className={sectionTitleClass}>Shipping method</h2>
+                <div className="space-y-2.5">
+                  {shippingMethods.map((method) => {
+                    const selected = selectedShipping === method.id;
+                    const Icon = method.id === 'express' ? Zap : Truck;
+                    return (
+                      <label
+                        key={method.id}
+                        className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                          selected
+                            ? 'border-[#2ED1B4] bg-[#2ED1B4]/10'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipping"
+                          value={method.id}
+                          checked={selected}
+                          onChange={() => setSelectedShipping(method.id)}
+                          className="w-4 h-4 accent-[#2ED1B4]"
+                        />
+                        <Icon className={`w-4 h-4 shrink-0 ${selected ? 'text-[#1FA896]' : 'text-slate-400'}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between gap-2">
+                            <span className="text-sm text-slate-900 font-medium">{method.name}</span>
+                            <span className="text-sm text-slate-900 font-semibold tabular-nums">
+                              {paidItemsTotal >= FREE_SHIPPING_THRESHOLD ? 'FREE' : `$${method.price.toFixed(2)}`}
+                            </span>
+                          </div>
+                          <p className="text-[12px] text-slate-500 mt-0.5">{method.estimatedDays}</p>
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-green-400">{selectedTier.label} Applied!</p>
-                          <p className="text-[10px] text-green-500/70">
-                            −{selectedTier.points} pts → −${pointsDiscount.toFixed(2)} off your order
-                            {pointsRefundEstimate > 0 && (
-                              <> · <span className="text-emerald-300">+{pointsRefundEstimate} pts refunded</span></>
-                            )}
-                          </p>
-                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section>
+                <h2 className={sectionTitleClass}>Coupon code</h2>
+                {appliedCode && appliedPromotion?.valid ? (
+                  referralBenefitsActive ? (
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                      <div>
+                        <p className="text-sm font-semibold text-emerald-700">
+                          {appliedCode} — {affiliateDiscountPercent}% off
+                        </p>
+                        <p className="text-xs text-emerald-600/80">
+                          Saving ${affiliateDiscountAmount.toFixed(2)}
+                        </p>
                       </div>
                       <button
                         type="button"
-                        onClick={() => setSelectedTier(null)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/15 border border-red-500/20 text-[10px] text-red-400 hover:bg-red-500/25 transition-colors"
+                        onClick={clearCode}
+                        className="text-xs text-red-600 hover:underline"
                       >
-                        <X className="w-3 h-3" />
                         Remove
                       </button>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-amber-50 border border-amber-200 gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-amber-800">{appliedCode} applied</p>
+                        <p className="text-xs text-amber-700/90 leading-snug">
+                          Add ${referralSubtotalShortfall.toFixed(2)} for {affiliateDiscountPercent}% off (${REFERRAL_MIN_ORDER_SUBTOTAL_USD}+ subtotal).
+                        </p>
+                      </div>
+                      <button type="button" onClick={clearCode} className="text-xs text-red-600 hover:underline shrink-0">
+                        Remove
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <>
+                    <div className="flex w-full gap-2">
+                      <input
+                        type="text"
+                        value={affiliateInput}
+                        onChange={(e) => { setAffiliateInput(e.target.value.toUpperCase()); setAffiliateError(null); }}
+                        placeholder="Enter coupon code"
+                        className={`${fieldClass} flex-1 min-w-0 uppercase`}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyAffiliate}
+                        disabled={affiliateLoading || !affiliateInput.trim()}
+                        className="shrink-0 px-5 h-12 rounded-xl bg-[#2ED1B4] text-[#070A12] text-sm font-semibold hover:bg-[#25b89d] disabled:opacity-50 transition-colors"
+                      >
+                        {affiliateLoading ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                    {affiliateError && (
+                      <p className="mt-1.5 text-[12px] text-red-600">{affiliateError}</p>
+                    )}
+                  </>
+                )}
+              </section>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    {REDEMPTION_TIERS.map((tier) => {
-                      const canAfford = balance >= tier.points;
-                      const isSelected = selectedTier?.points === tier.points;
-                      // Preview the cap + refund directly on each tier card so
-                      // the customer can see at a glance what they'd actually
-                      // get if they picked a tier bigger than their cart.
-                      const previewDiscount = Math.min(tier.value, discountableItemsTotal);
-                      const previewRefundValue = Math.max(0, tier.value - previewDiscount);
-                      const previewRefundPoints =
-                        previewRefundValue > 0
-                          ? Math.round((previewRefundValue * tier.points) / tier.value)
-                          : 0;
-                      return (
-                        <button
-                          key={tier.points}
-                          type="button"
-                          disabled={!canAfford}
-                          onClick={() => handleSelectTier(tier)}
-                          className={`relative p-3 rounded-xl border text-left transition-all duration-200 ${
-                            isSelected
-                              ? 'border-[#8B5CF6] bg-[#8B5CF6]/20 shadow-lg shadow-[#8B5CF6]/10'
-                              : canAfford
-                              ? 'border-white/10 bg-white/5 hover:border-[#8B5CF6]/50 hover:bg-[#8B5CF6]/10'
-                              : 'border-white/5 bg-white/[0.02] opacity-40 cursor-not-allowed'
-                          }`}
-                        >
-                          {isSelected && (
-                            <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#8B5CF6] flex items-center justify-center">
-                              <Check className="w-2.5 h-2.5 text-white" />
-                            </div>
-                          )}
-                          <p className="text-base font-bold text-white leading-none mb-0.5">{tier.points}</p>
-                          <p className="text-[10px] text-gray-400 mb-1.5">points</p>
-                          <p className="text-sm font-bold text-[#2ED1B4]">{tier.label}</p>
-                          {!canAfford ? (
-                            <p className="text-[9px] text-gray-500 mt-1">Need {tier.points - balance} more pts</p>
-                          ) : previewRefundPoints > 0 ? (
-                            <p className="text-[9px] text-emerald-300/90 mt-1">
-                              Applies ${previewDiscount.toFixed(2)} · +{previewRefundPoints} pts back
-                            </p>
-                          ) : null}
-                        </button>
-                      );
-                    })}
+              <section className="rounded-xl border border-violet-200 overflow-hidden bg-gradient-to-br from-violet-50 to-teal-50/40">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-violet-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
+                      <Gift className="w-3.5 h-3.5 text-[#8B5CF6]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Redeem Points</p>
+                      <p className="text-[11px] text-slate-500">Use rewards for a discount</p>
+                    </div>
                   </div>
-
-                  {!selectedTier && (
-                    <p className="text-[10px] text-gray-500 text-center mt-2">
-                      Select a tier above to apply a discount
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-100 border border-violet-200">
+                    <Award className="w-3 h-3 text-[#8B5CF6]" />
+                    <span className="text-xs font-bold text-[#8B5CF6]">
+                      {isLoggedIn ? `${balance} pts` : 'Login to use'}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3.5">
+                  {!isLoggedIn ? (
+                    <p className="text-[12px] text-slate-500">
+                      <a href="/login" className="text-[#8B5CF6] underline font-medium">Sign in</a> to use your reward points
                     </p>
+                  ) : balance === 0 ? (
+                    <p className="text-[12px] text-slate-500">You don't have any points yet. Earn points by placing orders!</p>
+                  ) : (
+                    <>
+                      {selectedTier ? (
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 border border-emerald-200 mb-3">
+                          <div>
+                            <p className="text-sm font-semibold text-emerald-700">{selectedTier.label} Applied!</p>
+                            <p className="text-[11px] text-emerald-600/80">
+                              −{selectedTier.points} pts → −${pointsDiscount.toFixed(2)} off
+                              {pointsRefundEstimate > 0 && <> · +{pointsRefundEstimate} pts refunded</>}
+                            </p>
+                          </div>
+                          <button type="button" onClick={() => setSelectedTier(null)} className="text-xs text-red-600 hover:underline">
+                            Remove
+                          </button>
+                        </div>
+                      ) : null}
+                      <div className="grid grid-cols-2 gap-2">
+                        {REDEMPTION_TIERS.map((tier) => {
+                          const canAfford = balance >= tier.points;
+                          const isSelected = selectedTier?.points === tier.points;
+                          const previewDiscount = Math.min(tier.value, discountableItemsTotal);
+                          const previewRefundValue = Math.max(0, tier.value - previewDiscount);
+                          const previewRefundPoints =
+                            previewRefundValue > 0
+                              ? Math.round((previewRefundValue * tier.points) / tier.value)
+                              : 0;
+                          return (
+                            <button
+                              key={tier.points}
+                              type="button"
+                              disabled={!canAfford}
+                              onClick={() => handleSelectTier(tier)}
+                              className={`relative p-3 rounded-xl border text-left transition-all ${
+                                isSelected
+                                  ? 'border-[#8B5CF6] bg-violet-100'
+                                  : canAfford
+                                  ? 'border-slate-200 bg-white hover:border-violet-300'
+                                  : 'border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed'
+                              }`}
+                            >
+                              <p className="text-base font-bold text-slate-900 leading-none mb-0.5">{tier.points}</p>
+                              <p className="text-[10px] text-slate-500 mb-1">points</p>
+                              <p className="text-sm font-bold text-[#1FA896]">{tier.label}</p>
+                              {!canAfford ? (
+                                <p className="text-[9px] text-slate-400 mt-1">Need {tier.points - balance} more</p>
+                              ) : previewRefundPoints > 0 ? (
+                                <p className="text-[9px] text-emerald-600 mt-1">
+                                  Applies ${previewDiscount.toFixed(2)} · +{previewRefundPoints} pts back
+                                </p>
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
-                </>
-              )}
-            </div>
+                </div>
+              </section>
+
+              <section>
+                <h2 className={sectionTitleClass}>Payment</h2>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="w-4 h-4 text-[#1FA896]" />
+                    <span className="text-sm font-semibold text-slate-900">Bank transfer after order</span>
+                  </div>
+                  <ul className="text-[12px] text-slate-600 space-y-1">
+                    <li>• PayID / BSB details shown on the confirmation page</li>
+                    <li>• Cash on pickup available</li>
+                    <li>
+                      •{' '}
+                      <a href={CONFIG.SOCIAL.TELEGRAM} target="_blank" rel="noopener noreferrer" className="text-[#1FA896] underline">
+                        Telegram support
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+              <section className="space-y-3">
+                <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+                  <input
+                    type="checkbox"
+                    id="age"
+                    checked={ageVerified}
+                    onChange={(e) => setAgeVerified(e.target.checked)}
+                    required
+                    className="w-4 h-4 mt-0.5 accent-amber-500"
+                  />
+                  <label htmlFor="age" className="text-[12px] text-slate-600 leading-snug">
+                    <span className="text-amber-700 font-semibold">I confirm I am 18 years or older</span> and purchasing these products for lawful research purposes only.
+                  </label>
+                </div>
+                <div className="flex items-start gap-2.5 px-1">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    required
+                    className="w-4 h-4 mt-0.5 accent-[#2ED1B4]"
+                  />
+                  <label htmlFor="terms" className="text-[12px] text-slate-600">
+                    I agree to the <a href="/terms" className="text-[#1FA896] underline">Terms</a> & <a href="/privacy" className="text-[#1FA896] underline">Privacy</a>
+                  </label>
+                </div>
+              </section>
+
+              <button
+                type="submit"
+                disabled={!agreedToTerms || !ageVerified || isSubmitting}
+                className="w-full py-3.5 rounded-xl bg-[#2ED1B4] text-[#070A12] font-bold text-[15px] hover:bg-[#25b89d] disabled:opacity-50 transition-colors"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processing...
+                  </span>
+                ) : (
+                  `Complete Order — $${finalTotal.toFixed(2)}`
+                )}
+              </button>
+
+              <p className="text-[11px] text-slate-400 text-center pb-4">
+                For research use only. Not for human consumption.
+              </p>
+            </form>
           </div>
-
-          {/* Payment Info */}
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#2ED1B4]/10 to-[#8B5CF6]/10 border border-[#2ED1B4]/20">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Building2 className="w-3.5 h-3.5 text-[#2ED1B4]" />
-              <span className="text-xs font-medium text-white">Payment Methods</span>
-            </div>
-            <ul className="text-[10px] text-gray-400 space-y-0.5">
-              <li>• Bank Transfer (details after order)</li>
-              <li>• Cash on pickup</li>
-              <li>• <a href={CONFIG.SOCIAL.TELEGRAM} target="_blank" rel="noopener noreferrer" className="text-[#2ED1B4] underline">Message us on Telegram</a> for more info</li>
-            </ul>
-          </div>
-
-          {/* Age Verification */}
-          <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
-            <div className="flex items-start gap-2">
-              <input 
-                type="checkbox" 
-                id="age" 
-                checked={ageVerified} 
-                onChange={(e) => setAgeVerified(e.target.checked)} 
-                required
-                className="w-3.5 h-3.5 mt-0.5 accent-amber-500"
-              />
-              <label htmlFor="age" className="text-[10px] text-gray-400">
-                <span className="text-amber-500 font-medium">I confirm I am 18 years or older</span> and purchasing these products for lawful research purposes only.
-              </label>
-            </div>
-          </div>
-
-          {/* Terms */}
-          <div className="flex items-start gap-2">
-            <input 
-              type="checkbox" 
-              id="terms" 
-              checked={agreedToTerms} 
-              onChange={(e) => setAgreedToTerms(e.target.checked)} 
-              required
-              className="w-3.5 h-3.5 mt-0.5 accent-[#2ED1B4]"
-            />
-            <label htmlFor="terms" className="text-[10px] text-gray-400">
-              I agree to the <a href="/terms" className="text-[#2ED1B4]">Terms</a> & <a href="/privacy" className="text-[#2ED1B4]">Privacy</a>
-            </label>
-          </div>
-
-          {/* Submit */}
-          <button 
-            type="submit" 
-            disabled={!agreedToTerms || !ageVerified || isSubmitting}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-[#2ED1B4] to-[#8B5CF6] text-white font-semibold text-sm disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Processing...
-              </span>
-            ) : (
-              `Complete Order — $${finalTotal.toFixed(2)}`
-            )}
-          </button>
-
-          {/* Research Disclaimer */}
-          <p className="text-[9px] text-gray-500 text-center">
-            For research use only. Not for human consumption.
-          </p>
-        </form>
-      </main>
-    </div>
+        </div>
+      </div>
     </>
   );
 }
+

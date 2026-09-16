@@ -78,7 +78,7 @@ export const DEFAULT_DISCOUNT_SETTINGS: DiscountSettings = {
 
 export const DEFAULT_FREE_GIFT_SETTINGS: FreeGiftSettings = {
   enabled: true,
-  threshold: 300,
+  threshold: 0,
   product_id: 'bac-water',
   dosage: '3 mL',
   name: 'BAC Water',

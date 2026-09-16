@@ -10,12 +10,11 @@ import {
   TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square, Clock, CalendarDays
 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
-import { getAdminAccess, grantLandingAccess, setLandingPageEnabled, type AdminAccess } from '@/lib/admin-access';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cached, invalidateCache, setCache, TTL_ADMIN_OVERVIEW, TTL_ADMIN_ORDERS, TTL_ADMIN_PRODUCTS } from '@/lib/cache';
 import { CONFIG } from '@/lib/config';
 import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS } from '@/lib/settings';
-import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, type PointsEvent } from '@/lib/supabase-db';
+import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, invokeAusPostSyncDelivered, type PointsEvent } from '@/lib/supabase-db';
 import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-reward';
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
 import TrustpilotAdminSection from '@/components/admin/TrustpilotAdminSection';
@@ -43,7 +42,7 @@ import {
 } from '@/lib/promo-codes';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
 import { sendPaymentReceived, sendOrderShipped, sendReplacementTrackingEmail, sendOrderDeliveredReviewEmail } from '@/lib/email';
-import { createAusPostLabel } from '@/lib/auspost-shipping';
+import { createAusPostLabel, looksLikeParcelLockerAddress } from '@/lib/auspost-shipping';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { SEO } from '@/components/SEO';
 import {
@@ -84,6 +83,7 @@ interface Order {
   notes: string;
   created_at: string;
   paid_at: string;
+  shipped_at?: string | null;
   payment_email_sent?: boolean;
   shipped_email_sent?: boolean;
   confirmation_email_sent?: boolean;
@@ -485,7 +485,6 @@ export default function AdminDashboard() {
     parseAdminTabParam(searchParams.get('tab')),
   );
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminAccess, setAdminAccess] = useState<AdminAccess>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState('');
 
@@ -507,13 +506,9 @@ export default function AdminDashboard() {
 
   // Keep tab in sync if the URL changes (back/forward / hard reload).
   useEffect(() => {
-    if (adminAccess === 'landing') {
-      setActiveTabState('settings');
-      return;
-    }
     const fromUrl = parseAdminTabParam(searchParams.get('tab'));
     setActiveTabState((prev) => (prev === fromUrl ? prev : fromUrl));
-  }, [searchParams, adminAccess]);
+  }, [searchParams]);
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -526,17 +521,22 @@ export default function AdminDashboard() {
 
         setAdminEmail(user.email || '');
 
-        const access = await getAdminAccess(user.id);
-        if (access) {
-          setAdminAccess(access);
+        if (user.user_metadata?.role === 'admin') {
           setIsAdmin(true);
-          if (access === 'landing') {
-            setActiveTabState('settings');
-          }
           return;
         }
 
-        window.location.href = '/';
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.is_admin) {
+          setIsAdmin(true);
+        } else {
+          window.location.href = '/';
+        }
       } catch (error) {
         console.error('[Admin] Auth check failed:', error);
         window.location.href = '/login';
@@ -653,10 +653,6 @@ export default function AdminDashboard() {
     { id: 'promo-codes', label: 'Promo Codes', icon: Tag },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
-  const visibleNav =
-    adminAccess === 'landing'
-      ? [{ id: 'settings' as const, label: 'Landing', icon: Eye }]
-      : navItems;
 
   return (
     <>
@@ -674,7 +670,7 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="p-4 space-y-1">
-          {visibleNav.map((item) => (
+          {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id as AdminTabId)}
@@ -697,7 +693,7 @@ export default function AdminDashboard() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-[#F4F6FA] truncate">{adminEmail.split('@')[0]}</p>
-              <p className="text-xs text-[#2ED1B4]">{adminAccess === 'landing' ? 'Landing access' : 'Administrator'}</p>
+              <p className="text-xs text-[#2ED1B4]">Administrator</p>
             </div>
           </div>
           <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.15)] text-[#EF4444] hover:bg-[rgba(239,68,68,0.2)] transition-colors text-sm font-medium">
@@ -712,11 +708,11 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-[rgba(46,209,180,0.15)] flex items-center justify-center shrink-0">
-              {(() => { const n = visibleNav.find(n => n.id === activeTab); return n ? <n.icon className="w-4 h-4 text-[#2ED1B4]" /> : null; })()}
+              {(() => { const n = navItems.find(n => n.id === activeTab); return n ? <n.icon className="w-4 h-4 text-[#2ED1B4]" /> : null; })()}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-bold text-[#F4F6FA] truncate">
-                {visibleNav.find(n => n.id === activeTab)?.label}
+                {navItems.find(n => n.id === activeTab)?.label}
               </p>
               <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#2ED1B4]">PEPLAB ADMIN</p>
             </div>
@@ -734,7 +730,7 @@ export default function AdminDashboard() {
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[rgba(17,24,39,0.97)] border-t border-[rgba(244,246,250,0.08)] backdrop-blur-sm safe-area-bottom">
         <div className="flex justify-around px-1 py-1">
-          {visibleNav.map((item) => {
+          {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
@@ -783,9 +779,7 @@ export default function AdminDashboard() {
           {/* Affiliates tab disabled — see navItems comment above. */}
           {/* {activeTab === 'affiliates' && <AffiliatesSection />} */}
           {activeTab === 'promo-codes' && <PromoCodesSection />}
-          {activeTab === 'settings' && (
-            <SettingsSection access={adminAccess === 'landing' ? 'landing' : 'full'} />
-          )}
+          {activeTab === 'settings' && <SettingsSection />}
         </div>
       </main>
     </div>
@@ -1584,8 +1578,37 @@ function formatOrderShippingAddressOneLine(
   return `${street}, ${suburbLine}`;
 }
 
+function formatAdminLabelMoney(value: number | string | null | undefined): string {
+  const n = Number(value);
+  return Number.isFinite(n) ? `$${n.toFixed(2)}` : '$0.00';
+}
+
+function buildAdminLabelItemsHtml(order: Order): string {
+  const items = Array.isArray(order.items) ? order.items : [];
+  if (items.length === 0) {
+    return '<p style="margin:0;color:#555;">No items</p>';
+  }
+  const rows = items
+    .map((item: any) => {
+      const name = escapeAdminLabelHtml(String(item?.name ?? 'Item').trim() || 'Item');
+      const dosageRaw = String(item?.dosage ?? '').trim();
+      const dosage = dosageRaw ? ` (${escapeAdminLabelHtml(dosageRaw)})` : '';
+      const qty = Number(item?.quantity) || 1;
+      const price = Number(item?.price) || 0;
+      const lineTotal = formatAdminLabelMoney(price * qty);
+      return `<tr>
+        <td style="padding:4px 0;vertical-align:top;">${name}${dosage}</td>
+        <td style="padding:4px 8px;text-align:center;white-space:nowrap;">×${qty}</td>
+        <td style="padding:4px 0;text-align:right;white-space:nowrap;">${lineTotal}</td>
+      </tr>`;
+    })
+    .join('');
+  return `<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4;">${rows}</table>`;
+}
+
 /**
- * Opens a printable shipping label in a new window.
+ * Opens a printable packing / shipping label in a new window.
+ * Shows customer name, ordered items, and total (plus address for fulfilment).
  * - `print: true` — after load, the popup runs `print()` (system dialog). The
  *   popup also has a **Print Label** button if the browser blocks auto-print.
  * - `edit: true` — label is `contentEditable` for quick fixes before printing.
@@ -1594,7 +1617,7 @@ function openAdminShippingLabelWindow(
   order: Order,
   options?: { print?: boolean; edit?: boolean },
 ): void {
-  const labelWindow = window.open('', '_blank', 'width=420,height=640');
+  const labelWindow = window.open('', '_blank', 'width=420,height=720');
   if (!labelWindow) {
     alert('Please allow pop‑ups to print labels');
     return;
@@ -1608,6 +1631,8 @@ function openAdminShippingLabelWindow(
   const trackingHtml = o.tracking_number
     ? escapeAdminLabelHtml(o.tracking_number)
     : '—';
+  const itemsHtml = buildAdminLabelItemsHtml(o);
+  const totalHtml = formatAdminLabelMoney(o.total);
 
   const autoPrintScript =
     options?.print === true
@@ -1615,7 +1640,7 @@ function openAdminShippingLabelWindow(
       : '';
 
   labelWindow.document.write(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Shipping Label - ${ordDisplay}</title>
+    `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Order Label - ${ordDisplay}</title>
 <style>
   body { font-family: Arial, Helvetica, sans-serif; padding: 20px; max-width: 420px; margin: 0 auto; color: #111; }
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
@@ -1624,12 +1649,14 @@ function openAdminShippingLabelWindow(
   .btn-edit { background: #8B5CF6; color: #fff; }
   .label { border: 2px solid #000; padding: 16px 18px; }
   .section-title { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #555; }
+  .customer-name { margin: 0 0 4px; font-size: 18px; font-weight: 700; line-height: 1.25; }
   .lines { font-size: 14px; line-height: 1.45; }
   .lines p { margin: 0 0 3px; }
   hr.sep { border: none; border-top: 1px solid #000; margin: 14px 0; }
   .meta { font-size: 13px; line-height: 1.55; color: #333; }
   .meta strong { color: #111; }
   .tracking { font-family: ui-monospace, monospace; font-size: 13px; }
+  .total-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; font-size: 16px; font-weight: 700; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
 </style></head><body>
 <div class="no-print toolbar">
@@ -1637,20 +1664,26 @@ function openAdminShippingLabelWindow(
   <button type="button" class="btn-edit" onclick="(function(){var el=document.querySelector('.label');if(el){el.contentEditable='true';el.focus();}})()">Edit Label</button>
 </div>
 <div class="label">
+  <div class="to-block">
+    <p class="section-title">Customer</p>
+    <p class="customer-name">${toName}</p>
+    <div class="lines">
+      <p>${fullAddress}</p>
+      ${phoneLine ? `<p>${phoneLine}</p>` : ''}
+    </div>
+  </div>
+  <hr class="sep" />
+  <div class="items-block">
+    <p class="section-title">Ordered</p>
+    ${itemsHtml}
+    <div class="total-row"><span>Total</span><span>${totalHtml}</span></div>
+  </div>
+  <hr class="sep" />
   <div class="from-block">
     <p class="section-title">From</p>
     <div class="lines">
       <p>${ADMIN_SHIPPING_LABEL_FROM.line1}</p>
       <p>${ADMIN_SHIPPING_LABEL_FROM.line2}</p>
-    </div>
-  </div>
-  <hr class="sep" />
-  <div class="to-block">
-    <p class="section-title">To</p>
-    <div class="lines">
-      <p><strong>${toName}</strong></p>
-      <p>${fullAddress}</p>
-      ${phoneLine ? `<p>${phoneLine}</p>` : ''}
     </div>
   </div>
   <hr class="sep" />
@@ -1744,6 +1777,7 @@ function OrdersSection() {
   const [copiedShippingField, setCopiedShippingField] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCreatingAusPostLabel, setIsCreatingAusPostLabel] = useState(false);
+  const [isSyncingDeliveries, setIsSyncingDeliveries] = useState(false);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBulkSendingReviewEmails, setIsBulkSendingReviewEmails] = useState(false);
@@ -1978,6 +2012,39 @@ function OrdersSection() {
     );
   };
 
+  /** Poll AusPost Track Items and auto-mark delivered shipments. */
+  const syncAusPostDeliveries = async () => {
+    const confirmed = window.confirm(
+      'Check Australia Post tracking for all Shipped orders and mark Delivered when AusPost reports delivery?\n\nEligible customers will also get the Trustpilot review email.',
+    );
+    if (!confirmed) return;
+
+    setIsSyncingDeliveries(true);
+    try {
+      const result = await invokeAusPostSyncDelivered({ sendReviewEmails: true });
+      if (result.error) {
+        alert(`AusPost delivery sync failed:\n\n${result.error}`);
+        return;
+      }
+      await loadOrders(true);
+      const list =
+        result.delivered_orders?.length
+          ? `\n\nOrders:\n${result.delivered_orders.map((n) => `• ${formatOrderNumberDisplay(n)}`).join('\n')}`
+          : '';
+      const errs =
+        result.track_errors?.length
+          ? `\n\nNotes:\n${result.track_errors.slice(0, 5).join('\n')}`
+          : '';
+      alert(
+        `AusPost delivery sync complete:\n• Checked ${result.checked ?? 0} shipped order(s)\n• Marked ${result.delivered ?? 0} delivered\n• Review emails sent: ${result.review_emails_sent ?? 0}${result.review_email_failed ? `\n• Review emails failed: ${result.review_email_failed}` : ''}${list}${errs}`,
+      );
+    } catch (err) {
+      alert(`AusPost delivery sync failed:\n\n${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsSyncingDeliveries(false);
+    }
+  };
+
   useEffect(() => {
     const node = sentinelRef.current;
     if (!node) return;
@@ -2047,6 +2114,72 @@ function OrdersSection() {
 
   const finalisePreorder = async (orderId: string) => {
     await updateOrderStatus(orderId, 'finalised');
+  };
+
+  /** Mark shipped for pickup / hand delivery — no AusPost label or tracking email. */
+  const markShippedWithoutLabel = async (order: Order) => {
+    if (order.status === 'shipped' || order.status === 'delivered') {
+      alert('This order is already marked as shipped or delivered.');
+      return;
+    }
+    const displayNo = formatOrderNumberDisplay(order.order_number);
+    const ok = window.confirm(
+      `Mark #${displayNo} as Shipped without creating a label?\n\nUse this for pickup or hand delivery.\nNo AusPost label or tracking email will be sent.`,
+    );
+    if (!ok) return;
+
+    setIsUpdating(true);
+    try {
+      const shippedAt = new Date().toISOString();
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          status: 'shipped',
+          shipped_at: shippedAt,
+          updated_at: shippedAt,
+        })
+        .eq('id', order.id);
+      if (error) throw error;
+
+      await loadOrders(true);
+      setSelectedOrder((prev) =>
+        prev && prev.id === order.id
+          ? { ...prev, status: 'shipped', shipped_at: shippedAt }
+          : prev,
+      );
+
+      // Award points in background (same as label / manual tracking flows).
+      void (async () => {
+        try {
+          const alreadyAwarded = await getOrderPointsAwarded(order.id);
+          if (!alreadyAwarded && order.user_id && order.subtotal > 0) {
+            const points = calculatePurchasePoints(order.subtotal, {
+              promoDiscountApplied: Number(order.affiliate_discount) > 0,
+            });
+            const earnedCountBefore = await getEarnedTransactionsCount(order.user_id);
+            await addUserPoints(
+              order.user_id,
+              points,
+              'purchase',
+              `Order ${displayNo}`,
+              order.id,
+            );
+            if (earnedCountBefore === 0) {
+              await addUserPoints(order.user_id, BONUS_POINTS.FIRST_PURCHASE, 'first_order', 'First order bonus', null);
+            }
+          }
+        } catch (pointsErr) {
+          console.error('[markShippedWithoutLabel] points award failed', pointsErr);
+        } finally {
+          window.dispatchEvent(new Event('peplab:points-updated'));
+        }
+      })();
+    } catch (error) {
+      console.error('Error marking shipped without label:', error);
+      alert('Failed to mark as shipped: ' + adminRequestErrorMessage(error));
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   /** Manual single-order Trustpilot review email (never bulk). Surfaces Resend/edge errors. */
@@ -2324,15 +2457,36 @@ function OrdersSection() {
   };
 
   /** Create AusPost shipment + label, save tracking, mark shipped, email customer. */
-  const createAusPostLabelForOrder = async (order: Order) => {
+  const createAusPostLabelForOrder = async (
+    order: Order,
+    opts?: {
+      addressType?: 'parcel_locker' | 'parcel_collect' | 'street';
+      /** Declared parcel weight for the AusPost label (e.g. 0.25 or 0.5). */
+      weightKg?: number;
+    },
+  ) => {
+    const weightKg = opts?.weightKg && opts.weightKg > 0 ? opts.weightKg : 0.5;
+    const weightLabel = weightKg < 1 ? `${weightKg.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}kg` : `${weightKg}kg`;
+    const forceLocker =
+      opts?.addressType === 'parcel_locker' ||
+      opts?.addressType === 'parcel_collect' ||
+      looksLikeParcelLockerAddress(order.shipping_address || '');
+    const lockerType: 'parcel_locker' | 'parcel_collect' =
+      opts?.addressType === 'parcel_collect' ||
+      /parcel\s*collect/i.test(order.shipping_address || '')
+        ? 'parcel_collect'
+        : 'parcel_locker';
+
     if (order.tracking_number?.trim()) {
       const reuse = window.confirm(
-        `This order already has tracking ${order.tracking_number}.\n\nCreate another AusPost label anyway?`,
+        `This order already has tracking ${order.tracking_number}.\n\nCreate another AusPost label (${weightLabel}) anyway?`,
       );
       if (!reuse) return;
     } else {
       const ok = window.confirm(
-        `Create Australia Post label for #${formatOrderNumberDisplay(order.order_number)}?\n\nThis will generate tracking, mark the order Shipped, and email the customer.`,
+        forceLocker
+          ? `Create Australia Post ${lockerType === 'parcel_collect' ? 'Parcel Collect' : 'Parcel Locker'} label (${weightLabel}) for #${formatOrderNumberDisplay(order.order_number)}?\n\nThis sends address type ${lockerType === 'parcel_collect' ? 'PARCEL_COLLECT' : 'PARCEL_LOCKER'} to AusPost, generates tracking, marks Shipped, and emails the customer.`
+          : `Create Australia Post label (${weightLabel}) for #${formatOrderNumberDisplay(order.order_number)}?\n\nThis will generate tracking, mark the order Shipped, and email the customer.`,
       );
       if (!ok) return;
     }
@@ -2350,6 +2504,8 @@ function OrdersSection() {
         shipping_suburb: order.shipping_suburb,
         shipping_state: order.shipping_state,
         shipping_postcode: order.shipping_postcode,
+        address_type: forceLocker ? lockerType : opts?.addressType === 'street' ? 'street' : undefined,
+        weight_kg: weightKg,
       });
 
       if (!result.success || !result.tracking_number) {
@@ -2940,6 +3096,16 @@ function OrdersSection() {
                       : 'No shipped orders selected'}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => void syncAusPostDeliveries()}
+                disabled={isSyncingDeliveries || isUpdating}
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-4 py-2 rounded-xl bg-[rgba(46,209,180,0.15)] border border-[rgba(46,209,180,0.35)] text-[#2ED1B4] text-sm font-semibold hover:bg-[rgba(46,209,180,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Poll AusPost tracking and auto-mark delivered orders"
+              >
+                <Truck className="w-4 h-4" />
+                {isSyncingDeliveries ? 'Syncing AusPost…' : 'Sync AusPost deliveries'}
+              </button>
             </div>
           )}
           {/* Desktop table */}
@@ -3317,13 +3483,38 @@ function OrdersSection() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => void createAusPostLabelForOrder(selectedOrder)}
+                    onClick={() => void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.25 })}
                     disabled={isCreatingAusPostLabel || isUpdating}
                     className="px-4 py-2 rounded-lg bg-[#F59E0B] text-[#070A12] text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
-                    title="Create Australia Post shipment, tracking number, and printable label"
+                    title="Create Australia Post label at 0.250 kg"
                   >
                     <Truck className="w-4 h-4" />
-                    {isCreatingAusPostLabel ? 'Creating AusPost label…' : 'Create AusPost Label'}
+                    {isCreatingAusPostLabel ? 'Creating…' : 'Label 0.250kg'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.5 })}
+                    disabled={isCreatingAusPostLabel || isUpdating}
+                    className="px-4 py-2 rounded-lg bg-[#F59E0B] text-[#070A12] text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                    title="Create Australia Post label at 0.5 kg"
+                  >
+                    <Truck className="w-4 h-4" />
+                    {isCreatingAusPostLabel ? 'Creating…' : 'Label 0.5kg'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void createAusPostLabelForOrder(selectedOrder, {
+                        addressType: 'parcel_locker',
+                        weightKg: 0.5,
+                      })
+                    }
+                    disabled={isCreatingAusPostLabel || isUpdating}
+                    className="px-4 py-2 rounded-lg bg-[#0EA5E9] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                    title="Force AusPost address type PARCEL_LOCKER (requires customer email)"
+                  >
+                    <Package className="w-4 h-4" />
+                    {isCreatingAusPostLabel ? 'Creating…' : 'Parcel Locker Label'}
                   </button>
                   <button
                     type="button"
@@ -3341,6 +3532,20 @@ function OrdersSection() {
                     <Pencil className="w-4 h-4" />
                     Edit Label
                   </button>
+                  {(selectedOrder.status === 'processing' ||
+                    selectedOrder.status === 'finalised' ||
+                    selectedOrder.status === 'pending_payment') && (
+                    <button
+                      type="button"
+                      onClick={() => void markShippedWithoutLabel(selectedOrder)}
+                      disabled={isCreatingAusPostLabel || isUpdating}
+                      className="px-4 py-2 rounded-lg bg-[#22C55E] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                      title="Mark shipped for pickup or hand delivery — no AusPost label"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      {isUpdating ? 'Updating…' : 'Shipped'}
+                    </button>
+                  )}
                 </div>
                 {selectedOrder.auspost_label_url ? (
                   <a
@@ -3525,20 +3730,51 @@ function OrdersSection() {
 
                 {!selectedOrder.tracking_number &&
                   (selectedOrder.status === 'processing' || selectedOrder.status === 'finalised') && (
-                  <div className="mb-3">
+                  <div className="mb-3 space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.25 })
+                        }
+                        disabled={isCreatingAusPostLabel || isUpdating}
+                        className="w-full px-4 py-3 rounded-xl bg-[#F59E0B] text-[#070A12] font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <Truck className="w-5 h-5" />
+                        {isCreatingAusPostLabel ? 'Creating…' : 'Label 0.250kg + Tracking'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.5 })
+                        }
+                        disabled={isCreatingAusPostLabel || isUpdating}
+                        className="w-full px-4 py-3 rounded-xl bg-[#F59E0B] text-[#070A12] font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <Truck className="w-5 h-5" />
+                        {isCreatingAusPostLabel ? 'Creating…' : 'Label 0.5kg + Tracking'}
+                      </button>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => void createAusPostLabelForOrder(selectedOrder)}
+                      onClick={() =>
+                        void createAusPostLabelForOrder(selectedOrder, {
+                          addressType: 'parcel_locker',
+                          weightKg: 0.5,
+                        })
+                      }
                       disabled={isCreatingAusPostLabel || isUpdating}
-                      className="w-full px-4 py-3 rounded-xl bg-[#F59E0B] text-[#070A12] font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full px-4 py-3 rounded-xl bg-[#0EA5E9] text-white font-semibold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      <Truck className="w-5 h-5" />
+                      <Package className="w-5 h-5" />
                       {isCreatingAusPostLabel
-                        ? 'Creating AusPost label…'
-                        : 'Create AusPost Label + Tracking'}
+                        ? 'Creating Parcel Locker label…'
+                        : 'Create Parcel Locker Label + Tracking'}
                     </button>
                     <p className="text-[11px] text-[#A9B3C7] mt-2 text-center">
-                      Auto-creates the label with customer details, saves tracking, marks Shipped, and emails the customer.
+                      {looksLikeParcelLockerAddress(selectedOrder.shipping_address || '')
+                        ? 'This address looks like a Parcel Locker — use the blue button so AusPost gets the correct address type.'
+                        : 'Pick 0.250kg or 0.5kg for the declared weight on the AusPost label. Use Parcel Locker when shipping to a locker.'}
                     </p>
                   </div>
                 )}
@@ -3650,12 +3886,13 @@ function OrdersSection() {
               )}
               {(selectedOrder.status === 'processing' || selectedOrder.status === 'finalised') && !selectedOrder.tracking_number && (
                 <button
-                  onClick={() => updateOrderStatus(selectedOrder.id, 'shipped')}
+                  onClick={() => void markShippedWithoutLabel(selectedOrder)}
                   disabled={isUpdating}
-                  className="flex-1 px-4 py-3 rounded-xl bg-[#2ED1B4] text-white hover:bg-[#25b89d] disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 rounded-xl bg-[#22C55E] text-white hover:bg-[#16A34A] disabled:opacity-50 flex items-center justify-center gap-2"
+                  title="Pickup or hand delivery — no AusPost label"
                 >
-                  <Truck className="w-5 h-5" />
-                  Mark as Shipped (No Tracking)
+                  <CheckCircle className="w-5 h-5" />
+                  {isUpdating ? 'Updating…' : 'Shipped (Pickup / Hand Delivery)'}
                 </button>
               )}
               {selectedOrder.status === 'shipped' && (
@@ -5240,10 +5477,6 @@ function UsersSection() {
   const [birthdayDraft, setBirthdayDraft] = useState('');
   const [birthdaySaving, setBirthdaySaving] = useState(false);
   const [birthdayError, setBirthdayError] = useState<string | null>(null);
-  const [landingGrantBusyId, setLandingGrantBusyId] = useState<string | null>(null);
-  const [landingGrantEmail, setLandingGrantEmail] = useState('');
-  const [landingGrantName, setLandingGrantName] = useState('Sufyan');
-  const [landingGrantMessage, setLandingGrantMessage] = useState<string | null>(null);
   const loadUsersRequestIdRef = useRef(0);
   const loadMoreLockRef = useRef(false);
   const rawOffsetRef = useRef(0);
@@ -5561,33 +5794,6 @@ function UsersSection() {
     }
   };
 
-  const handleLandingAccess = async (email: string, enabled: boolean, fullName?: string, userId?: string) => {
-    const key = userId || email;
-    setLandingGrantBusyId(key);
-    setLandingGrantMessage(null);
-    try {
-      const result = await grantLandingAccess(email, enabled, fullName);
-      if (!result.ok) {
-        setLandingGrantMessage(result.error || 'Could not update landing access.');
-        return;
-      }
-      setLandingGrantMessage(
-        enabled
-          ? `Landing access granted to ${fullName || email}. They can sign in and open Admin → Landing.`
-          : `Landing access removed from ${email}.`,
-      );
-      setUsers((prev) =>
-        prev.map((u) =>
-          (userId && u.id === userId) || (u.email || '').toLowerCase() === email.toLowerCase()
-            ? { ...u, can_manage_landing: enabled, full_name: fullName || u.full_name }
-            : u,
-        ),
-      );
-    } finally {
-      setLandingGrantBusyId(null);
-    }
-  };
-
   // Search is applied while paging from the RPC; list is already filtered.
   const filteredUsers = users;
 
@@ -5632,40 +5838,6 @@ function UsersSection() {
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A9B3C7]" />
         <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search users..." className="w-full pl-12 pr-4 py-3 rounded-xl bg-[rgba(7,10,18,0.6)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] placeholder-[#A9B3C7] focus:outline-none focus:border-[#2ED1B4]" />
-      </div>
-
-      <div className="p-4 rounded-2xl bg-gradient-to-br from-[rgba(59,130,246,0.1)] to-[rgba(139,92,246,0.1)] border border-[rgba(59,130,246,0.2)] space-y-3">
-        <h3 className="text-sm font-semibold text-[#F4F6FA]">Landing page access</h3>
-        <p className="text-xs text-[#A9B3C7]">
-          They must already have an account. Granting this only lets them turn the public landing page on or off — not orders, users, or other settings.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <input
-            type="text"
-            value={landingGrantName}
-            onChange={(e) => setLandingGrantName(e.target.value)}
-            placeholder="Name"
-            className="px-3 py-2 rounded-lg bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] text-sm"
-          />
-          <input
-            type="email"
-            value={landingGrantEmail}
-            onChange={(e) => setLandingGrantEmail(e.target.value)}
-            placeholder="sufyan@email.com"
-            className="px-3 py-2 rounded-lg bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] text-sm"
-          />
-          <button
-            type="button"
-            disabled={!landingGrantEmail.trim() || landingGrantBusyId === landingGrantEmail.trim()}
-            onClick={() => void handleLandingAccess(landingGrantEmail.trim(), true, landingGrantName.trim() || 'Sufyan')}
-            className="px-3 py-2 rounded-lg bg-[#3B82F6] text-white text-sm font-medium disabled:opacity-50"
-          >
-            Grant landing access
-          </button>
-        </div>
-        {landingGrantMessage && (
-          <p className="text-xs text-[#A9B3C7]">{landingGrantMessage}</p>
-        )}
       </div>
 
       {pointsModal && (
@@ -5778,9 +5950,6 @@ function UsersSection() {
                       <p className="font-medium text-[#F4F6FA] text-sm truncate">{user.full_name || user.email}</p>
                       {user.is_banned && <span className="px-1.5 py-0.5 rounded bg-[#EF4444] text-white text-[9px] font-bold">BANNED</span>}
                       {user.is_admin && <span className="px-1.5 py-0.5 rounded bg-[#8B5CF6] text-white text-[9px] font-bold">ADMIN</span>}
-                      {user.can_manage_landing && !user.is_admin && (
-                        <span className="px-1.5 py-0.5 rounded bg-[#3B82F6] text-white text-[9px] font-bold">LANDING</span>
-                      )}
                     </div>
                     <p className="text-xs text-[#A9B3C7] truncate mt-0.5">{user.email}</p>
                     {user.date_of_birth ? (
@@ -5801,25 +5970,6 @@ function UsersSection() {
                 </div>
                 {/* Action buttons row */}
                 <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  {!user.is_admin && (
-                    <button
-                      type="button"
-                      disabled={landingGrantBusyId === user.id}
-                      onClick={() =>
-                        void handleLandingAccess(
-                          user.email,
-                          !user.can_manage_landing,
-                          user.full_name || undefined,
-                          user.id,
-                        )
-                      }
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[#3B82F6] bg-[rgba(59,130,246,0.08)] hover:bg-[rgba(59,130,246,0.15)] text-xs font-medium transition-colors disabled:opacity-50"
-                      title="Landing page on/off access"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      {user.can_manage_landing ? 'Remove landing' : 'Give landing'}
-                    </button>
-                  )}
                   <button type="button" onClick={() => setPointsModal({ user, mode: 'add' })} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[#22C55E] bg-[rgba(34,197,94,0.08)] hover:bg-[rgba(34,197,94,0.15)] text-xs font-medium transition-colors" title="Add points">
                     <PlusCircle className="w-3.5 h-3.5" /> Add pts
                   </button>
@@ -6825,8 +6975,7 @@ function PromoCodesSection() {
   );
 }
 
-function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
-  const landingOnly = access === 'landing';
+function SettingsSection() {
   const [bankDetails, setBankDetails] = useState(DEFAULT_BANK_DETAILS);
   const [discountSettings, setDiscountSettings] = useState(DEFAULT_DISCOUNT_SETTINGS);
   const [freeGiftSettings, setFreeGiftSettings] = useState(DEFAULT_FREE_GIFT_SETTINGS);
@@ -6877,21 +7026,16 @@ function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
     setIsSaving(true);
     setSaveMessage('');
     try {
-      if (landingOnly) {
-        const result = await setLandingPageEnabled(landingPageSettings.enabled !== false);
-        if (!result.ok) throw new Error(result.error);
-      } else {
-        await Promise.all([
-          updateSiteSetting('bank_details', bankDetails),
-          updateSiteSetting('discount_settings', discountSettings),
-          updateSiteSetting('free_gift_settings', freeGiftSettings),
-          updateSiteSetting('telegram_link', { url: supportLinks.telegram_link }),
-          updateSiteSetting('whatsapp_link', { url: supportLinks.whatsapp_link }),
-          updateSiteSetting('landing_page_settings', landingPageSettings),
-          updateSiteSetting('affiliate_program_settings', affiliateProgramSettings),
-          updateSiteSetting('research_disclaimer_settings', researchDisclaimerSettings),
-        ]);
-      }
+      await Promise.all([
+        updateSiteSetting('bank_details', bankDetails),
+        updateSiteSetting('discount_settings', discountSettings),
+        updateSiteSetting('free_gift_settings', freeGiftSettings),
+        updateSiteSetting('telegram_link', { url: supportLinks.telegram_link }),
+        updateSiteSetting('whatsapp_link', { url: supportLinks.whatsapp_link }),
+        updateSiteSetting('landing_page_settings', landingPageSettings),
+        updateSiteSetting('affiliate_program_settings', affiliateProgramSettings),
+        updateSiteSetting('research_disclaimer_settings', researchDisclaimerSettings),
+      ]);
       setSaveMessage('Settings saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
@@ -6939,7 +7083,7 @@ function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
         </button>
       </div>
       {/* Bank Transfer Details */}
-      {!landingOnly && <div className="p-6 rounded-2xl bg-gradient-to-br from-[rgba(46,209,180,0.1)] to-[rgba(139,92,246,0.1)] border border-[rgba(46,209,180,0.2)]">
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-[rgba(46,209,180,0.1)] to-[rgba(139,92,246,0.1)] border border-[rgba(46,209,180,0.2)]">
         <h3 className="text-lg font-semibold text-[#F4F6FA] mb-4 flex items-center gap-2">
           <CreditCard className="w-5 h-5 text-[#2ED1B4]" />
           Bank Transfer Details
@@ -6991,7 +7135,7 @@ function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
             />
           </div>
         </div>
-      </div>}
+      </div>
 
       {/* Landing Page Control */}
       <div className="p-6 rounded-2xl bg-gradient-to-br from-[rgba(59,130,246,0.1)] to-[rgba(139,92,246,0.1)] border border-[rgba(59,130,246,0.2)]">
@@ -7000,7 +7144,7 @@ function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
           Landing Page Control
         </h3>
         <p className="text-xs text-[#A9B3C7] mb-5">
-          Turn the public storefront on or off. When off, visitors see a coming soon page. Admin login and dashboard stay available so you can turn it back on.
+          Turn the homepage on or off. When off, visitors must log in to access the shop homepage.
         </p>
         <div className="flex items-center justify-between p-4 rounded-xl bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.08)]">
           <div>
@@ -7008,7 +7152,7 @@ function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
             <p className="text-xs text-[#A9B3C7] mt-0.5">
               {landingPageSettings.enabled
                 ? 'Active — homepage is visible to everyone'
-                : 'Disabled — visitors see coming soon'}
+                : 'Disabled — homepage requires customer login'}
             </p>
           </div>
           <button
@@ -7025,8 +7169,6 @@ function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
         </div>
       </div>
 
-      {!landingOnly && (
-      <>
       {/* Shop research disclaimer banner */}
       <div className="p-6 rounded-2xl bg-gradient-to-br from-[rgba(239,68,68,0.1)] to-[rgba(17,24,39,0.6)] border border-[rgba(239,68,68,0.25)]">
         <h3 className="text-lg font-semibold text-[#F4F6FA] mb-1 flex items-center gap-2">
@@ -7404,8 +7546,6 @@ function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
           </p>
         </div>
       </div>
-      </>
-      )}
 
       {/* Save Button */}
       <div className="space-y-3">
@@ -7425,7 +7565,7 @@ function SettingsSection({ access = 'full' }: { access?: 'full' | 'landing' }) {
           className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#2ED1B4] text-white hover:bg-[#25b89d] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 font-semibold transition-all"
         >
           <Save className="w-5 h-5" />
-          {isSaving ? 'Saving...' : landingOnly ? 'Save landing setting' : 'Save All Settings'}
+          {isSaving ? 'Saving...' : 'Save All Settings'}
         </button>
       </div>
 

@@ -13,6 +13,14 @@ verify_jwt = true
 [functions.auspost-validate-address]
 verify_jwt = false
 
+# Cron or admin JWT (function checks x-cron-secret OR admin profile)
+[functions.auspost-sync-delivered]
+verify_jwt = false
+
+# Public Track Order — verifies via track_order RPC then AusPost Track Items
+[functions.auspost-track-public]
+verify_jwt = false
+
 # -----------------------------------------------------------------------------
 # Auth — frictionless signup (no email verification)
 # -----------------------------------------------------------------------------

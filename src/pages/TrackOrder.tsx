@@ -15,6 +15,8 @@ import {
   Loader2,
   ShieldCheck,
   Mail,
+  ExternalLink,
+  MapPin,
 } from 'lucide-react';
 
 import {
@@ -22,11 +24,16 @@ import {
   resolveCurrentStageIndex,
   isCancelled,
   TRACKING_STAGES,
+  fetchAusPostPublicTracking,
   type TrackOrderResult,
+  type AusPostPublicTrackResult,
 } from '@/lib/trackOrder';
 import { sendOrderTrackingUpdate } from '@/lib/email';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
 import { SEO } from '@/components/SEO';
+import { JsonLd } from '@/components/JsonLd';
+import { PAGE_SEO } from '@/lib/seo-constants';
+import { buildBreadcrumbJsonLd } from '@/lib/seo-breadcrumbs';
 
 // Throttle duplicate status emails so re-submits don't spam the customer.
 // Keyed by (order_number, email) and stored in sessionStorage — resets every tab.
@@ -97,6 +104,8 @@ export default function TrackOrder() {
   // - 'failed'   → send attempt returned an error
   const [emailState, setEmailState] = useState<'idle' | 'sending' | 'sent' | 'cooldown' | 'failed'>('idle');
   const [emailSentTo, setEmailSentTo] = useState<string>('');
+  const [ausPostTrack, setAusPostTrack] = useState<AusPostPublicTrackResult | null>(null);
+  const [ausPostLoading, setAusPostLoading] = useState(false);
 
   // Prefill from ?order=XXXX&email=foo@bar.com for deep-linking from email/receipts.
   useEffect(() => {
@@ -114,6 +123,7 @@ export default function TrackOrder() {
     e.preventDefault();
     setError(null);
     setResult(null);
+    setAusPostTrack(null);
     setEmailState('idle');
     setEmailSentTo('');
     setSubmitting(true);
@@ -124,6 +134,20 @@ export default function TrackOrder() {
         return;
       }
       setResult(data);
+
+      // Live AusPost events (same order+email proof as the RPC).
+      if (data?.tracking_number && (data.status || '').toLowerCase() !== 'cancelled') {
+        setAusPostLoading(true);
+        void fetchAusPostPublicTracking(orderInput, emailInput)
+          .then((ap) => setAusPostTrack(ap))
+          .catch(() =>
+            setAusPostTrack({
+              ok: false,
+              error: 'Could not load Australia Post tracking.',
+            }),
+          )
+          .finally(() => setAusPostLoading(false));
+      }
 
       // Fire-and-forget status email — the RPC has already verified that the
       // (order_number, email) pair matches, so we only ever email the legitimate
@@ -179,8 +203,15 @@ export default function TrackOrder() {
   return (
     <>
       <SEO
-        title="Track Your Order | PEPLAB"
-        description="Track your PEPLAB peptide order with your order number and email. Australia-wide AusPost tracking updates."
+        title={PAGE_SEO.trackOrder.title}
+        description={PAGE_SEO.trackOrder.description}
+      />
+      <JsonLd
+        id="track-order-breadcrumbs"
+        data={buildBreadcrumbJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Track Order', path: '/track-order' },
+        ])}
       />
     <div className="min-h-screen" style={{ background: '#070A12' }}>
       <div className="absolute inset-0 grid-overlay opacity-60" />
@@ -356,25 +387,38 @@ export default function TrackOrder() {
                 <Timeline currentStage={currentStage} order={result} />
               )}
 
-              {/* Tracking number */}
+              {/* Tracking number + live AusPost */}
               {result.tracking_number && !cancelled && (
-                <div className="mt-6 p-4 rounded-xl bg-[rgba(46,209,180,0.06)] border border-[rgba(46,209,180,0.2)]">
-                  <div className="flex items-start gap-3">
-                    <Truck className="w-5 h-5 text-[#2ED1B4] flex-shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[#2ED1B4] uppercase tracking-wider mb-1">
-                        Tracking Number
-                      </p>
-                      <p className="text-sm font-mono text-[#F4F6FA] break-all">
-                        {result.tracking_number}
-                      </p>
-                      {result.shipping_method && (
-                        <p className="text-xs text-[#A9B3C7] mt-1">
-                          Shipping via {formatShippingMethod(result.shipping_method)}
+                <div className="mt-6 space-y-4">
+                  <div className="p-4 rounded-xl bg-[rgba(46,209,180,0.06)] border border-[rgba(46,209,180,0.2)]">
+                    <div className="flex items-start gap-3">
+                      <Truck className="w-5 h-5 text-[#2ED1B4] flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-[#2ED1B4] uppercase tracking-wider mb-1">
+                          Tracking Number
                         </p>
-                      )}
+                        <p className="text-sm font-mono text-[#F4F6FA] break-all">
+                          {result.tracking_number}
+                        </p>
+                        {result.shipping_method && (
+                          <p className="text-xs text-[#A9B3C7] mt-1">
+                            Shipping via {formatShippingMethod(result.shipping_method)}
+                          </p>
+                        )}
+                        <a
+                          href={`https://auspost.com.au/mypost/track/details/${encodeURIComponent(result.tracking_number)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#2ED1B4] hover:text-[#F4F6FA] transition-colors"
+                        >
+                          Open on Australia Post
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
                     </div>
                   </div>
+
+                  <AusPostLiveTracking loading={ausPostLoading} track={ausPostTrack} />
                 </div>
               )}
 
@@ -427,6 +471,169 @@ export default function TrackOrder() {
       </main>
     </div>
     </>
+  );
+}
+
+function formatAusPostStatusLabel(status: string | null | undefined): string | null {
+  const raw = (status || '').trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+  if (lower === 'none' || lower === 'unknown' || lower === 'not found') return 'Pending';
+  return raw;
+}
+
+function isAusPostAwaitingDetails(status: string | null | undefined, eventCount: number): boolean {
+  if (eventCount > 0) return false;
+  const lower = (status || '').trim().toLowerCase();
+  return !lower || lower === 'none' || lower === 'pending' || lower === 'unknown' || lower === 'not found';
+}
+
+function AusPostLiveTracking({
+  loading,
+  track,
+}: {
+  loading: boolean;
+  track: AusPostPublicTrackResult | null;
+}) {
+  if (loading) {
+    return (
+      <div className="p-4 rounded-xl bg-[rgba(17,24,39,0.5)] border border-[rgba(244,246,250,0.08)] flex items-center gap-3">
+        <Loader2 className="w-4 h-4 text-[#2ED1B4] animate-spin flex-shrink-0" />
+        <p className="text-sm text-[#A9B3C7]">Loading Australia Post updates…</p>
+      </div>
+    );
+  }
+
+  if (!track) return null;
+
+  if (track.error && !track.parcels?.length) {
+    return (
+      <div className="p-4 rounded-xl bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)]">
+        <p className="text-sm text-[#F4F6FA]">{track.error}</p>
+        {track.auspost_url && (
+          <a
+            href={track.auspost_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#F59E0B] hover:text-[#F4F6FA] transition-colors"
+          >
+            Track on Australia Post
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  if (track.has_tracking === false) {
+    return (
+      <div className="p-4 rounded-xl bg-[rgba(17,24,39,0.5)] border border-[rgba(244,246,250,0.08)]">
+        <p className="text-sm text-[#A9B3C7]">
+          {track.message || 'Australia Post tracking is not available yet for this order.'}
+        </p>
+      </div>
+    );
+  }
+
+  const parcels = track.parcels || [];
+  if (!parcels.length) return null;
+
+  return (
+    <div className="p-4 sm:p-5 rounded-xl bg-[rgba(17,24,39,0.5)] border border-[rgba(244,246,250,0.08)]">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <p className="text-xs font-semibold text-[#A9B3C7] uppercase tracking-wider">
+          Australia Post updates
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        {parcels.map((parcel) => {
+          const statusLabel = formatAusPostStatusLabel(parcel.status);
+          const awaitingDetails = isAusPostAwaitingDetails(
+            parcel.status,
+            parcel.events?.length || 0,
+          );
+
+          return (
+          <div key={parcel.tracking_number}>
+            {parcels.length > 1 && (
+              <p className="text-xs font-mono text-[#2ED1B4] mb-2 break-all">
+                {parcel.tracking_number}
+              </p>
+            )}
+            {statusLabel && (
+              <p className="text-sm font-semibold text-[#F4F6FA] mb-3">{statusLabel}</p>
+            )}
+            {parcel.errors?.length > 0 && !parcel.events?.length && !awaitingDetails && (
+              <p className="text-sm text-[#A9B3C7] mb-2">{parcel.errors.join(' · ')}</p>
+            )}
+            {parcel.events?.length > 0 ? (
+              <ol className="relative space-y-0">
+                {parcel.events.map((ev, idx) => {
+                  const isFirst = idx === 0;
+                  const isLast = idx === parcel.events.length - 1;
+                  return (
+                    <li key={`${ev.date}-${ev.description}-${idx}`} className="relative flex gap-3 pb-4 last:pb-0">
+                      {!isLast && (
+                        <span
+                          aria-hidden
+                          className="absolute left-[7px] top-4 bottom-0 w-px bg-[rgba(244,246,250,0.1)]"
+                        />
+                      )}
+                      <span
+                        className="relative z-10 mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
+                        style={{
+                          background: isFirst ? '#2ED1B4' : 'rgba(169,179,199,0.45)',
+                          boxShadow: isFirst ? '0 0 8px rgba(46,209,180,0.45)' : 'none',
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`text-sm ${isFirst ? 'font-semibold text-[#F4F6FA]' : 'text-[#A9B3C7]'}`}
+                        >
+                          {ev.description}
+                        </p>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[#5A667E]">
+                          {ev.date && <span>{formatDate(ev.date)}</span>}
+                          {ev.location && (
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {ev.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            ) : (
+              awaitingDetails && (
+                <div className="rounded-xl bg-[rgba(46,209,180,0.06)] border border-[rgba(46,209,180,0.18)] p-4">
+                  <p className="text-sm font-semibold text-[#F4F6FA]">
+                    Try checking again in 24 hours
+                  </p>
+                  <p className="mt-1.5 text-sm text-[#A9B3C7] leading-relaxed">
+                    Australia Post hasn’t received the full parcel details from the sender yet.
+                    Tracking updates will appear here once the parcel is scanned into their network.
+                  </p>
+                </div>
+              )
+            )}
+            <a
+              href={parcel.auspost_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#2ED1B4] hover:text-[#F4F6FA] transition-colors"
+            >
+              View on Australia Post
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

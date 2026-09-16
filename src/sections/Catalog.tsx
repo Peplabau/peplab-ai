@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
-import { Search, Truck, Gift, Beaker, Award, TrendingUp, MessageCircle } from 'lucide-react';
+import { Search, Truck, Gift, Tag, Award, MessageCircle } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
@@ -20,6 +20,94 @@ const cachedCatalogSales = getCache<Record<string, number>>('products:homepage-s
 
 /** Catalog-only community invite with admin approval (not the site-wide support Telegram setting). */
 const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
+
+/** Pumpkin mark for the Halloween Treat banner and the drifting promo pumpkin. */
+function HalloweenPumpkinIcon({ className }: { className?: string }) {
+  // Gradient/filter ids must stay unique — the icon renders several times per page.
+  const uid = useId().replace(/:/g, '');
+  const bodyId = `pk-body-${uid}`;
+  const stemId = `pk-stem-${uid}`;
+  const faceId = `pk-face-${uid}`;
+  const glowId = `pk-glow-${uid}`;
+  const carveId = `pk-carve-${uid}`;
+
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      className={className}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id={bodyId} cx="38%" cy="26%" r="80%">
+          <stop offset="0%" stopColor="#FDBA74" />
+          <stop offset="45%" stopColor="#F97316" />
+          <stop offset="100%" stopColor="#B03C06" />
+        </radialGradient>
+        <linearGradient id={stemId} x1="29" y1="9" x2="35" y2="22" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#86EFAC" />
+          <stop offset="100%" stopColor="#15803D" />
+        </linearGradient>
+        <radialGradient id={faceId} cx="50%" cy="42%" r="62%">
+          <stop offset="0%" stopColor="#FEF9C3" />
+          <stop offset="100%" stopColor="#FACC15" />
+        </radialGradient>
+        <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="1.8" />
+        </filter>
+        <g id={carveId}>
+          <path d="M19.5 29.5 27 30.5 22.8 37.5Z" />
+          <path d="M44.5 29.5 37 30.5 41.2 37.5Z" />
+          <path d="M32 33.5 34.8 38.2 29.2 38.2Z" />
+          <path d="M20.5 41.5c1.3-.3 2.6-.2 3.9.2l1.1 2.6 2.5-2.2c2.7-.3 5.3-.3 8 0l2.5 2.2 1.1-2.6c1.3-.4 2.6-.5 3.9-.2-2.4 6.4-7 9.6-11.5 9.6s-9.1-3.2-11.5-9.6Z" />
+        </g>
+      </defs>
+
+      <path
+        d="M29.6 21.4c-.8-4.1.2-8.3 2.6-10.7 1.5 1 2.3 2.7 2.3 4.7 0 2.2-.6 4.2-.6 6.2Z"
+        fill={`url(#${stemId})`}
+      />
+      <path
+        d="M31.7 11.6c-.6 3-.8 6.3-.6 9.3"
+        stroke="#14532D"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
+
+      <ellipse cx="32" cy="39" rx="24" ry="19.5" fill={`url(#${bodyId})`} />
+      <ellipse cx="19.5" cy="39" rx="8" ry="17.5" fill="#EA580C" opacity="0.28" />
+      <ellipse cx="44.5" cy="39" rx="8" ry="17.5" fill="#FDBA74" opacity="0.18" />
+      <path
+        d="M21.5 22.6C17.6 27.6 16 33.1 16 39c0 5.7 1.5 11 5 15.9"
+        stroke="#B03C06"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+      <path
+        d="M42.5 22.6C46.4 27.6 48 33.1 48 39c0 5.7-1.5 11-5 15.9"
+        stroke="#B03C06"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+      <ellipse
+        cx="23"
+        cy="28"
+        rx="6.5"
+        ry="3.8"
+        fill="#FFFFFF"
+        opacity="0.22"
+        transform="rotate(-22 23 28)"
+      />
+
+      <use href={`#${carveId}`} fill="#FDE047" opacity="0.9" filter={`url(#${glowId})`} />
+      <use href={`#${carveId}`} fill={`url(#${faceId})`} />
+    </svg>
+  );
+}
 
 export default function Catalog() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -157,9 +245,8 @@ export default function Catalog() {
   const otherCategories = filteredProducts.filter(
     (p) => !['best-seller', 'high-popularity', 'popular', 'essentials'].includes(p.category)
   );
-  const peptideCount = products.filter(
-    (p) => p.category !== 'essentials' && p.type !== 'essentials',
-  ).length;
+  /** Marketing headline count (client: show 60+, not live catalogue total). */
+  const shopPeptideHeadlineCount = 60;
 
   const renderProductCard = (product: Product) => {
     const priority = cardRenderIndex.current < 6;
@@ -185,66 +272,86 @@ export default function Catalog() {
       className="relative z-60 pt-16 sm:pt-20 lg:pt-24 pb-16 lg:pb-24"
     >
       <div className="relative z-10 px-4 sm:px-6 lg:px-12">
-        {/* Promotional Banner - Compact on mobile */}
-        <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
-          <div className="grid grid-cols-3 gap-1 sm:gap-4">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-              <div className="p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
-                <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#2ED1B4]" />
+        {/* Promo chips + Rewards / Halloween Treat strip */}
+        <div className="catalog-halloween-strip mb-3 sm:mb-4">
+          {/* Drift pumpkin — rotates across the strip like the old promo animation */}
+          <div className="catalog-halloween-pumpkin" aria-hidden="true">
+            <HalloweenPumpkinIcon className="w-full h-full" />
+          </div>
+
+          {/* Promotional Banner - Compact on mobile */}
+          <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
+            <div className="grid grid-cols-3 gap-1 sm:gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
+                  <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#2ED1B4]" />
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Free Shipping</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Over $250</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Free Shipping</p>
-                <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Over $250</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-full bg-[#2a2050] flex-shrink-0">
+                  <Gift className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#8B5CF6]" />
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Special Offer</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">$300 = Free BAC</p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
+                <div className="p-1.5 sm:p-2 rounded-full bg-[#3d1a30] flex-shrink-0">
+                  <Tag className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#EC4899]" />
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">PRICE MATCH</p>
+                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Find it cheaper? We&apos;ll match it.</p>
+                </div>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-              <div className="p-1.5 sm:p-2 rounded-full bg-[#2a2050] flex-shrink-0">
-                <Gift className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#8B5CF6]" />
+          </div>
+
+          {/* Rewards + Halloween Treat (side-by-side like promo screen) */}
+          <div className="catalog-halloween-promo grid grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] sm:grid-cols-2 overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.35)] bg-gradient-to-r from-[#16122a] via-[#12101f] to-[#1a1220] shadow-[0_0_24px_rgba(139,92,246,0.18)]">
+            <Link
+              to="/dashboard#rewards"
+              className="relative z-10 flex items-center gap-2 sm:gap-3 p-2.5 sm:p-4 hover:bg-[rgba(139,92,246,0.08)] transition-colors"
+            >
+              <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#6366F1] shrink-0">
+                <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white" />
               </div>
-              <div>
-                <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Special Offer</p>
-                <p className="text-[8px] sm:text-xs text-[#A9B3C7]">$300 = Free BAC</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-base font-semibold text-[#F4F6FA] leading-tight whitespace-nowrap">
+                  PEPLAB Rewards
+                </p>
+                <p className="text-[9px] sm:text-xs text-[#C4B5FD] leading-snug mt-0.5">1pt/$1</p>
+                <p className="text-[9px] sm:text-xs text-[#A9B3C7] leading-snug">Redeem $150+</p>
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-              <div className="p-1.5 sm:p-2 rounded-full bg-[#3d1a30] flex-shrink-0">
-                <Beaker className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#EC4899]" />
+            </Link>
+
+            <div
+              className="catalog-halloween-treat relative overflow-hidden px-2 py-2.5 sm:px-4 sm:py-4"
+              role="region"
+              aria-label="Halloween Treat — Free BAC Water on all orders"
+            >
+              <div className="catalog-halloween-web" aria-hidden="true" />
+              <div className="catalog-halloween-jacks" aria-hidden="true">
+                <span className="catalog-halloween-jack catalog-halloween-jack--a">
+                  <HalloweenPumpkinIcon className="w-full h-full" />
+                </span>
+                <span className="catalog-halloween-jack catalog-halloween-jack--b">
+                  <HalloweenPumpkinIcon className="w-full h-full" />
+                </span>
               </div>
-              <div>
-                <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">HPLC-Verified</p>
-                <p className="text-[8px] sm:text-xs text-[#A9B3C7]">≥99% Pure</p>
+              <div className="catalog-halloween-copy">
+                <p className="catalog-halloween-title">HALLOWEEN TREAT</p>
+                <p className="catalog-halloween-offer">FREE BAC WATER</p>
+                <p className="catalog-halloween-note">ON ALL ORDERS</p>
               </div>
             </div>
           </div>
         </div>
-
-        {/* PEPLAB Rewards Banner - Compact on mobile */}
-        <Link
-          to="/dashboard#rewards"
-          className="block mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#1b1634] to-[#0d282a] border border-[rgba(139,92,246,0.3)] hover:border-[rgba(139,92,246,0.5)] transition-colors"
-        >
-          <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#2ED1B4]">
-                <Award className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm sm:text-lg font-semibold text-[#F4F6FA]">PEPLAB Rewards</p>
-                <p className="hidden sm:block text-sm text-[#A9B3C7]">Earn points with every purchase and redeem for discounts</p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-6 text-[10px] sm:text-sm">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[#22C55E]" />
-                <span className="text-[#A9B3C7]">1pt/$1</span>
-              </div>
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-[#8B5CF6]" />
-                <span className="text-[#A9B3C7]">Redeem $150+</span>
-              </div>
-            </div>
-          </div>
-        </Link>
 
         {/* Support chips — forced single row on mobile (no wrap); abbreviated labels below sm */}
         <div className="flex flex-nowrap items-stretch gap-2 sm:gap-3 mb-4 sm:mb-6 w-full">
@@ -279,13 +386,11 @@ export default function Catalog() {
 
         {/* Header */}
         <div ref={headerRef} className="mb-8">
-          <h2 className="mb-4 text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA]">
+          <h1 className="mb-4 text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA]">
             Shop{' '}
-            {peptideCount > 0 && (
-              <span className="tabular-nums">{peptideCount}+</span>
-            )}{' '}
+            <span className="tabular-nums">{shopPeptideHeadlineCount}+</span>{' '}
             <span className="gradient-text">peptides</span>
-          </h2>
+          </h1>
 
           {/* Search */}
           <div className="relative max-w-md">

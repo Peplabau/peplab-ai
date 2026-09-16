@@ -88,6 +88,11 @@
         document.title = 'PEPLAB | Sign in';
         var robots = document.querySelector('meta[name="robots"]');
         if (robots) robots.setAttribute('content', 'noindex, nofollow');
+        var chromeOg = location.origin + '/chrome-seo.jpeg';
+        var ogImage = document.querySelector('meta[property="og:image"]');
+        if (ogImage) ogImage.setAttribute('content', chromeOg);
+        var twImage = document.querySelector('meta[name="twitter:image"]');
+        if (twImage) twImage.setAttribute('content', chromeOg);
       })();
     </script>
     <meta name="description" content="Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only." />

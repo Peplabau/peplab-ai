@@ -152,11 +152,14 @@ export function applyLoginGatewayDocumentBranding(): void {
 
   setMeta('meta[name="description"]', LOGIN_GATEWAY_META_DESCRIPTION);
   setMeta('meta[name="robots"]', 'noindex, nofollow');
+  const chromeOg = `${window.location.origin}${CONFIG.SHARE_PREVIEW_IMAGE_PATH}`;
   setMeta('meta[property="og:title"]', LOGIN_GATEWAY_PAGE_TITLE);
   setMeta('meta[property="og:description"]', LOGIN_GATEWAY_META_DESCRIPTION);
+  setMeta('meta[property="og:image"]', chromeOg);
   setMeta('meta[property="og:site_name"]', 'PEPLAB');
   setMeta('meta[name="twitter:title"]', LOGIN_GATEWAY_PAGE_TITLE);
   setMeta('meta[name="twitter:description"]', LOGIN_GATEWAY_META_DESCRIPTION);
+  setMeta('meta[name="twitter:image"]', chromeOg);
 
   const eyebrow = document.getElementById('app-loading-eyebrow');
   if (eyebrow) eyebrow.textContent = LOGIN_GATEWAY_LOADING_EYEBROW;

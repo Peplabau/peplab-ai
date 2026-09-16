@@ -861,6 +861,9 @@ export interface OrderFromDB {
   total: number;
   status: string;
   created_at: string;
+  /** Points + promo discounts applied at checkout (AUD). */
+  discount_amount?: number | null;
+  affiliate_discount?: number | null;
 }
 
 export const createOrder = async (orderData: Partial<OrderFromDB>): Promise<string | null> => {
@@ -1441,6 +1444,45 @@ export const invokeSyncTrustpilot = async (): Promise<{
     stats?: TrustpilotStatsRow;
     warning?: string | null;
     debug?: { rawItemCount?: number; sampleKeys?: unknown; runId?: string | null };
+    error?: string;
+  };
+};
+
+/** Poll AusPost Track Items and mark shipped orders as delivered when AusPost says so. */
+export const invokeAusPostSyncDelivered = async (opts?: {
+  sendReviewEmails?: boolean;
+}): Promise<{
+  ok?: boolean;
+  checked?: number;
+  tracking_ids_queried?: number;
+  delivered?: number;
+  delivered_orders?: string[];
+  review_emails_sent?: number;
+  review_email_failed?: number;
+  track_errors?: string[];
+  message?: string;
+  error?: string;
+}> => {
+  const { data, error } = await supabase.functions.invoke('auspost-sync-delivered', {
+    body: { send_review_emails: opts?.sendReviewEmails !== false },
+  });
+  if (error) {
+    const message =
+      (data as { error?: string } | null)?.error ||
+      error.message ||
+      'AusPost delivery sync failed';
+    return { error: message };
+  }
+  return (data || {}) as {
+    ok?: boolean;
+    checked?: number;
+    tracking_ids_queried?: number;
+    delivered?: number;
+    delivered_orders?: string[];
+    review_emails_sent?: number;
+    review_email_failed?: number;
+    track_errors?: string[];
+    message?: string;
     error?: string;
   };
 };

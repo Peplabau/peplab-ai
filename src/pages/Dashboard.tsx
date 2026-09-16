@@ -16,8 +16,7 @@ import {
   BONUS_POINTS,
 } from '@/context/RewardsContext';
 import { supabase, signOut, getCurrentUser } from '@/lib/supabase';
-import { getUserOrders, getUserReviews, createReview, uploadReviewImage, getProductUuidBySlug, getUserReviewCount, type OrderFromDB, type UserReview } from '@/lib/supabase-db';
-import { getAdminAccess } from '@/lib/admin-access';
+import { getUserOrders, getUserReviews, createReview, uploadReviewImage, getProductUuidBySlug, getUserReviewCount, checkIsAdmin, type OrderFromDB, type UserReview } from '@/lib/supabase-db';
 import { useAffiliate } from '@/context/AffiliateContext';
 import { createOrUpdatePromoterForUser } from '@/lib/affiliates';
 import { invalidateCache } from '@/lib/cache';
@@ -87,8 +86,7 @@ export default function Dashboard() {
       navigate('/login?redirect=/dashboard');
       return;
     }
-    const access = await getAdminAccess(currentUser.id);
-    const admin = access === 'full' || access === 'landing';
+    const admin = await checkIsAdmin(currentUser.id);
     setIsAdminUser(admin);
     if (admin) localStorage.setItem('peplab_is_admin', 'true');
     else localStorage.removeItem('peplab_is_admin');
@@ -373,8 +371,13 @@ export default function Dashboard() {
   // Only count orders that are paid/shipped for dashboard stats
   const paidOrders = orders.filter((o) => orderUnlocksTrustpilot(o));
   const trustpilotUnlocked = paidOrders.length > 0;
-  const totalSpent = paidOrders.reduce((sum, o) => sum + Number(o.total ?? 0), 0);
   const paidOrderCount = paidOrders.length;
+  const totalSaved = paidOrders.reduce((sum, o) => {
+    const discount = Number(o.discount_amount ?? 0);
+    // Prefer discount_amount (points + promo). Fall back to affiliate-only if present alone.
+    if (discount > 0) return sum + discount;
+    return sum + Number(o.affiliate_discount ?? 0);
+  }, 0);
 
   // Points history comes directly from the database (new user_points event table).
   // No client-side computation needed — balance = SUM from DB via RewardsContext.
@@ -589,20 +592,15 @@ export default function Dashboard() {
             <p className="text-[#A9B3C7]">Member since {joinDate}</p>
           </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-4 mb-5 lg:mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4 mb-5 lg:mb-8">
             <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
               <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-[#2ED1B4] mb-1.5 sm:mb-2" />
               <p className="text-lg sm:text-2xl font-bold text-[#F4F6FA]">{paidOrderCount}</p>
               <p className="text-[10px] sm:text-xs text-[#A9B3C7]">Orders</p>
             </div>
-            <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
-              <History className="w-5 h-5 sm:w-6 sm:h-6 text-[#8B5CF6] mb-1.5 sm:mb-2" />
-              <p className="text-lg sm:text-2xl font-bold text-[#F4F6FA]">${totalSpent.toFixed(0)}</p>
-              <p className="text-[10px] sm:text-xs text-[#A9B3C7]">Spent</p>
-            </div>
             <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[rgba(34,197,94,0.1)] border border-[rgba(34,197,94,0.2)]">
               <Tag className="w-5 h-5 sm:w-6 sm:h-6 text-[#22C55E] mb-1.5 sm:mb-2" />
-              <p className="text-lg sm:text-2xl font-bold text-[#22C55E]">$0</p>
+              <p className="text-lg sm:text-2xl font-bold text-[#22C55E]">${totalSaved.toFixed(0)}</p>
               <p className="text-[10px] sm:text-xs text-[#22C55E]">Saved</p>
             </div>
             {REVIEWS_ENABLED && (
