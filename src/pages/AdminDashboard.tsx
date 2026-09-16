@@ -19,6 +19,7 @@ import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-r
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
 import TrustpilotAdminSection from '@/components/admin/TrustpilotAdminSection';
 import OrderTimingSection from '@/components/admin/OrderTimingSection';
+import EmailCampaignPromoToggle from '@/components/admin/EmailCampaignPromoToggle';
 import ResearchMarquee from '@/components/ResearchMarquee';
 import { DEFAULT_MORE_INFO_TEXT } from '@/lib/defaultMoreInfo';
 import { BONUS_POINTS } from '@/context/RewardsContext';
@@ -6555,6 +6556,8 @@ function PromoCodesSection() {
         Create checkout discount codes with a custom percentage. One-time codes are random 8-character codes that deactivate after a single use.
         Customers enter them at checkout like any other promo code.
       </p>
+
+      <EmailCampaignPromoToggle codes={codes} onChanged={loadCodes} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="p-6 rounded-2xl bg-[rgba(17,24,39,0.6)] border border-[rgba(139,92,246,0.25)] space-y-4">
