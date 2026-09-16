@@ -224,7 +224,7 @@ export function promoCodeTypeLabel(row: PromoCode): string {
 }
 
 /** Shared 50% email-campaign code. One row in promo_codes; all storefronts read the same backend. */
-export const EMAIL_CAMPAIGN_PROMO_CODE = 'SALE50';
+export const EMAIL_CAMPAIGN_PROMO_CODE = 'PEP50';
 export const EMAIL_CAMPAIGN_DISCOUNT_PERCENT = 50;
 export const EMAIL_CAMPAIGN_LABEL = '50% off email campaign';
 
