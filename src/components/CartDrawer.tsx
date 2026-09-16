@@ -182,7 +182,7 @@ export default function CartDrawer() {
             <div className="flex items-center gap-1.5">
               <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-[#8B5CF6]" />
               <span className="text-[10px] sm:text-xs text-[#8B5CF6] font-medium">
-                Free BAC Water 10mL added!
+                Halloween Special — Free BAC Water added!
               </span>
             </div>
           </div>

@@ -134,3 +134,66 @@ export function resolveCurrentStageIndex(order: TrackOrderResult): number {
 export function isCancelled(order: TrackOrderResult): boolean {
   return (order.status || '').toLowerCase() === 'cancelled';
 }
+
+export type AusPostTrackEvent = {
+  description: string;
+  date: string | null;
+  location: string | null;
+};
+
+export type AusPostParcelTracking = {
+  tracking_number: string;
+  status: string | null;
+  events: AusPostTrackEvent[];
+  errors: string[];
+  auspost_url: string;
+};
+
+export type AusPostPublicTrackResult = {
+  ok?: boolean;
+  has_tracking?: boolean;
+  order_number?: string;
+  order_status?: string | null;
+  status?: string | null;
+  message?: string;
+  parcels?: AusPostParcelTracking[];
+  tracking_numbers?: string[];
+  auspost_url?: string;
+  error?: string;
+};
+
+/**
+ * Live Australia Post events for a verified (order_number, email) pair.
+ * Edge Function re-checks ownership via `track_order` before calling AusPost.
+ */
+export async function fetchAusPostPublicTracking(
+  orderNumber: string,
+  email: string,
+): Promise<AusPostPublicTrackResult> {
+  const normalized = normalizeOrderNumberInput(orderNumber);
+  const cleanEmail = (email || '').trim().toLowerCase();
+  if (!normalized || !cleanEmail) {
+    return { ok: false, error: 'Missing order number or email.' };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke('auspost-track-public', {
+      body: { order_number: normalized, email: cleanEmail },
+    });
+    if (error) {
+      const message =
+        (data as { error?: string } | null)?.error ||
+        error.message ||
+        'Could not load Australia Post tracking.';
+      return { ok: false, error: message };
+    }
+    return (data || {}) as AusPostPublicTrackResult;
+  } catch (err) {
+    console.error('[trackOrder] AusPost public track failed:', err);
+    return {
+      ok: false,
+      error: 'Could not load Australia Post tracking. Please try again.',
+    };
+  }
+}
+
