@@ -315,40 +315,56 @@ export default function Catalog() {
             </div>
           </div>
 
-          {/* Rewards level bar + Halloween Treat */}
-          <div className="catalog-halloween-promo grid grid-cols-2 overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.4)] bg-[#0c0a14] shadow-[0_0_24px_rgba(139,92,246,0.18)]">
+          {/* Rewards level bar + Halloween Treat — bar spans full card width */}
+          <div className="catalog-halloween-promo relative overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.4)] bg-[#0c0a14] shadow-[0_0_24px_rgba(139,92,246,0.18)]">
+            <div className="catalog-halloween-jacks" aria-hidden="true">
+              <span className="catalog-halloween-jack catalog-halloween-jack--a">
+                <HalloweenPumpkinIcon className="w-full h-full" />
+              </span>
+              <span className="catalog-halloween-jack catalog-halloween-jack--b">
+                <HalloweenPumpkinIcon className="w-full h-full" />
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 items-start">
+              <Link
+                to={isLoggedIn ? '/dashboard#rewards' : '/login?redirect=/dashboard'}
+                className="relative z-10 px-3 pt-3 sm:px-5 sm:pt-4 hover:bg-[rgba(139,92,246,0.06)] transition-colors"
+              >
+                <p className="font-bold text-white leading-tight tracking-tight text-[11px] sm:text-base">
+                  PEPLAB Rewards
+                </p>
+                <p className="leading-snug text-[#C8CDD8] text-[8px] sm:text-[11px] mt-0.5">
+                  Unlock cashback &amp; discounts
+                </p>
+              </Link>
+
+              <div
+                className="catalog-halloween-treat relative overflow-hidden px-2 pt-2.5 pb-0 sm:px-4 sm:pt-4"
+                role="region"
+                aria-label="Halloween Treat — Free BAC Water on all orders"
+              >
+                <div className="catalog-halloween-web" aria-hidden="true" />
+                <div className="catalog-halloween-copy">
+                  <p className="catalog-halloween-title">HALLOWEEN TREAT</p>
+                  <p className="catalog-halloween-offer">FREE BAC WATER</p>
+                  <p className="catalog-halloween-note">ON ALL ORDERS</p>
+                </div>
+              </div>
+            </div>
+
             <Link
               to={isLoggedIn ? '/dashboard#rewards' : '/login?redirect=/dashboard'}
-              className="relative z-10 flex items-center px-3 py-3 sm:px-5 sm:py-4 hover:bg-[rgba(139,92,246,0.06)] transition-colors"
+              className="relative z-10 block px-3 pb-3 pt-1 pr-10 sm:px-5 sm:pb-4 sm:pr-14 hover:bg-[rgba(139,92,246,0.04)] transition-colors"
             >
               <LoyaltyProgressBar
                 compact
+                hideTitle
                 loggedIn={isLoggedIn}
                 lifetimeSpend={lifetimeSpend}
                 className="w-full"
               />
             </Link>
-
-            <div
-              className="catalog-halloween-treat relative overflow-hidden px-2 py-2.5 sm:px-4 sm:py-4"
-              role="region"
-              aria-label="Halloween Treat — Free BAC Water on all orders"
-            >
-              <div className="catalog-halloween-web" aria-hidden="true" />
-              <div className="catalog-halloween-jacks" aria-hidden="true">
-                <span className="catalog-halloween-jack catalog-halloween-jack--a">
-                  <HalloweenPumpkinIcon className="w-full h-full" />
-                </span>
-                <span className="catalog-halloween-jack catalog-halloween-jack--b">
-                  <HalloweenPumpkinIcon className="w-full h-full" />
-                </span>
-              </div>
-              <div className="catalog-halloween-copy">
-                <p className="catalog-halloween-title">HALLOWEEN TREAT</p>
-                <p className="catalog-halloween-offer">FREE BAC WATER</p>
-                <p className="catalog-halloween-note">ON ALL ORDERS</p>
-              </div>
-            </div>
           </div>
         </div>
 
