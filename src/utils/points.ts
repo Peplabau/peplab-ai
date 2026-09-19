@@ -25,18 +25,26 @@ export const DISCOUNT_PROMO_PURCHASE_POINTS_DEDUCTION = 100;
 
 export type CalculatePurchasePointsOptions = {
   promoDiscountApplied?: boolean;
+  /**
+   * Loyalty cashback % (5–10). Scales the earn rate so 5% = 1 pt/$1,
+   * 6% = 1.2 pt/$1, …, 10% = 2 pt/$1. Defaults to base Member rate (5%).
+   */
+  cashbackPercent?: number;
 };
 
 /**
  * Calculate how many purchase points to award for a given order total.
- * 1 point per $1 spent on subtotal, rounded down.
+ * Base Member rate is 1 point per $1 (5% cashback). Higher loyalty tiers
+ * earn more points per dollar so effective cashback matches the tier %.
  * Optional penalty when a discount promo (referral) code was applied.
  */
 export function calculatePurchasePoints(
   orderTotal: number,
   options?: CalculatePurchasePointsOptions,
 ): number {
-  const base = Math.floor(orderTotal * POINTS_PER_DOLLAR);
+  const cashbackPercent = options?.cashbackPercent ?? 5;
+  const rate = (Number(cashbackPercent) || 5) / 5;
+  const base = Math.floor(orderTotal * POINTS_PER_DOLLAR * rate);
   if (options?.promoDiscountApplied) {
     return Math.max(0, base - DISCOUNT_PROMO_PURCHASE_POINTS_DEDUCTION);
   }

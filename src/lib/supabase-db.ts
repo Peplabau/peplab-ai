@@ -458,6 +458,57 @@ export const getEarnedTransactionsCount = async (userId: string): Promise<number
 };
 
 /**
+ * Lifetime purchase spend in AUD for loyalty leveling.
+ * Prefers paid/shipped order subtotals so earn-rate changes never inflate the level.
+ * Falls back to SUM of `purchase` point events (historically 1 pt ≈ $1).
+ *
+ * Pass `excludeOrderId` when awarding points for an order that is already
+ * marked paid/shipped so that order does not count toward its own tier.
+ */
+export const getLifetimePurchaseSpend = async (
+  userId: string,
+  opts?: { excludeOrderId?: string },
+): Promise<number> => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, subtotal, payment_status, status')
+      .eq('user_id', userId);
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      const qualifying = data.filter((o) => {
+        if (opts?.excludeOrderId && o.id === opts.excludeOrderId) return false;
+        const status = String(o.status || '').toLowerCase();
+        const payment = String(o.payment_status || '').toLowerCase();
+        if (payment === 'confirmed') return true;
+        return ['shipped', 'delivered', 'processing', 'finalised', 'finalized'].includes(status);
+      });
+      if (qualifying.length > 0) {
+        return qualifying.reduce((sum, o) => sum + (Number(o.subtotal) || 0), 0);
+      }
+    }
+
+    // Fallback: purchase-point ledger (1 pt ≈ $1 for historical awards).
+    const { data: events, error: ptsErr } = await supabase
+      .from('user_points')
+      .select('points, order_id')
+      .eq('user_id', userId)
+      .eq('type', 'purchase');
+
+    if (ptsErr) {
+      console.error('Error getting lifetime purchase spend:', ptsErr);
+      return 0;
+    }
+    return (events || [])
+      .filter((e) => !opts?.excludeOrderId || e.order_id !== opts.excludeOrderId)
+      .reduce((sum, e) => sum + (Number(e.points) || 0), 0);
+  } catch (error) {
+    console.error('Error getting lifetime purchase spend:', error);
+    return 0;
+  }
+};
+
+/**
  * Check if purchase points were already awarded for a specific order.
  * Prevents double-awarding when both "Mark Paid" and "Add Tracking" are triggered.
  */

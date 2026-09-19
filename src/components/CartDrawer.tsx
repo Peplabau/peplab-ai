@@ -7,6 +7,8 @@ import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS } from '@/lib/settings';
 import { getMarketingBundleOffLabel, getStorefrontPrice, productExcludesVolumeBundle } from '@/utils/pricing';
 import { getOptimizedProductImageUrl } from '@/lib/product-image';
 import { CONFIG } from '@/lib/config';
+import { useRewards } from '@/context/RewardsContext';
+import { calculatePurchasePoints } from '@/utils/points';
 
 export default function CartDrawer() {
   const {
@@ -19,6 +21,7 @@ export default function CartDrawer() {
     setIsCartOpen,
     freeGiftAdded,
   } = useCart();
+  const { loyaltyTier, isLoggedIn } = useRewards();
 
   const [showSydneyOption, setShowSydneyOption] = useState(false);
 
@@ -45,8 +48,10 @@ export default function CartDrawer() {
   const paidItems = items.filter(item => !item.isFree);
   const paidTotal = paidItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
-  // Calculate points to be earned (1 point per $1 on subtotal)
-  const pointsToEarn = Math.floor(paidTotal);
+  // Points estimate at the member's loyalty cashback rate (guests = 5%).
+  const pointsToEarn = calculatePurchasePoints(paidTotal, {
+    cashbackPercent: isLoggedIn ? loyaltyTier.cashbackPercent : 5,
+  });
   
   // Calculate total savings using originalPrice stored on each CartItem
   const totalSavings = paidItems.reduce((sum, item) => {
@@ -182,7 +187,7 @@ export default function CartDrawer() {
             <div className="flex items-center gap-1.5">
               <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-[#8B5CF6]" />
               <span className="text-[10px] sm:text-xs text-[#8B5CF6] font-medium">
-                Free BAC Water 10mL added!
+                Halloween Special — Free BAC Water added!
               </span>
             </div>
           </div>

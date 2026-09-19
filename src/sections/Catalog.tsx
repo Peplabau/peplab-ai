@@ -2,8 +2,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
-import { Search, Truck, Gift, Tag, Award, MessageCircle } from 'lucide-react';
+import { Search, Truck, Gift, Tag, MessageCircle } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
+import LoyaltyProgressBar from '@/components/LoyaltyProgressBar';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
 import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS, type DiscountSettings } from '@/lib/settings';
@@ -12,6 +13,7 @@ import { preloadProductImages } from '@/lib/product-image';
 import type { Product } from '@/products';
 import { Skeleton } from '@/components/ui/skeleton';
 import ResearchMarquee from '@/components/ResearchMarquee';
+import { useRewards } from '@/context/RewardsContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -115,6 +117,7 @@ export default function Catalog() {
   const gridRef = useRef<HTMLDivElement>(null);
   const cardRenderIndex = useRef(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const { lifetimeSpend, isLoggedIn } = useRewards();
   const initialProducts = rankCatalogBySales(cachedCatalogProducts ?? [], cachedCatalogSales ?? {});
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(initialProducts.length === 0);
@@ -312,22 +315,18 @@ export default function Catalog() {
             </div>
           </div>
 
-          {/* Rewards + Halloween Treat (side-by-side like promo screen) */}
-          <div className="catalog-halloween-promo grid grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)] sm:grid-cols-2 overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.35)] bg-gradient-to-r from-[#16122a] via-[#12101f] to-[#1a1220] shadow-[0_0_24px_rgba(139,92,246,0.18)]">
+          {/* Rewards level bar + Halloween Treat */}
+          <div className="catalog-halloween-promo grid grid-cols-2 overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.4)] bg-[#0c0a14] shadow-[0_0_24px_rgba(139,92,246,0.18)]">
             <Link
-              to="/dashboard#rewards"
-              className="relative z-10 flex items-center gap-2 sm:gap-3 p-2.5 sm:p-4 hover:bg-[rgba(139,92,246,0.08)] transition-colors"
+              to={isLoggedIn ? '/dashboard#rewards' : '/login?redirect=/dashboard'}
+              className="relative z-10 flex items-center px-3 py-3 sm:px-5 sm:py-4 hover:bg-[rgba(139,92,246,0.06)] transition-colors"
             >
-              <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#6366F1] shrink-0">
-                <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] sm:text-base font-semibold text-[#F4F6FA] leading-tight whitespace-nowrap">
-                  PEPLAB Rewards
-                </p>
-                <p className="text-[9px] sm:text-xs text-[#C4B5FD] leading-snug mt-0.5">1pt/$1</p>
-                <p className="text-[9px] sm:text-xs text-[#A9B3C7] leading-snug">Redeem $150+</p>
-              </div>
+              <LoyaltyProgressBar
+                compact
+                loggedIn={isLoggedIn}
+                lifetimeSpend={lifetimeSpend}
+                className="w-full"
+              />
             </Link>
 
             <div

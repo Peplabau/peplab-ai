@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cached, invalidateCache, setCache, TTL_ADMIN_OVERVIEW, TTL_ADMIN_ORDERS, TTL_ADMIN_PRODUCTS } from '@/lib/cache';
 import { CONFIG } from '@/lib/config';
 import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS } from '@/lib/settings';
-import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, invokeAusPostSyncDelivered, type PointsEvent } from '@/lib/supabase-db';
+import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, getLifetimePurchaseSpend, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, invokeAusPostSyncDelivered, type PointsEvent } from '@/lib/supabase-db';
 import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-reward';
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
 import TrustpilotAdminSection from '@/components/admin/TrustpilotAdminSection';
@@ -25,6 +25,7 @@ import { DEFAULT_MORE_INFO_TEXT } from '@/lib/defaultMoreInfo';
 import { BONUS_POINTS } from '@/context/RewardsContext';
 import { getBundlePricing, getEffectiveListDiscountPercent, getStackedBundleUnitPrice } from '@/utils/pricing';
 import { calculatePurchasePoints, POINT_TYPE_LABELS } from '@/utils/points';
+import { getLoyaltyTier } from '@/utils/loyalty';
 import {
   getAllPromoters, createPromoter, updatePromoter, deletePromoter,
   getAllAffiliateOrders, getAffiliateOrderByOrderId, adjustStoreCredit, creditAffiliateCommission,
@@ -53,6 +54,22 @@ import {
   preferAdminDisplayName,
   type WeeklyRevenueRow,
 } from '@/lib/admin-analytics';
+
+/** Award purchase points at the buyer's current loyalty cashback rate. */
+async function loyaltyPurchasePoints(
+  userId: string,
+  subtotal: number,
+  opts: { promoDiscountApplied?: boolean; excludeOrderId?: string },
+): Promise<number> {
+  const spendBefore = await getLifetimePurchaseSpend(userId, {
+    excludeOrderId: opts.excludeOrderId,
+  });
+  const tier = getLoyaltyTier(spendBefore);
+  return calculatePurchasePoints(subtotal, {
+    promoDiscountApplied: opts.promoDiscountApplied,
+    cashbackPercent: tier.cashbackPercent,
+  });
+}
 
 // Types
 interface Order {
@@ -2153,8 +2170,9 @@ function OrdersSection() {
         try {
           const alreadyAwarded = await getOrderPointsAwarded(order.id);
           if (!alreadyAwarded && order.user_id && order.subtotal > 0) {
-            const points = calculatePurchasePoints(order.subtotal, {
+            const points = await loyaltyPurchasePoints(order.user_id, order.subtotal, {
               promoDiscountApplied: Number(order.affiliate_discount) > 0,
+              excludeOrderId: order.id,
             });
             const earnedCountBefore = await getEarnedTransactionsCount(order.user_id);
             await addUserPoints(
@@ -2355,8 +2373,9 @@ function OrdersSection() {
             if (!alreadyAwarded) {
               const earnedCountBefore = await getEarnedTransactionsCount(order.user_id);
               const promoDiscountApplied = Number(order.affiliate_discount) > 0;
-              const subtotalPts = calculatePurchasePoints(Number(order.subtotal), {
+              const subtotalPts = await loyaltyPurchasePoints(order.user_id, Number(order.subtotal), {
                 promoDiscountApplied,
+                excludeOrderId: orderId,
               });
               if (subtotalPts > 0) {
                 await addUserPoints(order.user_id, subtotalPts, 'purchase', `Order ${formatOrderNumberDisplay(order.order_number)}`, orderId);
@@ -2431,8 +2450,9 @@ function OrdersSection() {
           // Award points only if not already awarded (e.g. already given when admin marked paid)
           const alreadyAwarded = await getOrderPointsAwarded(orderId);
           if (!alreadyAwarded && userId && subtotal > 0) {
-            const points = calculatePurchasePoints(subtotal, {
+            const points = await loyaltyPurchasePoints(userId, subtotal, {
               promoDiscountApplied: Number(affiliateDiscount) > 0,
+              excludeOrderId: orderId,
             });
             const earnedCountBefore = await getEarnedTransactionsCount(userId);
             await addUserPoints(userId, points, 'purchase', `Order ${formatOrderNumberDisplay(orderNumber)}`, orderId);
@@ -2550,8 +2570,9 @@ function OrdersSection() {
         try {
           const alreadyAwarded = await getOrderPointsAwarded(order.id);
           if (!alreadyAwarded && order.user_id && order.subtotal > 0) {
-            const points = calculatePurchasePoints(order.subtotal, {
+            const points = await loyaltyPurchasePoints(order.user_id, order.subtotal, {
               promoDiscountApplied: Number(order.affiliate_discount) > 0,
+              excludeOrderId: order.id,
             });
             const earnedCountBefore = await getEarnedTransactionsCount(order.user_id);
             await addUserPoints(

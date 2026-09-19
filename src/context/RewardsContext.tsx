@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { supabase, getCurrentUser } from '@/lib/supabase';
-import { getUserPointsBalance, getUserTransactions, addUserPoints, getReferrals } from '@/lib/supabase-db';
+import { getUserPointsBalance, getUserTransactions, addUserPoints, getReferrals, getLifetimePurchaseSpend } from '@/lib/supabase-db';
 import type { PointsEvent } from '@/lib/supabase-db';
 import {
   SIGNUP_BONUS,
@@ -9,6 +9,7 @@ import {
   type CalculatePurchasePointsOptions,
   type PointType,
 } from '@/utils/points';
+import { getLoyaltyTier, type LoyaltyTier } from '@/utils/loyalty';
 
 // Re-export constants so existing consumers (Dashboard, AdminDashboard) don't break
 export { SIGNUP_BONUS, FIRST_ORDER_BONUS, calculatePurchasePoints };
@@ -82,8 +83,16 @@ interface RewardsContextType {
   balance: number;
   /** Lifetime points earned (positive events only). */
   lifetimePoints: number;
-  /** Lifetime spend in dollars, derived from 'purchase' type rows. */
+  /**
+   * Lifetime purchase spend in AUD for loyalty leveling
+   * (paid/shipped order subtotals; display as points — $1 ≈ 1 pt).
+   * Redeeming points never reduces this.
+   */
   lifetimeSpend: number;
+  /** Current loyalty level derived from lifetimeSpend. */
+  loyaltyTier: LoyaltyTier;
+  /** Whether a signed-in user is loaded (guests sit at Member / 5%). */
+  isLoggedIn: boolean;
   transactions: PointsTransaction[];
   referrals: Referral[];
   earnPoints: (
@@ -231,21 +240,20 @@ export function RewardsProvider({ children }: { children: React.ReactNode }) {
     if (!uid) return;
 
     try {
-      const [events, bal, dbReferrals] = await Promise.all([
+      const [events, bal, dbReferrals, spend] = await Promise.all([
         getUserTransactions(uid),
         getUserPointsBalance(uid),
         getReferrals(uid),
+        getLifetimePurchaseSpend(uid),
       ]);
 
       setBalance(bal);
 
       // Derive lifetime figures from event rows
       const earned = (events || []).reduce((s, e) => s + (e.points > 0 ? e.points : 0), 0);
-      const spent  = (events || [])
-        .filter(e => e.type === 'purchase')
-        .reduce((s, e) => s + e.points, 0);
       setLifetimePoints(earned);
-      setLifetimeSpend(spent);
+      // Loyalty level uses paid/shipped order spend (falls back to purchase pts).
+      setLifetimeSpend(spend);
 
       setTransactions((events || []).map((e: PointsEvent) => ({
         id:          e.id,
@@ -319,14 +327,18 @@ export function RewardsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  /** Award purchase points (1pt per $1 spent). Called by admin when marking order paid. */
+  /** Award purchase points at the member's loyalty cashback rate. */
   const earnPoints = useCallback(async (
     amount: number,
     description: string,
     orderId?: string,
     purchaseOpts?: CalculatePurchasePointsOptions,
   ) => {
-    const points = calculatePurchasePoints(amount, purchaseOpts);
+    const tier = getLoyaltyTier(lifetimeSpend);
+    const points = calculatePurchasePoints(amount, {
+      ...purchaseOpts,
+      cashbackPercent: purchaseOpts?.cashbackPercent ?? tier.cashbackPercent,
+    });
 
     if (userId) {
       await addUserPoints(userId, points, 'purchase', description, orderId);
@@ -345,7 +357,9 @@ export function RewardsProvider({ children }: { children: React.ReactNode }) {
       setLifetimeSpend(prev => prev + amount);
       saveToLocalStorage();
     }
-  }, [userId, refreshPoints]);
+  }, [userId, refreshPoints, lifetimeSpend]);
+
+  const loyaltyTier = getLoyaltyTier(userId ? lifetimeSpend : 0);
 
   const redeemPoints = useCallback(async (
     points: number,
@@ -506,6 +520,8 @@ export function RewardsProvider({ children }: { children: React.ReactNode }) {
         balance,
         lifetimePoints,
         lifetimeSpend,
+        loyaltyTier,
+        isLoggedIn: Boolean(userId),
         transactions,
         referrals,
         earnPoints,

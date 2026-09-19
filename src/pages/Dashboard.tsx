@@ -5,6 +5,7 @@ import {
   Award, X, Cake,
 } from 'lucide-react';
 import BirthdayRewardCard from '@/components/BirthdayRewardCard';
+import LoyaltyProgressBar from '@/components/LoyaltyProgressBar';
 import { Skeleton } from '@/components/ui/skeleton';
 import LeaderboardWidget from '@/components/LeaderboardWidget';
 import PromoCodeEditor from '@/components/PromoCodeEditor';
@@ -61,6 +62,9 @@ export default function Dashboard() {
   const {
     balance,
     lifetimePoints,
+    lifetimeSpend,
+    loyaltyTier,
+    isLoggedIn,
     transactions,
     getAvailableRedemptions,
     getPointsValue,
@@ -642,9 +646,22 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="p-3 sm:p-4 rounded-xl bg-[rgba(7,10,18,0.5)] mb-4 sm:mb-6">
+                <LoyaltyProgressBar
+                  loggedIn={isLoggedIn}
+                  lifetimeSpend={lifetimeSpend}
+                  showHint
+                />
+              </div>
+              <div className="p-3 sm:p-4 rounded-xl bg-[rgba(7,10,18,0.5)] mb-4 sm:mb-6">
                 <div className="flex items-center justify-between">
                   <span className="text-xs sm:text-sm text-[#A9B3C7]">Points value:</span>
                   <span className="text-lg sm:text-2xl font-bold text-[#22C55E]">${getPointsValue(balance).toFixed(2)} AUD</span>
+                </div>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-[rgba(244,246,250,0.06)]">
+                  <span className="text-xs sm:text-sm text-[#A9B3C7]">Your cashback rate:</span>
+                  <span className="text-sm sm:text-base font-semibold text-[#A78BFA]">
+                    {loyaltyTier.cashbackPercent}% · {loyaltyTier.name}
+                  </span>
                 </div>
               </div>
               {(availableRedemptions.length > 0 || upcomingRedemptions.length > 0) && (
@@ -690,7 +707,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-[#A9B3C7]">
                     <TrendingUp className="w-4 h-4 text-[#22C55E] shrink-0" />
-                    <span>1 point per $1 spent</span>
+                    <span>{loyaltyTier.cashbackPercent}% back on every order ({loyaltyTier.name})</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs sm:text-sm text-[#A9B3C7]">
                     <User className="w-4 h-4 text-[#8B5CF6] shrink-0" />
