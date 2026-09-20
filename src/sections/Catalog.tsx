@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
-import { Search, Truck, Gift, Tag, MessageCircle } from 'lucide-react';
+import { Search, Truck, Gift, Tag, MessageCircle, Award } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import LoyaltyProgressBar from '@/components/LoyaltyProgressBar';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
@@ -329,14 +329,22 @@ export default function Catalog() {
             <div className="grid grid-cols-2 items-start">
               <Link
                 to={isLoggedIn ? '/dashboard#rewards' : '/login?redirect=/dashboard'}
-                className="relative z-10 px-3 pt-3 sm:px-5 sm:pt-4 hover:bg-[rgba(139,92,246,0.06)] transition-colors"
+                className="relative z-10 flex items-center gap-2 sm:gap-3 px-3 pt-3 sm:px-5 sm:pt-4 hover:bg-[rgba(139,92,246,0.06)] transition-colors"
               >
-                <p className="font-bold text-white leading-tight tracking-tight text-[11px] sm:text-base">
-                  PEPLAB Rewards
-                </p>
-                <p className="leading-snug text-[#C8CDD8] text-[8px] sm:text-[11px] mt-0.5">
-                  Unlock cashback &amp; discounts
-                </p>
+                <div className="p-1.5 sm:p-2 rounded-full bg-[rgba(139,92,246,0.2)] flex-shrink-0">
+                  <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#A78BFA]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-white leading-tight tracking-tight text-[11px] sm:text-base">
+                    PEPLAB Rewards
+                  </p>
+                  <p className="leading-snug text-[#C8CDD8] text-[8px] sm:text-[11px] mt-0.5">
+                    1pt/$1
+                  </p>
+                  <p className="leading-snug text-[#C8CDD8] text-[8px] sm:text-[11px]">
+                    Redeem $150+
+                  </p>
+                </div>
               </Link>
 
               <div
