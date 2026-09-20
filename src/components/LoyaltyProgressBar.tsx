@@ -66,7 +66,7 @@ export default function LoyaltyProgressBar({
         </div>
       )}
 
-      <div className={`relative ${compact ? 'px-0.5' : 'px-1'}`}>
+      <div className="relative">
         <div
           className={`relative w-full ${compact ? 'h-2.5 sm:h-3' : 'h-3 sm:h-3.5'}`}
           role="progressbar"
@@ -75,27 +75,28 @@ export default function LoyaltyProgressBar({
           aria-valuenow={tier.cashbackPercent}
           aria-label={`${tier.name} — ${tier.cashbackPercent}% rewards back`}
         >
-          {/* Thin grey track */}
+          {/* Thin grey track — flush left with rewards icon */}
           <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full bg-[rgba(244,246,250,0.2)]" />
 
           {/* Tick dots */}
           {LOYALTY_CASHBACK_MARKS.map((pct, i) => {
-            const left = (i / segments) * 100;
+            const isFirst = i === 0;
+            const isLast = i === segments;
             return (
               <span
                 key={`dot-${pct}`}
-                className={`absolute top-1/2 z-[1] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#9CA3AF] ${
-                  compact ? 'w-1 h-1 sm:w-1.5 sm:h-1.5' : 'w-1.5 h-1.5'
-                }`}
-                style={{ left: `${left}%` }}
+                className={`absolute top-1/2 z-[1] -translate-y-1/2 rounded-full bg-[#9CA3AF] ${
+                  isFirst ? 'translate-x-0' : isLast ? '-translate-x-full' : '-translate-x-1/2'
+                } ${compact ? 'w-1 h-1 sm:w-1.5 sm:h-1.5' : 'w-1.5 h-1.5'}`}
+                style={{ left: `${(i / segments) * 100}%` }}
                 aria-hidden="true"
               />
             );
           })}
 
-          {/* Purple → pink → cyan neon fill */}
+          {/* Neon fill — flush left (square), rounded cyan tip */}
           <div
-            className={`absolute left-0 top-1/2 z-[2] -translate-y-1/2 rounded-full transition-[width] duration-500 ease-out ${
+            className={`absolute left-0 top-1/2 z-[2] -translate-y-1/2 rounded-r-full transition-[width] duration-500 ease-out ${
               compact ? 'h-2 sm:h-2.5' : 'h-2.5 sm:h-3'
             }`}
             style={{
@@ -108,18 +109,21 @@ export default function LoyaltyProgressBar({
           />
         </div>
 
-        {/* Percentage labels */}
+        {/* Percentage labels — first flush left under icon */}
         <div className={`relative w-full ${compact ? 'mt-1.5 h-3' : 'mt-2 h-4'}`}>
           {LOYALTY_CASHBACK_MARKS.map((pct, i) => {
-            const left = (i / segments) * 100;
             const active = pct === tier.cashbackPercent;
+            const isFirst = i === 0;
+            const isLast = i === segments;
             return (
               <span
                 key={`label-${pct}`}
-                className={`absolute -translate-x-1/2 tabular-nums leading-none ${
-                  active ? 'font-semibold text-white' : 'font-medium text-[#9CA3AF]'
-                } ${compact ? 'text-[8px] sm:text-[11px]' : 'text-[10px] sm:text-xs'}`}
-                style={{ left: `${left}%` }}
+                className={`absolute tabular-nums leading-none ${
+                  isFirst ? 'translate-x-0' : isLast ? '-translate-x-full' : '-translate-x-1/2'
+                } ${active ? 'font-semibold text-white' : 'font-medium text-[#9CA3AF]'} ${
+                  compact ? 'text-[8px] sm:text-[11px]' : 'text-[10px] sm:text-xs'
+                }`}
+                style={{ left: `${(i / segments) * 100}%` }}
               >
                 {pct}%
               </span>

@@ -342,7 +342,7 @@ export default function Catalog() {
                     1pt/$1
                   </p>
                   <p className="leading-snug text-[#C8CDD8] text-[8px] sm:text-[11px]">
-                    Redeem $150+
+                    Store credit back on every order, by tier
                   </p>
                 </div>
               </Link>
