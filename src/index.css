@@ -3996,10 +3996,7 @@
 }
 
 .catalog-halloween-treat {
-  background:
-    radial-gradient(ellipse 80% 120% at 100% 0%, rgba(139, 92, 246, 0.22), transparent 55%),
-    radial-gradient(ellipse 70% 90% at 90% 100%, rgba(249, 115, 22, 0.16), transparent 50%),
-    linear-gradient(135deg, rgba(20, 12, 28, 0.95), rgba(12, 18, 28, 0.9));
+  background: transparent;
 }
 
 .catalog-halloween-web {
@@ -4008,13 +4005,13 @@
   right: -0.55rem;
   width: 4rem;
   height: 4rem;
-  opacity: 0.85;
+  opacity: 0.5;
   pointer-events: none;
   background:
-    radial-gradient(circle at 100% 0%, transparent 34%, rgba(167, 139, 250, 0.75) 35%, transparent 37%),
-    radial-gradient(circle at 100% 0%, transparent 56%, rgba(167, 139, 250, 0.6) 57%, transparent 59%),
-    radial-gradient(circle at 100% 0%, transparent 78%, rgba(167, 139, 250, 0.45) 79%, transparent 81%),
-    repeating-conic-gradient(from 90deg at 100% 0%, rgba(167, 139, 250, 0.55) 0deg 0.6deg, transparent 0.6deg 15deg);
+    radial-gradient(circle at 100% 0%, transparent 34%, rgba(124, 106, 168, 0.35) 35%, transparent 37%),
+    radial-gradient(circle at 100% 0%, transparent 56%, rgba(124, 106, 168, 0.28) 57%, transparent 59%),
+    radial-gradient(circle at 100% 0%, transparent 78%, rgba(124, 106, 168, 0.22) 79%, transparent 81%),
+    repeating-conic-gradient(from 90deg at 100% 0%, rgba(124, 106, 168, 0.26) 0deg 0.6deg, transparent 0.6deg 15deg);
   mask-image: radial-gradient(circle at 100% 0%, #000 30%, transparent 100%);
   -webkit-mask-image: radial-gradient(circle at 100% 0%, #000 30%, transparent 100%);
 }
