@@ -10,7 +10,7 @@ export const LANDING_PATH = '/landing';
 /** Peptide reconstitution calculator. */
 export const CALCULATOR_PATH = '/calculator';
 
-/** Research peptide dosage / protocol chart. */
+/** Research peptide dosage / protocol chart. Temporarily unlinked from nav — path kept for restore. */
 export const PROTOCOLS_PATH = '/protocols';
 
 /** Published COA archive — all products with certificates on file. */

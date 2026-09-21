@@ -6,7 +6,9 @@ import { useAffiliate } from '@/context/AffiliateContext';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
 import SearchBar from './SearchBar';
-import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, PROTOCOLS_PATH } from '@/lib/routes';
+import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
+// PROTOCOLS_PATH temporarily unused — restore with Protocols nav entry below
+// import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, PROTOCOLS_PATH } from '@/lib/routes';
 
 type NavigationProps = {
   /** Render inside a parent fixed header (e.g. below announce bar on /landing). */
@@ -80,7 +82,8 @@ export default function Navigation({ embedded = false }: NavigationProps) {
   /** Crawlable anchors where possible; Google sitelinks are still automated. */
   const navEntries: ReadonlyArray<NavAnchor> = [
     { label: 'Shop', href: SHOP_PATH },
-    { label: 'Protocols', href: PROTOCOLS_PATH },
+    // Temporarily disabled — client asked to remove Protocols (compliance risk).
+    // { label: 'Protocols', href: PROTOCOLS_PATH },
     { label: 'COA', href: COA_ARCHIVE_PATH },
     { label: 'Calculator', href: CALCULATOR_PATH },
     { label: 'About', href: '/standards' },
@@ -101,7 +104,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
       >
         <div className={embedded ? 'nl-container' : 'w-full px-4 sm:px-6 lg:px-12'}>
           <div className={`nl-nav-bar flex items-center justify-between ${embedded ? '' : 'h-16 sm:h-20 lg:h-24'}`}>
-            <a href={HOME_PATH} className="flex flex-col items-start" onClick={() => setIsMobileMenuOpen(false)}>
+            <a href={HOME_PATH} className="flex flex-col items-start" aria-label="PEPLAB Australia home" onClick={() => setIsMobileMenuOpen(false)}>
               <span className={`font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-4xl' : 'text-3xl sm:text-4xl lg:text-5xl'}`}>
                 PEPLAB
               </span>

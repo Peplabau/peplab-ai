@@ -1,13 +1,17 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { LANDING_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, PROTOCOLS_PATH } from '@/lib/routes';
+// PROTOCOLS_PATH temporarily disabled (client risk) — restore with /protocols routes below.
+import { LANDING_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { CartProvider } from '@/context/CartContext';
 import { RewardsProvider } from '@/context/RewardsContext';
 import { AffiliateProvider } from '@/context/AffiliateContext';
-import { getSiteSetting, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_LANDING_PAGE_SETTINGS } from '@/lib/settings';
+// `DEFAULT_LANDING_PAGE_SETTINGS` was used by the ShopRoute homepage-gate check
+// (now commented out below). Import kept out of the tree until re-enabled.
+import { getSiteSetting, DEFAULT_AFFILIATE_PROGRAM_SETTINGS } from '@/lib/settings';
+import { supabase } from '@/lib/supabase';
 import Navigation from '@/components/Navigation';
 import CartDrawer from '@/components/CartDrawer';
 import SignupWelcomeModal from '@/components/SignupWelcomeModal';
@@ -50,10 +54,9 @@ const PromoterDashboard = lazy(() => import('@/pages/PromoterDashboard'));
 const TrackOrder = lazy(() => import('@/pages/TrackOrder'));
 const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
 const Calculator = lazy(() => import('@/pages/Calculator'));
-const Protocols = lazy(() => import('@/pages/Protocols'));
+// const Protocols = lazy(() => import('@/pages/Protocols')); // temporarily disabled — restore with routes
 const CoaArchive = lazy(() => import('@/pages/CoaArchive'));
 const PeplabLandingRoute = lazy(() => import('@/pages/PeplabLandingRoute'));
-const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -155,54 +158,66 @@ function HomePage() {
   );
 }
 
-function ShopRouteLoading() {
-  return (
-    <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-}
-
-/**
- * peplab.ai: when the admin landing toggle is off, the public storefront
- * shows Coming Soon. Admin routes stay live so the site can be turned back on.
- * Login redirect for a disabled landing page is peplab.com.au only.
- */
-function PublicComingSoonGate({ children }: { children: React.ReactNode }) {
-  const { pathname } = useLocation();
-  const authOpen =
-    pathname.startsWith('/admin') ||
-    pathname === '/login' ||
-    pathname === '/forgot-password' ||
-    pathname === '/reset-password';
-  const [mode, setMode] = useState<'loading' | 'live' | 'soon'>(authOpen ? 'live' : 'loading');
-
-  useEffect(() => {
-    if (authOpen) {
-      setMode('live');
-      return;
-    }
-    let cancelled = false;
-    setMode('loading');
-    getSiteSetting('landing_page_settings', DEFAULT_LANDING_PAGE_SETTINGS)
-      .then((settings) => {
-        if (cancelled) return;
-        setMode(settings.enabled !== false ? 'live' : 'soon');
-      })
-      .catch((error) => {
-        console.error('Failed to load landing page setting:', error);
-        if (!cancelled) setMode('live');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [authOpen]);
-
-  if (authOpen) return <>{children}</>;
-  if (mode === 'loading') return <ShopRouteLoading />;
-  if (mode === 'soon') return <ComingSoon />;
-  return <>{children}</>;
-}
+// The homepage / shop is always publicly viewable on the storefront.
+//
+// The `landing_page_settings.enabled` toggle in the admin panel used to gate
+// this route (redirecting anonymous visitors to /login when disabled). We
+// intentionally bypass that check now — the setting is still writable from
+// admin so nothing there breaks, but it no longer affects the storefront.
+//
+// The original gating logic is preserved below (commented out) so it can be
+// restored quickly if the requirement changes.
+//
+// type ShopRouteGate = 'loading' | 'public' | 'authed' | 'login';
+//
+// function ShopRouteLoading() {
+//   return (
+//     <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
+//       <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+//     </div>
+//   );
+// }
+//
+// function ShopRoute() {
+//   const [gate, setGate] = useState<ShopRouteGate>('loading');
+//
+//   useEffect(() => {
+//     let cancelled = false;
+//     const loadGate = async () => {
+//       try {
+//         const [settings, { data: { session } }] = await Promise.all([
+//           getSiteSetting('landing_page_settings', DEFAULT_LANDING_PAGE_SETTINGS),
+//           supabase.auth.getSession(),
+//         ]);
+//         if (cancelled) return;
+//
+//         const landingEnabled = settings.enabled !== false;
+//         const isLoggedIn = Boolean(session?.user);
+//
+//         if (landingEnabled) {
+//           setGate('public');
+//         } else if (isLoggedIn) {
+//           setGate('authed');
+//         } else {
+//           setGate('login');
+//         }
+//       } catch (error) {
+//         console.error('Failed to load shop route gate:', error);
+//         if (!cancelled) setGate('public');
+//       }
+//     };
+//     loadGate();
+//     return () => {
+//       cancelled = true;
+//     };
+//   }, []);
+//
+//   if (gate === 'loading') return <ShopRouteLoading />;
+//   if (gate === 'login') {
+//     return <Navigate to={`/login?redirect=${encodeURIComponent(SHOP_PATH)}`} replace />;
+//   }
+//   return <HomePage />;
+// }
 
 function ShopRoute() {
   return <HomePage />;
@@ -362,6 +377,55 @@ function RedirectToMainShop() {
   );
 }
 
+/**
+ * `/` on peplab.com.au:
+ * - guests see the lock/login UI with homepage SEO (indexable, no redirect)
+ * - members are handed off to peplab.ai
+ */
+function HomeGate() {
+  const [ready, setReady] = useState(false);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const sync = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      setAuthed(Boolean(session?.user));
+      setReady(true);
+    };
+
+    sync();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
+      setAuthed(Boolean(session?.user));
+      setReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  if (!ready) {
+    return (
+      <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (authed) return <RedirectToMainShop />;
+  return <LoginGateway asHomepage />;
+}
+
 function LoginOnlyApp() {
   return (
     <CartProvider>
@@ -373,7 +437,6 @@ function LoginOnlyApp() {
             <StaleTabReloader />
             <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
               <Routes>
-                <Route path="/" element={<LoginGateway />} />
                 <Route path="/login" element={<LoginGateway />} />
                 <Route path="/signup" element={<LoginGateway />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -394,11 +457,15 @@ function LoginOnlyApp() {
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/calculator" element={<Calculator />} />
+                {/* Temporarily disabled — client asked to remove protocols (compliance risk). Restore when needed.
                 <Route path="/protocols" element={<Protocols />} />
                 <Route path="/peptide-dosage-chart" element={<Navigate to={PROTOCOLS_PATH} replace />} />
+                */}
                 <Route path="/coa" element={<CoaArchive />} />
                 <Route path="/track-order" element={<TrackOrder />} />
 
+                {/* `/` is indexable: lock page for guests, shop for members. `/login` + `/signup` stay unchanged. */}
+                <Route path="/" element={<HomeGate />} />
                 {/* Shop lives on peplab.ai — hand off session and leave this host */}
                 <Route path="/shop" element={<RedirectToMainShop />} />
                 <Route path="/product/:slug" element={<RedirectToMainShop />} />
@@ -410,7 +477,7 @@ function LoginOnlyApp() {
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-                <Route path="*" element={<Navigate to="/login" replace />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </BrowserRouter>
@@ -443,12 +510,11 @@ function App() {
         <AffiliateProvider>
         <BrowserRouter>
           <ScrollToTop />
+          {CONFIG.FEATURES.ENABLE_SIGNUP_WELCOME_MODAL && <SignupWelcomeModal />}
+          <PersistReferralRef />
+          <StaleTabReloader />
           <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
-            <PublicComingSoonGate>
-              {CONFIG.FEATURES.ENABLE_SIGNUP_WELCOME_MODAL && <SignupWelcomeModal />}
-              <PersistReferralRef />
-              <StaleTabReloader />
-              <Routes>
+            <Routes>
               <Route path="/" element={<ShopRoute />} />
               <Route path="/shop" element={<ShopRoute />} />
               <Route path="/landing" element={<PeplabLandingRoute />} />
@@ -475,13 +541,14 @@ function App() {
               <Route path="/promoter" element={<PromoterDashboard />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/calculator" element={<Calculator />} />
+              {/* Temporarily disabled — client asked to remove protocols (compliance risk). Restore when needed.
               <Route path="/protocols" element={<Protocols />} />
               <Route path="/peptide-dosage-chart" element={<Navigate to="/protocols" replace />} />
+              */}
               <Route path="/coa" element={<CoaArchive />} />
               <Route path="/track-order" element={<TrackOrder />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            </PublicComingSoonGate>
           </Suspense>
         </BrowserRouter>
         </AffiliateProvider>

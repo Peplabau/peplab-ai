@@ -11,11 +11,6 @@
     <priority>0.98</priority>
   </url>
   <url>
-    <loc>https://peplab.ai/landing</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
     <loc>https://peplab.ai/coa</loc>
     <changefreq>weekly</changefreq>
     <priority>0.88</priority>
@@ -25,11 +20,13 @@
     <changefreq>monthly</changefreq>
     <priority>0.78</priority>
   </url>
+  <!-- Temporarily removed — client asked to remove protocols (compliance risk). Restore when needed.
   <url>
     <loc>https://peplab.ai/protocols</loc>
     <changefreq>monthly</changefreq>
     <priority>0.86</priority>
   </url>
+  -->
   <url>
     <loc>https://peplab.ai/leaderboard</loc>
     <changefreq>weekly</changefreq>
