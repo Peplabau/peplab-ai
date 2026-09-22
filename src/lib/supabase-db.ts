@@ -509,6 +509,59 @@ export const getLifetimePurchaseSpend = async (
 };
 
 /**
+ * Lifetime purchase spend for many users (admin Users list).
+ * Same qualifying rules as getLifetimePurchaseSpend (confirmed / shipped / etc.).
+ */
+export const getLifetimePurchaseSpendForUsers = async (
+  userIds: string[],
+): Promise<Record<string, number>> => {
+  const unique = [...new Set(userIds.filter(Boolean))];
+  const out: Record<string, number> = {};
+  for (const id of unique) out[id] = 0;
+  if (!unique.length) return out;
+
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('user_id, subtotal, payment_status, status')
+      .in('user_id', unique);
+
+    if (!error && Array.isArray(data)) {
+      for (const o of data) {
+        const uid = String(o.user_id || '');
+        if (!uid || !(uid in out)) continue;
+        const status = String(o.status || '').toLowerCase();
+        const payment = String(o.payment_status || '').toLowerCase();
+        const ok =
+          payment === 'confirmed' ||
+          ['shipped', 'delivered', 'processing', 'finalised', 'finalized'].includes(status);
+        if (ok) out[uid] += Number(o.subtotal) || 0;
+      }
+    }
+
+    // Fallback for users with no qualifying orders: sum purchase-point ledger.
+    const needFallback = unique.filter((id) => out[id] === 0);
+    if (needFallback.length > 0) {
+      const { data: events } = await supabase
+        .from('user_points')
+        .select('user_id, points')
+        .in('user_id', needFallback)
+        .eq('type', 'purchase');
+      for (const e of events || []) {
+        const uid = String(e.user_id || '');
+        if (!uid || !(uid in out)) continue;
+        out[uid] += Number(e.points) || 0;
+      }
+    }
+
+    return out;
+  } catch (error) {
+    console.error('Error getting lifetime spend for users:', error);
+    return out;
+  }
+};
+
+/**
  * Check if purchase points were already awarded for a specific order.
  * Prevents double-awarding when both "Mark Paid" and "Add Tracking" are triggered.
  */

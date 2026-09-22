@@ -334,9 +334,8 @@ async function validateShipment(to: Address, shippingMethod?: string): Promise<{
           {
             item_reference: "CHECKOUT",
             product_id: productId,
-            length: "20",
-            width: "15",
-            height: "10",
+            // Packaging + dead weight only (no L/W/H → no cubic/volumetric weight).
+            packaging_type: "CTN",
             weight: "0.5",
             authority_to_leave: true,
             safe_drop_enabled: true,

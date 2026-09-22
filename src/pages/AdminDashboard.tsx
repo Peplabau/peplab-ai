@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cached, invalidateCache, setCache, TTL_ADMIN_OVERVIEW, TTL_ADMIN_ORDERS, TTL_ADMIN_PRODUCTS } from '@/lib/cache';
 import { CONFIG } from '@/lib/config';
 import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS } from '@/lib/settings';
-import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, getLifetimePurchaseSpend, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, invokeAusPostSyncDelivered, type PointsEvent } from '@/lib/supabase-db';
+import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, getLifetimePurchaseSpend, getLifetimePurchaseSpendForUsers, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, invokeAusPostSyncDelivered, type PointsEvent } from '@/lib/supabase-db';
 import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-reward';
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
 import TrustpilotAdminSection from '@/components/admin/TrustpilotAdminSection';
@@ -5473,6 +5473,7 @@ function ProductsSection() {
 function UsersSection() {
   const [users, setUsers] = useState<any[]>([]);
   const [userBalances, setUserBalances] = useState<Record<string, number>>({});
+  const [userLifetimeSpend, setUserLifetimeSpend] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -5518,8 +5519,13 @@ function UsersSection() {
   }, [searchQuery]);
 
   const mergeBalances = async (pageUsers: any[]) => {
-    const balMap = await fetchBalancesForUserIds(pageUsers.map((u) => u.id));
+    const ids = pageUsers.map((u) => u.id);
+    const [balMap, spendMap] = await Promise.all([
+      fetchBalancesForUserIds(ids),
+      getLifetimePurchaseSpendForUsers(ids),
+    ]);
     setUserBalances((prev) => ({ ...prev, ...balMap }));
+    setUserLifetimeSpend((prev) => ({ ...prev, ...spendMap }));
   };
 
   const userMatchesSearch = (u: any, q: string) => {
@@ -5960,6 +5966,8 @@ function UsersSection() {
       <div className="space-y-3">
         {filteredUsers.map((user) => {
           const userBalance = userBalances[user.id] ?? 0;
+          const spend = userLifetimeSpend[user.id] ?? 0;
+          const loyalty = getLoyaltyTier(spend);
           const isExpanded = expandedUserId === user.id;
           return (
             <div key={user.id} className={`rounded-xl bg-[rgba(17,24,39,0.6)] border overflow-hidden ${user.is_banned ? 'border-[#EF4444] opacity-70' : 'border-[rgba(244,246,250,0.08)]'}`}>
@@ -5971,6 +5979,12 @@ function UsersSection() {
                       <p className="font-medium text-[#F4F6FA] text-sm truncate">{user.full_name || user.email}</p>
                       {user.is_banned && <span className="px-1.5 py-0.5 rounded bg-[#EF4444] text-white text-[9px] font-bold">BANNED</span>}
                       {user.is_admin && <span className="px-1.5 py-0.5 rounded bg-[#8B5CF6] text-white text-[9px] font-bold">ADMIN</span>}
+                      <span
+                        className="px-1.5 py-0.5 rounded bg-[rgba(139,92,246,0.2)] text-[#C4B5FD] text-[9px] font-bold"
+                        title={`Lifetime spend ~$${spend.toFixed(0)} · ${loyalty.cashbackPercent}% back`}
+                      >
+                        {loyalty.name} · {loyalty.cashbackPercent}%
+                      </span>
                     </div>
                     <p className="text-xs text-[#A9B3C7] truncate mt-0.5">{user.email}</p>
                     {user.date_of_birth ? (
