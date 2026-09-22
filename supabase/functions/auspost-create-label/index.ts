@@ -43,9 +43,7 @@ type CreateLabelBody = {
   shipping_method?: string;
   to?: AddressIn;
   weight_kg?: number;
-  /** CTN etc. Dimensions omitted so AusPost prices on dead weight, not cubic. */
   packaging_type?: string;
-  /** Ignored — kept for older clients; cubic dims no longer sent. */
   length_cm?: number;
   width_cm?: number;
   height_cm?: number;
@@ -483,9 +481,12 @@ Deno.serve(async (req: Request) => {
     }
 
     const weight = Math.min(Math.max(Number(body.weight_kg) || 0.5, 0.01), 22);
-    // Packaging only — do NOT send length/width/height.
-    // AusPost cubic (volumetric) weight comes from dimensions; client wants dead weight + packaging_type.
-    const packagingType = String(body.packaging_type || "CTN").trim().slice(0, 3) || "CTN";
+    // Single bubble-mailer parcel (not per product). AusPost still requires L/W/H.
+    // Defaults ~24×17×2cm → cubic ~0.20kg so chargeable follows actual weight.
+    const length = Math.min(Math.max(Number(body.length_cm) || 24, 1), 105);
+    const width = Math.min(Math.max(Number(body.width_cm) || 17, 1), 105);
+    const height = Math.min(Math.max(Number(body.height_cm) || 2, 1), 105);
+    const packagingType = String(body.packaging_type || "SAT").trim().slice(0, 3) || "SAT";
 
     // Lockers/collect: ATL + safe-drop are for street delivery and often rejected by AusPost.
     const authorityToLeave = isLockerOrCollect ? false : true;
@@ -504,6 +505,9 @@ Deno.serve(async (req: Request) => {
               item_reference: orderNumber.slice(0, 50),
               product_id: picked.productId,
               packaging_type: packagingType,
+              length: String(length),
+              width: String(width),
+              height: String(height),
               weight: String(weight),
               authority_to_leave: authorityToLeave,
               safe_drop_enabled: safeDropEnabled,

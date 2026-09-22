@@ -21,16 +21,10 @@ export type AusPostCreateLabelInput = {
   address_type?: AusPostAddressType | null;
   /** Optional parcel overrides (defaults applied server-side). */
   weight_kg?: number;
-  /**
-   * AusPost packaging type (e.g. CTN). Dimensions are intentionally NOT sent —
-   * cubic/volumetric weight is derived from L×W×H; we ship on dead weight + packaging only.
-   */
+  /** AusPost packaging type (e.g. CTN). One parcel only — not per product line. */
   packaging_type?: string;
-  /** @deprecated Ignored — cubic dimensions removed per client (packaging only). */
   length_cm?: number;
-  /** @deprecated Ignored — cubic dimensions removed per client (packaging only). */
   width_cm?: number;
-  /** @deprecated Ignored — cubic dimensions removed per client (packaging only). */
   height_cm?: number;
 };
 
@@ -107,7 +101,10 @@ export async function createAusPostLabel(
         // Always book Express with AusPost (checkout may still show Standard for pricing).
         shipping_method: 'express',
         weight_kg: input.weight_kg,
-        packaging_type: input.packaging_type || 'CTN',
+        packaging_type: input.packaging_type || 'SAT',
+        length_cm: input.length_cm,
+        width_cm: input.width_cm,
+        height_cm: input.height_cm,
         to: {
           name,
           lines,

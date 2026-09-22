@@ -334,8 +334,12 @@ async function validateShipment(to: Address, shippingMethod?: string): Promise<{
           {
             item_reference: "CHECKOUT",
             product_id: productId,
-            // Packaging + dead weight only (no L/W/H → no cubic/volumetric weight).
-            packaging_type: "CTN",
+            // One bubble-mailer parcel (not per product). L/W/H required by AusPost.
+            // 24×17×2 → cubic ~0.20kg so chargeable follows actual weight (0.25/0.5).
+            packaging_type: "SAT",
+            length: "24",
+            width: "17",
+            height: "2",
             weight: "0.5",
             authority_to_leave: true,
             safe_drop_enabled: true,
