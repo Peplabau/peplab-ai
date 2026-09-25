@@ -1,12 +1,19 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
-import { Search, Truck, Gift, Tag, MessageCircle, Award } from 'lucide-react';
+import { ChevronDown, Search, Truck, Gift, Tag, MessageCircle, Award } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import LoyaltyProgressBar from '@/components/LoyaltyProgressBar';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
+import {
+  getResearchCategoryById,
+  productMatchesCategory,
+  RESEARCH_CATEGORIES,
+  type ResearchCategory,
+} from '@/lib/research-categories';
 import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS, type DiscountSettings } from '@/lib/settings';
 import { getCache } from '@/lib/cache';
 import { preloadProductImages } from '@/lib/product-image';
@@ -22,6 +29,143 @@ const cachedCatalogSales = getCache<Record<string, number>>('products:homepage-s
 
 /** Catalog-only community invite with admin approval (not the site-wide support Telegram setting). */
 const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
+
+function CatalogCategoryDropdown({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  const listId = useId();
+
+  const selected: ResearchCategory | undefined = value
+    ? getResearchCategoryById(value)
+    : undefined;
+  const triggerLabel = selected
+    ? `${selected.emoji} ${selected.label}`
+    : 'All Categories';
+
+  const updateMenuPos = () => {
+    const el = rootRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setMenuPos({
+      top: r.bottom + 6,
+      left: r.left,
+      width: Math.max(r.width, 240),
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuPos(null);
+      return;
+    }
+    updateMenuPos();
+    const onReposition = () => updateMenuPos();
+    window.addEventListener('resize', onReposition);
+    window.addEventListener('scroll', onReposition, true);
+    return () => {
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (rootRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const pick = (id: string) => {
+    onChange(id);
+    setOpen(false);
+  };
+
+  const itemClass = (active: boolean) =>
+    [
+      'flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+      active
+        ? 'bg-[#7DD3FC] text-[#0B1220] font-medium'
+        : 'text-[#F4F6FA] hover:bg-[#1a2234]',
+    ].join(' ');
+
+  const menu =
+    open && menuPos
+      ? createPortal(
+          <ul
+            ref={menuRef}
+            id={listId}
+            role="listbox"
+            aria-label="Research category"
+            style={{
+              position: 'fixed',
+              top: menuPos.top,
+              left: menuPos.left,
+              width: menuPos.width,
+              zIndex: 9999,
+            }}
+            className="max-h-[min(360px,50vh)] overflow-y-auto rounded-xl border border-[rgba(173,198,230,0.35)] bg-[#111827] p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.85)]"
+          >
+            <li role="option" aria-selected={!value}>
+              <button type="button" className={itemClass(!value)} onClick={() => pick('')}>
+                All Categories
+              </button>
+            </li>
+            {RESEARCH_CATEGORIES.map((cat) => {
+              const active = value === cat.id;
+              return (
+                <li key={cat.id} role="option" aria-selected={active}>
+                  <button type="button" className={itemClass(active)} onClick={() => pick(cat.id)}>
+                    <span className="text-base leading-none" aria-hidden>
+                      {cat.emoji}
+                    </span>
+                    <span className="truncate">{cat.label}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>,
+          document.body,
+        )
+      : null;
+
+  return (
+    <div ref={rootRef} className="relative w-[148px] sm:w-[220px] shrink-0">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-[rgba(173,198,230,0.4)] bg-[#111827] px-5 py-3 text-sm text-[#F4F6FA] transition-colors hover:border-[rgba(173,198,230,0.65)] focus:outline-none focus-visible:border-[#7DD3FC]"
+      >
+        <span className="truncate">{triggerLabel}</span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-[#C8D4E8] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {menu}
+    </div>
+  );
+}
 
 /** Pumpkin mark for the Halloween Treat banner and the drifting promo pumpkin. */
 function HalloweenPumpkinIcon({ className }: { className?: string }) {
@@ -117,6 +261,7 @@ export default function Catalog() {
   const gridRef = useRef<HTMLDivElement>(null);
   const cardRenderIndex = useRef(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const { lifetimeSpend, isLoggedIn } = useRewards();
   const initialProducts = rankCatalogBySales(cachedCatalogProducts ?? [], cachedCatalogSales ?? {});
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -233,12 +378,18 @@ export default function Catalog() {
     };
   }, [products.length, loading]);
 
+  const selectedCategory = selectedCategoryId
+    ? getResearchCategoryById(selectedCategoryId)
+    : undefined;
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       searchQuery === '' ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    const matchesCategory =
+      !selectedCategory || productMatchesCategory(product.name, selectedCategory);
+    return matchesSearch && matchesCategory;
   });
 
   const essentials = filteredProducts.filter((p) => p.category === 'essentials');
@@ -415,15 +566,21 @@ export default function Catalog() {
             <span className="gradient-text">peptides</span>
           </h1>
 
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A9B3C7]" />
-            <input
-              type="text"
-              placeholder="Search peptides..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 rounded-full bg-[#0d121f] border border-[rgba(244,246,250,0.08)] text-[#F4F6FA] placeholder-[#A9B3C7] focus:outline-none focus:border-[#2ED1B4] transition-colors"
+          {/* Search + research category filter */}
+          <div className="flex flex-row items-center gap-2 sm:gap-3 max-w-2xl">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A9B3C7] pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search peptides, e.g. Tirzepatide, BPC-157, GHK-Cu..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 rounded-full bg-[#0d121f] border border-[rgba(244,246,250,0.08)] text-[#F4F6FA] placeholder-[#A9B3C7] focus:outline-none focus:border-[#2ED1B4] transition-colors"
+              />
+            </div>
+            <CatalogCategoryDropdown
+              value={selectedCategoryId}
+              onChange={setSelectedCategoryId}
             />
           </div>
 
@@ -481,92 +638,113 @@ export default function Catalog() {
           )}
           {!loading && !error && products.length > 0 && (
             <>
-              {/* Best Sellers */}
-              {bestSellers.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-xl">🔥</span>
-                    <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Best Sellers</h3>
-                    <span className="px-2 py-0.5 rounded-full bg-[rgba(239,68,68,0.15)] text-[#EF4444] text-[10px] font-mono uppercase">
-                      Very High Demand
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {bestSellers.map(renderProductCard)}
-                  </div>
-                </div>
-              )}
-
-              {/* High Popularity */}
-              {highPopularity.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-xl">⭐</span>
-                    <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">High Popularity</h3>
-                    <span className="px-2 py-0.5 rounded-full bg-[rgba(139,92,246,0.15)] text-[#8B5CF6] text-[10px] font-mono uppercase">
-                      Trending Now
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {highPopularity.map(renderProductCard)}
-                  </div>
-                </div>
-              )}
-
-              {/* Popular */}
-              {popular.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Popular</h3>
-                    <span className="px-2 py-0.5 rounded-full bg-[rgba(59,130,246,0.15)] text-[#3B82F6] text-[10px] font-mono uppercase">
-                      Research Favourites
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {popular.map(renderProductCard)}
-                  </div>
-                </div>
-              )}
-
-              {/* Essentials */}
-              {essentials.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-xl">🧪</span>
-                    <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Essentials</h3>
-                    <span className="px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[#22C55E] text-[10px] font-mono uppercase">
-                      Must Haves
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {essentials.map(renderProductCard)}
-                  </div>
-                </div>
-              )}
-
-              {/* Other categories from DB */}
-              {otherCategories.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">More Products</h3>
-                  </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {otherCategories.map(renderProductCard)}
-                  </div>
-                </div>
-              )}
-
-              {/* No Results (search filtered empty) */}
-              {filteredProducts.length === 0 && (
+              {filteredProducts.length === 0 ? (
                 <div className="text-center py-16">
                   <p className="text-[#A9B3C7] text-lg">No products found matching your criteria.</p>
                   <button
-                    onClick={() => setSearchQuery('')}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategoryId('');
+                    }}
                     className="mt-4 text-[#2ED1B4] hover:underline"
                   >
-                    Clear search
+                    Clear filters
                   </button>
                 </div>
+              ) : selectedCategory ? (
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-xl" aria-hidden>
+                      {selectedCategory.emoji}
+                    </span>
+                    <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">
+                      {selectedCategory.label}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-[rgba(46,209,180,0.12)] text-[#2ED1B4] text-[10px] font-mono uppercase">
+                      {filteredProducts.length} product{filteredProducts.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {filteredProducts.map(renderProductCard)}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Best Sellers */}
+                  {bestSellers.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="text-xl">🔥</span>
+                        <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Best Sellers</h3>
+                        <span className="px-2 py-0.5 rounded-full bg-[rgba(239,68,68,0.15)] text-[#EF4444] text-[10px] font-mono uppercase">
+                          Very High Demand
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {bestSellers.map(renderProductCard)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* High Popularity */}
+                  {highPopularity.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="text-xl">⭐</span>
+                        <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">High Popularity</h3>
+                        <span className="px-2 py-0.5 rounded-full bg-[rgba(139,92,246,0.15)] text-[#8B5CF6] text-[10px] font-mono uppercase">
+                          Trending Now
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {highPopularity.map(renderProductCard)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Popular */}
+                  {popular.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Popular</h3>
+                        <span className="px-2 py-0.5 rounded-full bg-[rgba(59,130,246,0.15)] text-[#3B82F6] text-[10px] font-mono uppercase">
+                          Research Favourites
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {popular.map(renderProductCard)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Essentials */}
+                  {essentials.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="text-xl">🧪</span>
+                        <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Essentials</h3>
+                        <span className="px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[#22C55E] text-[10px] font-mono uppercase">
+                          Must Haves
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {essentials.map(renderProductCard)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Other categories from DB */}
+                  {otherCategories.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">More Products</h3>
+                      </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {otherCategories.map(renderProductCard)}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
