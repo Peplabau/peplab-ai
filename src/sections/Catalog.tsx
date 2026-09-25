@@ -636,7 +636,7 @@ export default function Catalog() {
               onClick={() => {
                 gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }}
-              className="shrink-0 rounded-r-[11px] bg-[#7C3AED] px-5 sm:px-8 text-sm font-semibold text-white transition-colors hover:bg-[#6D28D9] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#A78BFA]"
+              className="shrink-0 rounded-r-[11px] bg-[#2ED1B4] px-5 sm:px-8 text-sm font-semibold text-[#070A12] transition-colors hover:bg-[#1FA896] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7DE8D4]"
             >
               Search
             </button>
