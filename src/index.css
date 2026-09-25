@@ -2937,7 +2937,21 @@
   }
 }
 
-/* Shop search + category filter */
+/* Shop section heading marks */
+.catalog-section-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.catalog-section-mark svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
 .catalog-search {
   display: flex;
   align-items: stretch;

@@ -293,6 +293,108 @@ function HalloweenPumpkinIcon({ className }: { className?: string }) {
   );
 }
 
+type SectionKind = 'hot' | 'trend' | 'popular' | 'essential' | 'more';
+
+/** Two-tone marks for the shop headings. Color sits on the symbol only. */
+function SectionGlyph({ kind }: { kind: SectionKind }) {
+  const uid = useId().replace(/:/g, '');
+  const fill = `sgf-${uid}`;
+  const tone: Record<SectionKind, [string, string]> = {
+    hot: ['#FDE68A', '#F43F5E'],
+    trend: ['#E9D5FF', '#7C3AED'],
+    popular: ['#DBEAFE', '#3B82F6'],
+    essential: ['#A7F3D0', '#10B981'],
+    more: ['#99F6E4', '#14B8A6'],
+  };
+  const [light, deep] = tone[kind];
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
+      <defs>
+        <linearGradient id={fill} x1="4" y1="20" x2="20" y2="3" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={deep} />
+          <stop offset="100%" stopColor={light} />
+        </linearGradient>
+      </defs>
+      {kind === 'hot' && (
+        <>
+          <path
+            fill={`url(#${fill})`}
+            d="M12 1.6c.3 2.5-1.1 4-2.2 5 1.9-.3 3.4-1.7 3.8-3.6.7 1.9 3 3.2 3 6 0 4.8-2.9 8.6-6.6 8.6S3.4 13.8 3.4 9c0-2.3 1.4-4 2.5-5.4.6 1.6 1.7 2.6 3.1 2.8C8 4.6 9.7 2.6 12 1.6Z"
+          />
+          <path
+            fill="#fff"
+            opacity="0.72"
+            d="M12 9.4c.4 1.1 0 2-.6 2.5.7-.2 1.2-.8 1.4-1.6.3.7 1.1 1.3 1.1 2.4 0 1.9-1.3 3.4-2.9 3.4s-2.9-1.5-2.9-3.4c0-1 .5-1.8 1-2.4.3.6.8 1 1.2 1.2-.4-.7.2-1.8 1.7-2.1Z"
+          />
+        </>
+      )}
+      {kind === 'trend' && (
+        <>
+          <path
+            d="M3 16.8c2.4-.2 3.4-4.6 6-4.6 2.4 0 2.8 3.2 5.2 3.2 2.6 0 3.4-6.6 6.8-7.8"
+            stroke={`url(#${fill})`}
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+          <path
+            d="M16.6 6.1h4.6V10.7"
+            stroke={light}
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="20.9" cy="6.4" r="1.15" fill={light} />
+        </>
+      )}
+      {kind === 'popular' && (
+        <>
+          <path
+            fill={`url(#${fill})`}
+            d="m12 1.8 2.15 5.05 5.45.5-4.15 3.55 1.28 5.3L12 13.4 7.27 16.2l1.28-5.3L4.4 7.35l5.45-.5L12 1.8Z"
+          />
+          <path fill="#fff" opacity="0.55" d="M12 1.8 13.1 4.4 12 8.6 10.9 4.4 12 1.8Z" />
+        </>
+      )}
+      {kind === 'essential' && (
+        <>
+          <path
+            fill={`url(#${fill})`}
+            d="M9.1 2.4h5.8v1.5h1.1v1.5H8V3.9h1.1V2.4Z"
+          />
+          <path
+            stroke={`url(#${fill})`}
+            strokeWidth="1.45"
+            d="M8.2 6.2h7.6v10.2a2.2 2.2 0 0 1-2.2 2.2H10.4a2.2 2.2 0 0 1-2.2-2.2V6.2Z"
+          />
+          <path fill={`url(#${fill})`} d="M8.7 12.6h6.6v3.5a1.7 1.7 0 0 1-1.7 1.7h-3.2a1.7 1.7 0 0 1-1.7-1.7v-3.5Z" />
+          <path d="M10.1 8.1v4.4" stroke="#fff" strokeOpacity="0.7" strokeWidth="1" strokeLinecap="round" />
+        </>
+      )}
+      {kind === 'more' && (
+        <>
+          <path fill={`url(#${fill})`} d="M12 3.2 20.2 7.1 12 11 3.8 7.1 12 3.2Z" />
+          <path
+            d="M4.2 10.2 12 14l7.8-3.8"
+            stroke={`url(#${fill})`}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M4.2 14.2 12 18 19.8 14.2"
+            stroke={light}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.85"
+          />
+        </>
+      )}
+    </svg>
+  );
+}
+
 export default function Catalog() {
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -722,7 +824,9 @@ export default function Catalog() {
                   {bestSellers.length > 0 && (
                     <div>
                       <div className="flex items-center gap-3 mb-4">
-                        <span className="text-xl">🔥</span>
+                        <span className="catalog-section-mark" aria-hidden>
+                          <SectionGlyph kind="hot" />
+                        </span>
                         <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Best Sellers</h3>
                         <span className="px-2 py-0.5 rounded-full bg-[rgba(239,68,68,0.15)] text-[#EF4444] text-[10px] font-mono uppercase">
                           Very High Demand
@@ -738,7 +842,9 @@ export default function Catalog() {
                   {highPopularity.length > 0 && (
                     <div>
                       <div className="flex items-center gap-3 mb-4">
-                        <span className="text-xl">⭐</span>
+                        <span className="catalog-section-mark" aria-hidden>
+                          <SectionGlyph kind="trend" />
+                        </span>
                         <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">High Popularity</h3>
                         <span className="px-2 py-0.5 rounded-full bg-[rgba(139,92,246,0.15)] text-[#8B5CF6] text-[10px] font-mono uppercase">
                           Trending Now
@@ -754,6 +860,9 @@ export default function Catalog() {
                   {popular.length > 0 && (
                     <div>
                       <div className="flex items-center gap-3 mb-4">
+                        <span className="catalog-section-mark" aria-hidden>
+                          <SectionGlyph kind="popular" />
+                        </span>
                         <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Popular</h3>
                         <span className="px-2 py-0.5 rounded-full bg-[rgba(59,130,246,0.15)] text-[#3B82F6] text-[10px] font-mono uppercase">
                           Research Favourites
@@ -769,7 +878,9 @@ export default function Catalog() {
                   {essentials.length > 0 && (
                     <div>
                       <div className="flex items-center gap-3 mb-4">
-                        <span className="text-xl">🧪</span>
+                        <span className="catalog-section-mark" aria-hidden>
+                          <SectionGlyph kind="essential" />
+                        </span>
                         <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">Essentials</h3>
                         <span className="px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.15)] text-[#22C55E] text-[10px] font-mono uppercase">
                           Must Haves
@@ -785,6 +896,9 @@ export default function Catalog() {
                   {otherCategories.length > 0 && (
                     <div>
                       <div className="flex items-center gap-3 mb-4">
+                        <span className="catalog-section-mark" aria-hidden>
+                          <SectionGlyph kind="more" />
+                        </span>
                         <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">More Products</h3>
                       </div>
                       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
