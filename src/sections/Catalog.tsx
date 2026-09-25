@@ -188,14 +188,14 @@ function CatalogCategoryDropdown({
       : null;
 
   return (
-    <div ref={rootRef} className="relative w-[168px] sm:w-[240px] shrink-0">
+    <div ref={rootRef} className="relative w-[140px] sm:w-[200px] lg:w-[220px] shrink-0">
       <button
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 rounded-full border border-[rgba(173,198,230,0.4)] bg-[#111827] pl-3 pr-4 py-3 text-sm text-[#F4F6FA] transition-colors hover:border-[rgba(173,198,230,0.65)] focus:outline-none focus-visible:border-[#7DD3FC]"
+        className="flex h-full min-h-[48px] w-full items-center justify-between gap-2 border-l border-[rgba(244,246,250,0.12)] bg-[#0d121f] pl-3 pr-3 text-sm text-[#F4F6FA] transition-colors hover:bg-[#111827] focus:outline-none focus-visible:bg-[#111827]"
       >
         <span className="flex min-w-0 items-center gap-2">
           <span
@@ -615,8 +615,8 @@ export default function Catalog() {
             <span className="gradient-text">peptides</span>
           </h1>
 
-          {/* Search + research category filter */}
-          <div className="flex flex-row items-center gap-2 sm:gap-3 max-w-2xl">
+          {/* Search + research category filter — full content width */}
+          <div className="flex w-full flex-row items-stretch rounded-xl border border-[rgba(244,246,250,0.12)] bg-[#0d121f]">
             <div className="relative min-w-0 flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A9B3C7] pointer-events-none" />
               <input
@@ -624,13 +624,22 @@ export default function Catalog() {
                 placeholder="Search peptides, e.g. Tirzepatide, BPC-157, GHK-Cu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 rounded-full bg-[#0d121f] border border-[rgba(244,246,250,0.08)] text-[#F4F6FA] placeholder-[#A9B3C7] focus:outline-none focus:border-[#2ED1B4] transition-colors"
+                className="h-full min-h-[48px] w-full rounded-l-xl bg-transparent pl-11 pr-4 text-[#F4F6FA] placeholder-[#A9B3C7] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#2ED1B4]"
               />
             </div>
             <CatalogCategoryDropdown
               value={selectedCategoryId}
               onChange={setSelectedCategoryId}
             />
+            <button
+              type="button"
+              onClick={() => {
+                gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="shrink-0 rounded-r-[11px] bg-[#7C3AED] px-5 sm:px-8 text-sm font-semibold text-white transition-colors hover:bg-[#6D28D9] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#A78BFA]"
+            >
+              Search
+            </button>
           </div>
 
           {/* Research Disclaimer Banner — infinite marquee */}
