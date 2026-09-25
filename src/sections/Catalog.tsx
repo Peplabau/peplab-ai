@@ -61,14 +61,17 @@ function CatalogCategoryDropdown({
     const el = rootRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const width = r.width;
+    const bar = el.closest('.catalog-search')?.getBoundingClientRect();
+    const narrow = window.innerWidth < 720;
+    const anchor = narrow && bar ? bar : r;
+    const width = narrow ? Math.min(anchor.width, window.innerWidth - 24) : r.width;
     const gap = 8;
     const spaceBelow = window.innerHeight - r.bottom - gap - 12;
     const spaceAbove = r.top - gap - 12;
     // Prefer opening down; flip up only when below is clearly tighter.
     const openUp = spaceBelow < 280 && spaceAbove > spaceBelow;
     const maxHeight = Math.min(openUp ? spaceAbove : spaceBelow, 520);
-    const left = Math.min(r.left, window.innerWidth - width - 12);
+    const left = Math.min(anchor.left, window.innerWidth - width - 12);
     setMenuPos({
       top: openUp ? r.top - gap : r.bottom + gap,
       left: Math.max(12, left),
@@ -118,16 +121,8 @@ function CatalogCategoryDropdown({
 
   const itemClass = (active: boolean) =>
     [
-      'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] leading-snug transition-colors',
-      active
-        ? 'bg-[#7DD3FC] text-[#0B1220] font-semibold'
-        : 'text-[#E8EEF8] hover:bg-[#1c2638]',
-    ].join(' ');
-
-  const iconWrap = (accent: string, active: boolean) =>
-    [
-      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
-      active ? 'bg-[rgba(11,18,32,0.18)]' : 'bg-[rgba(244,246,250,0.06)]',
+      'catalog-cat-item',
+      active ? 'is-active' : '',
     ].join(' ');
 
   const AllIcon = ALL_CATEGORIES_ICON;
@@ -149,31 +144,31 @@ function CatalogCategoryDropdown({
               maxHeight: menuPos.maxHeight,
               zIndex: 9999,
             }}
-            className="catalog-cat-menu overflow-y-auto overscroll-contain rounded-2xl border border-[rgba(173,198,230,0.22)] bg-[#0E1524] p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.65),0_0_0_1px_rgba(125,211,252,0.06)]"
+            className="catalog-cat-menu"
           >
             <li role="option" aria-selected={!value}>
               <button type="button" className={itemClass(!value)} onClick={() => pick('')}>
-                <span className={iconWrap(ALL_CATEGORIES_ACCENT, !value)} aria-hidden>
+                <span className="catalog-cat-icon" aria-hidden>
                   <AllIcon
                     className="h-3.5 w-3.5"
-                    style={{ color: !value ? '#0B1220' : ALL_CATEGORIES_ACCENT }}
+                    style={{ color: ALL_CATEGORIES_ACCENT }}
                     strokeWidth={2}
                   />
                 </span>
                 <span className="truncate">All Categories</span>
               </button>
             </li>
-            <li aria-hidden className="my-1 mx-2 h-px bg-[rgba(244,246,250,0.08)]" />
+            <li aria-hidden className="catalog-cat-rule" />
             {RESEARCH_CATEGORIES.map((cat) => {
               const active = value === cat.id;
               const Icon = cat.icon;
               return (
                 <li key={cat.id} role="option" aria-selected={active}>
                   <button type="button" className={itemClass(active)} onClick={() => pick(cat.id)}>
-                    <span className={iconWrap(cat.accent, active)} aria-hidden>
+                    <span className="catalog-cat-icon" aria-hidden>
                       <Icon
                         className="h-3.5 w-3.5"
-                        style={{ color: active ? '#0B1220' : cat.accent }}
+                        style={{ color: cat.accent }}
                         strokeWidth={2}
                       />
                     </span>
@@ -188,27 +183,22 @@ function CatalogCategoryDropdown({
       : null;
 
   return (
-    <div ref={rootRef} className="relative w-[140px] sm:w-[200px] lg:w-[220px] shrink-0">
+    <div ref={rootRef} className="catalog-cat">
       <button
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-full min-h-[48px] w-full items-center justify-between gap-2 border-l border-[rgba(244,246,250,0.12)] bg-[#0d121f] pl-3 pr-3 text-sm text-[#F4F6FA] transition-colors hover:bg-[#111827] focus:outline-none focus-visible:bg-[#111827]"
+        className={`catalog-cat-trigger${open ? ' is-open' : ''}`}
       >
-        <span className="flex min-w-0 items-center gap-2">
-          <span
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[rgba(244,246,250,0.06)]"
-            aria-hidden
-          >
+        <span className="catalog-cat-trigger-label">
+          <span className="catalog-cat-icon" aria-hidden>
             <TriggerIcon className="h-3.5 w-3.5" style={{ color: triggerAccent }} strokeWidth={2} />
           </span>
           <span className="truncate">{selected ? selected.label : 'All Categories'}</span>
         </span>
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 text-[#C8D4E8] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-        />
+        <ChevronDown className="catalog-cat-chevron" />
       </button>
       {menu}
     </div>
@@ -616,30 +606,21 @@ export default function Catalog() {
           </h1>
 
           {/* Search + research category filter — full content width */}
-          <div className="flex w-full flex-row items-stretch rounded-xl border border-[rgba(244,246,250,0.12)] bg-[#0d121f]">
-            <div className="relative min-w-0 flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A9B3C7] pointer-events-none" />
+          <div className="catalog-search">
+            <label className="catalog-search-field">
+              <Search aria-hidden />
               <input
                 type="text"
                 placeholder="Search peptides, e.g. Tirzepatide, BPC-157, GHK-Cu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-full min-h-[48px] w-full rounded-l-xl bg-transparent pl-11 pr-4 text-[#F4F6FA] placeholder-[#A9B3C7] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#2ED1B4]"
+                aria-label="Search peptides"
               />
-            </div>
+            </label>
             <CatalogCategoryDropdown
               value={selectedCategoryId}
               onChange={setSelectedCategoryId}
             />
-            <button
-              type="button"
-              onClick={() => {
-                gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              className="shrink-0 rounded-r-[11px] bg-[#2ED1B4] px-5 sm:px-8 text-sm font-semibold text-[#070A12] transition-colors hover:bg-[#1FA896] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7DE8D4]"
-            >
-              Search
-            </button>
           </div>
 
           {/* Research Disclaimer Banner — infinite marquee */}
