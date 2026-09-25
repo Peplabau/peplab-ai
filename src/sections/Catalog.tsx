@@ -9,6 +9,8 @@ import LoyaltyProgressBar from '@/components/LoyaltyProgressBar';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
 import {
+  ALL_CATEGORIES_ACCENT,
+  ALL_CATEGORIES_ICON,
   getResearchCategoryById,
   productMatchesCategory,
   RESEARCH_CATEGORIES,
@@ -52,9 +54,8 @@ function CatalogCategoryDropdown({
   const selected: ResearchCategory | undefined = value
     ? getResearchCategoryById(value)
     : undefined;
-  const triggerLabel = selected
-    ? `${selected.emoji} ${selected.label}`
-    : 'All Categories';
+  const TriggerIcon = selected?.icon ?? ALL_CATEGORIES_ICON;
+  const triggerAccent = selected?.accent ?? ALL_CATEGORIES_ACCENT;
 
   const updateMenuPos = () => {
     const el = rootRef.current;
@@ -117,11 +118,19 @@ function CatalogCategoryDropdown({
 
   const itemClass = (active: boolean) =>
     [
-      'flex w-full items-center gap-3 rounded-lg px-3.5 py-2 text-left text-[13px] leading-snug transition-colors',
+      'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] leading-snug transition-colors',
       active
         ? 'bg-[#7DD3FC] text-[#0B1220] font-semibold'
         : 'text-[#E8EEF8] hover:bg-[#1c2638]',
     ].join(' ');
+
+  const iconWrap = (accent: string, active: boolean) =>
+    [
+      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+      active ? 'bg-[rgba(11,18,32,0.18)]' : 'bg-[rgba(244,246,250,0.06)]',
+    ].join(' ');
+
+  const AllIcon = ALL_CATEGORIES_ICON;
 
   const menu =
     open && menuPos
@@ -144,8 +153,12 @@ function CatalogCategoryDropdown({
           >
             <li role="option" aria-selected={!value}>
               <button type="button" className={itemClass(!value)} onClick={() => pick('')}>
-                <span className="w-5 text-center text-sm opacity-70" aria-hidden>
-                  ✦
+                <span className={iconWrap(ALL_CATEGORIES_ACCENT, !value)} aria-hidden>
+                  <AllIcon
+                    className="h-3.5 w-3.5"
+                    style={{ color: !value ? '#0B1220' : ALL_CATEGORIES_ACCENT }}
+                    strokeWidth={2}
+                  />
                 </span>
                 <span className="truncate">All Categories</span>
               </button>
@@ -153,11 +166,16 @@ function CatalogCategoryDropdown({
             <li aria-hidden className="my-1 mx-2 h-px bg-[rgba(244,246,250,0.08)]" />
             {RESEARCH_CATEGORIES.map((cat) => {
               const active = value === cat.id;
+              const Icon = cat.icon;
               return (
                 <li key={cat.id} role="option" aria-selected={active}>
                   <button type="button" className={itemClass(active)} onClick={() => pick(cat.id)}>
-                    <span className="w-5 text-center text-[15px] leading-none" aria-hidden>
-                      {cat.emoji}
+                    <span className={iconWrap(cat.accent, active)} aria-hidden>
+                      <Icon
+                        className="h-3.5 w-3.5"
+                        style={{ color: active ? '#0B1220' : cat.accent }}
+                        strokeWidth={2}
+                      />
                     </span>
                     <span className="truncate">{cat.label}</span>
                   </button>
@@ -170,16 +188,24 @@ function CatalogCategoryDropdown({
       : null;
 
   return (
-    <div ref={rootRef} className="relative w-[148px] sm:w-[220px] shrink-0">
+    <div ref={rootRef} className="relative w-[168px] sm:w-[240px] shrink-0">
       <button
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 rounded-full border border-[rgba(173,198,230,0.4)] bg-[#111827] px-5 py-3 text-sm text-[#F4F6FA] transition-colors hover:border-[rgba(173,198,230,0.65)] focus:outline-none focus-visible:border-[#7DD3FC]"
+        className="flex w-full items-center justify-between gap-2 rounded-full border border-[rgba(173,198,230,0.4)] bg-[#111827] pl-3 pr-4 py-3 text-sm text-[#F4F6FA] transition-colors hover:border-[rgba(173,198,230,0.65)] focus:outline-none focus-visible:border-[#7DD3FC]"
       >
-        <span className="truncate">{triggerLabel}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[rgba(244,246,250,0.06)]"
+            aria-hidden
+          >
+            <TriggerIcon className="h-3.5 w-3.5" style={{ color: triggerAccent }} strokeWidth={2} />
+          </span>
+          <span className="truncate">{selected ? selected.label : 'All Categories'}</span>
+        </span>
         <ChevronDown
           className={`h-4 w-4 shrink-0 text-[#C8D4E8] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
@@ -403,6 +429,7 @@ export default function Catalog() {
   const selectedCategory = selectedCategoryId
     ? getResearchCategoryById(selectedCategoryId)
     : undefined;
+  const SelectedCatIcon = selectedCategory?.icon;
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -676,9 +703,18 @@ export default function Catalog() {
               ) : selectedCategory ? (
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-xl" aria-hidden>
-                      {selectedCategory.emoji}
-                    </span>
+                    {SelectedCatIcon ? (
+                      <span
+                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-[rgba(244,246,250,0.06)]"
+                        aria-hidden
+                      >
+                        <SelectedCatIcon
+                          className="h-4 w-4"
+                          style={{ color: selectedCategory!.accent }}
+                          strokeWidth={2}
+                        />
+                      </span>
+                    ) : null}
                     <h3 className="text-lg sm:text-xl font-bold text-[#F4F6FA]">
                       {selectedCategory.label}
                     </h3>

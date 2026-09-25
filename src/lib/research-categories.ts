@@ -3,10 +3,30 @@
  * Products are matched by name (flexible), not DB category fields.
  */
 
+import type { LucideIcon } from 'lucide-react';
+import {
+  Activity,
+  Brain,
+  Dna,
+  Flame,
+  FlaskConical,
+  LayoutGrid,
+  Moon,
+  Pill,
+  Shield,
+  Sparkles,
+  Sun,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
+
 export type ResearchCategory = {
   id: string;
   label: string;
-  emoji: string;
+  /** Lucide icon — same stroke style for a consistent dropdown look. */
+  icon: LucideIcon;
+  /** Soft accent for the icon chip (not emoji). */
+  accent: string;
   /** Display names from the client list — used for matching product names. */
   peptides: string[];
 };
@@ -15,7 +35,8 @@ export const RESEARCH_CATEGORIES: ResearchCategory[] = [
   {
     id: 'metabolic',
     label: 'Metabolic Research',
-    emoji: '🟢',
+    icon: Activity,
+    accent: '#34D399',
     peptides: [
       'Retatrutide',
       'Semaglutide',
@@ -30,7 +51,8 @@ export const RESEARCH_CATEGORIES: ResearchCategory[] = [
   {
     id: 'growth',
     label: 'Growth Research',
-    emoji: '🔵',
+    icon: TrendingUp,
+    accent: '#60A5FA',
     peptides: [
       'HGH 191AA',
       'IGF-1 LR3',
@@ -48,7 +70,8 @@ export const RESEARCH_CATEGORIES: ResearchCategory[] = [
   {
     id: 'skin-aging',
     label: 'Skin & Aging Research',
-    emoji: '🟣',
+    icon: Sparkles,
+    accent: '#C084FC',
     peptides: [
       'GHK-Cu',
       'AHK-Cu',
@@ -66,7 +89,8 @@ export const RESEARCH_CATEGORIES: ResearchCategory[] = [
   {
     id: 'recovery',
     label: 'Recovery Research',
-    emoji: '💊',
+    icon: Pill,
+    accent: '#2DD4BF',
     peptides: [
       'BPC-157',
       'BPC-157 + TB-500',
@@ -82,7 +106,8 @@ export const RESEARCH_CATEGORIES: ResearchCategory[] = [
   {
     id: 'brain',
     label: 'Brain Research',
-    emoji: '🧠',
+    icon: Brain,
+    accent: '#F472B6',
     peptides: [
       'Semax',
       'Selank',
@@ -98,19 +123,22 @@ export const RESEARCH_CATEGORIES: ResearchCategory[] = [
   {
     id: 'sleep',
     label: 'Sleep Research',
-    emoji: '😴',
+    icon: Moon,
+    accent: '#A5B4FC',
     peptides: ['DSIP', 'Selank', 'Semax + Selank', 'Melatonin'],
   },
   {
     id: 'energy',
     label: 'Energy Research',
-    emoji: '⚡',
+    icon: Zap,
+    accent: '#FBBF24',
     peptides: ['NAD+', 'MOTS-C', 'SS-31', '5-Amino-1MQ', 'SLU-PP-332', 'ET-10'],
   },
   {
     id: 'longevity',
     label: 'Longevity Research',
-    emoji: '🧬',
+    icon: Dna,
+    accent: '#2ED1B4',
     peptides: [
       'GHK-Cu',
       'AHK-Cu',
@@ -130,28 +158,35 @@ export const RESEARCH_CATEGORIES: ResearchCategory[] = [
   {
     id: 'reproductive',
     label: 'Reproductive Research',
-    emoji: '🔥',
+    icon: Flame,
+    accent: '#FB7185',
     peptides: ['PT-141', 'Kisspeptin-10', 'HCG'],
   },
   {
     id: 'pigmentation',
     label: 'Pigmentation Research',
-    emoji: '🌞',
+    icon: Sun,
+    accent: '#FCD34D',
     peptides: ['MT-1', 'MT-2'],
   },
   {
     id: 'immune',
     label: 'Immune Research',
-    emoji: '🛡️',
+    icon: Shield,
+    accent: '#38BDF8',
     peptides: ['KPV', 'LL-37', 'Thymalin', 'VIP', 'ARA-290', 'BPC-157', 'TB-500'],
   },
   {
     id: 'oncology',
     label: 'Oncology Research',
-    emoji: '🧪',
+    icon: FlaskConical,
+    accent: '#4ADE80',
     peptides: ['PNC-27', 'PN10'],
   },
 ];
+
+export const ALL_CATEGORIES_ICON = LayoutGrid;
+export const ALL_CATEGORIES_ACCENT = '#94A3B8';
 
 /** Normalize for fuzzy name matching (case, punctuation, common aliases). */
 function normalizeName(raw: string): string {
