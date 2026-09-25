@@ -2911,6 +2911,30 @@
   .scrollbar-subtle::-webkit-scrollbar-thumb:hover {
     background: rgba(46, 209, 180, 0.38);
   }
+
+  /** Catalog category dropdown — hide chrome scrollbar; still scrollable if needed */
+  .catalog-cat-menu {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    animation: catalog-cat-menu-in 140ms ease-out;
+  }
+
+  .catalog-cat-menu::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  @keyframes catalog-cat-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 
 /* PEPLAB reconstitution calculator */

@@ -38,7 +38,13 @@ function CatalogCategoryDropdown({
   onChange: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [menuPos, setMenuPos] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+    openUp: boolean;
+  } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const listId = useId();
@@ -54,10 +60,20 @@ function CatalogCategoryDropdown({
     const el = rootRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
+    const width = Math.max(r.width, 260);
+    const gap = 8;
+    const spaceBelow = window.innerHeight - r.bottom - gap - 12;
+    const spaceAbove = r.top - gap - 12;
+    // Prefer opening down; flip up only when below is clearly tighter.
+    const openUp = spaceBelow < 280 && spaceAbove > spaceBelow;
+    const maxHeight = Math.min(openUp ? spaceAbove : spaceBelow, 520);
+    const left = Math.min(r.left, window.innerWidth - width - 12);
     setMenuPos({
-      top: r.bottom + 6,
-      left: r.left,
-      width: Math.max(r.width, 240),
+      top: openUp ? r.top - gap : r.bottom + gap,
+      left: Math.max(12, left),
+      width,
+      maxHeight: Math.max(180, maxHeight),
+      openUp,
     });
   };
 
@@ -101,10 +117,10 @@ function CatalogCategoryDropdown({
 
   const itemClass = (active: boolean) =>
     [
-      'flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors',
+      'flex w-full items-center gap-3 rounded-lg px-3.5 py-2 text-left text-[13px] leading-snug transition-colors',
       active
-        ? 'bg-[#7DD3FC] text-[#0B1220] font-medium'
-        : 'text-[#F4F6FA] hover:bg-[#1a2234]',
+        ? 'bg-[#7DD3FC] text-[#0B1220] font-semibold'
+        : 'text-[#E8EEF8] hover:bg-[#1c2638]',
     ].join(' ');
 
   const menu =
@@ -117,24 +133,30 @@ function CatalogCategoryDropdown({
             aria-label="Research category"
             style={{
               position: 'fixed',
-              top: menuPos.top,
+              top: menuPos.openUp ? undefined : menuPos.top,
+              bottom: menuPos.openUp ? window.innerHeight - menuPos.top : undefined,
               left: menuPos.left,
               width: menuPos.width,
+              maxHeight: menuPos.maxHeight,
               zIndex: 9999,
             }}
-            className="max-h-[min(360px,50vh)] overflow-y-auto rounded-xl border border-[rgba(173,198,230,0.35)] bg-[#111827] p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.85)]"
+            className="catalog-cat-menu overflow-y-auto overscroll-contain rounded-2xl border border-[rgba(173,198,230,0.22)] bg-[#0E1524] p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.65),0_0_0_1px_rgba(125,211,252,0.06)]"
           >
             <li role="option" aria-selected={!value}>
               <button type="button" className={itemClass(!value)} onClick={() => pick('')}>
-                All Categories
+                <span className="w-5 text-center text-sm opacity-70" aria-hidden>
+                  ✦
+                </span>
+                <span className="truncate">All Categories</span>
               </button>
             </li>
+            <li aria-hidden className="my-1 mx-2 h-px bg-[rgba(244,246,250,0.08)]" />
             {RESEARCH_CATEGORIES.map((cat) => {
               const active = value === cat.id;
               return (
                 <li key={cat.id} role="option" aria-selected={active}>
                   <button type="button" className={itemClass(active)} onClick={() => pick(cat.id)}>
-                    <span className="text-base leading-none" aria-hidden>
+                    <span className="w-5 text-center text-[15px] leading-none" aria-hidden>
                       {cat.emoji}
                     </span>
                     <span className="truncate">{cat.label}</span>
