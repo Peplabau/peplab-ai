@@ -60,7 +60,7 @@ function CatalogCategoryDropdown({
     const el = rootRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const width = Math.max(r.width, 260);
+    const width = r.width;
     const gap = 8;
     const spaceBelow = window.innerHeight - r.bottom - gap - 12;
     const spaceAbove = r.top - gap - 12;
