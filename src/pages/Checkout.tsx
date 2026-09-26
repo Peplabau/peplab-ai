@@ -17,6 +17,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import { useRewards, REDEMPTION_TIERS } from '@/context/RewardsContext';
 import { useAffiliate } from '@/context/AffiliateContext';
 import { supabase, getCurrentUser } from '@/lib/supabase';
@@ -83,6 +84,7 @@ function formatShippingForEmail(
 
 export default function Checkout() {
   const { items, paidItemsTotal, clearCart, isLoading: isCartLoading } = useCart();
+  const lightShop = useLightShopPreview();
   const { balance, redeemPoints, loyaltyTier, isLoggedIn: rewardsLoggedIn } = useRewards();
   const { appliedCode, appliedPromotion, applyCode, clearCode } = useAffiliate();
   const [userId, setUserId] = useState<string | null>(null);
@@ -602,11 +604,7 @@ export default function Checkout() {
   // ORDER CONFIRMATION PAGE
   if (orderComplete) {
     return (
-      <div className="min-h-screen bg-[#070A12]">
-        <nav className="px-4 py-4 border-b border-white/10">
-          <a href="/" className="text-2xl font-bold tracking-wider gradient-text">PEPLAB</a>
-        </nav>
-
+      <div className="min-h-screen page-grid-bg pt-24 sm:pt-28">
         <main className="px-4 py-6 max-w-md mx-auto">
           {/* Success */}
           <div className="text-center mb-6">
@@ -821,11 +819,7 @@ export default function Checkout() {
     return (
       <>
         <SEO title="Checkout | PEPLAB" noIndex />
-        <div className="min-h-screen bg-[#070A12]">
-          <nav className="px-4 py-4 border-b border-white/10 flex items-center justify-between">
-            <span className="text-xl font-bold tracking-wider gradient-text">PEPLAB</span>
-            <span className="text-sm text-gray-500">Loading checkout…</span>
-          </nav>
+        <div className="min-h-screen page-grid-bg pt-24 sm:pt-28">
           <main className="px-4 py-6 max-w-lg mx-auto space-y-3">
             <Skeleton className="h-7 w-48 rounded-lg" />
             <Skeleton className="h-28 w-full rounded-xl" />
@@ -842,7 +836,7 @@ export default function Checkout() {
   // Empty cart (only after cart has finished loading)
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-[#070A12] flex items-center justify-center">
+      <div className="min-h-screen page-grid-bg pt-24 sm:pt-28 flex items-center justify-center">
         <div className="text-center px-4">
           <ShoppingBag className="w-16 h-16 mx-auto text-white/20 mb-4" />
           <h1 className="text-xl font-bold text-white mb-2">Your cart is empty</h1>
@@ -859,16 +853,7 @@ export default function Checkout() {
   return (
     <>
       <SEO title="Checkout | PEPLAB" noIndex />
-    <div className="min-h-screen bg-[#070A12]">
-      {/* Header */}
-      <nav className="px-4 py-4 border-b border-white/10 flex items-center justify-between">
-        <a href="/" className="text-xl font-bold tracking-wider gradient-text">PEPLAB</a>
-        <a href="/" className="text-sm text-gray-400 flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </a>
-      </nav>
-
+    <div className="min-h-screen page-grid-bg pt-24 sm:pt-28">
       <main className="px-4 py-3 max-w-lg mx-auto">
         {/* Title */}
         <h1 className="text-lg font-bold text-white mb-3">Complete Your Order</h1>
@@ -907,7 +892,7 @@ export default function Checkout() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-xs text-white truncate">{item.name}</p>
                       {!item.isFree && item.isPreorder && (
-                        <span className="shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#7F1D1D] text-[#FECACA] border border-red-500/40">
+                        <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border ${lightShop ? 'bg-[#fff1f0] text-[#b42318] border-[#fda29b]' : 'bg-[#7F1D1D] text-[#FECACA] border-red-500/40'}`}>
                           Preorder
                         </span>
                       )}

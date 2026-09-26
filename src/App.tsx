@@ -10,11 +10,11 @@ import { RewardsProvider } from '@/context/RewardsContext';
 import { AffiliateProvider } from '@/context/AffiliateContext';
 // `DEFAULT_LANDING_PAGE_SETTINGS` was used by the ShopRoute homepage-gate check
 // (now commented out below). Import kept out of the tree until re-enabled.
+import { ThemePreviewSync, ThemeProvider } from '@/context/ThemeContext';
 import { getSiteSetting, DEFAULT_AFFILIATE_PROGRAM_SETTINGS } from '@/lib/settings';
 import { supabase } from '@/lib/supabase';
-import Navigation from '@/components/Navigation';
-import CartDrawer from '@/components/CartDrawer';
 import SignupWelcomeModal from '@/components/SignupWelcomeModal';
+import PublicLayout from '@/components/PublicLayout';
 import { CONFIG } from '@/lib/config';
 import { SEO } from '@/components/SEO';
 import { SITE_SEO_DESCRIPTION, SITE_SEO_KEYWORDS, SITE_SEO_TITLE } from '@/lib/seo-keywords';
@@ -61,7 +61,15 @@ const PeplabLandingRoute = lazy(() => import('@/pages/PeplabLandingRoute'));
 gsap.registerPlugin(ScrollTrigger);
 
 /** Inline shell styles — work before Tailwind CSS finishes loading on slow mobile networks. */
-const PAGE_SHELL_STYLE = { background: '#070A12', minHeight: '100dvh' } as const;
+const PAGE_SHELL_STYLE = { background: 'transparent', minHeight: '100dvh' } as const;
+
+function RouteLoadingShell() {
+  return (
+    <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
+      <div className="pl-route-spin w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function HomePage() {
   useEffect(() => {
@@ -126,13 +134,6 @@ function HomePage() {
         keywords={SITE_SEO_KEYWORDS}
       />
       <div className="relative min-h-screen page-grid-bg">
-
-        {/* Navigation */}
-        <Navigation />
-
-        {/* Cart Drawer */}
-        <CartDrawer />
-
         {/* Main Content */}
         <main className="relative z-10">
         {/* Shop - Catalog */}
@@ -173,7 +174,7 @@ function HomePage() {
 // function ShopRouteLoading() {
 //   return (
 //     <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
-//       <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+//       <div className="pl-route-spin w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
 //     </div>
 //   );
 // }
@@ -372,7 +373,7 @@ function RedirectToMainShop() {
 
   return (
     <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+      <div className="pl-route-spin w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
@@ -417,7 +418,7 @@ function HomeGate() {
   if (!ready) {
     return (
       <div style={PAGE_SHELL_STYLE} className="flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+        <div className="pl-route-spin w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -428,21 +429,23 @@ function HomeGate() {
 
 function LoginOnlyApp() {
   return (
+    <ThemeProvider>
     <CartProvider>
       <RewardsProvider>
         <AffiliateProvider>
           <BrowserRouter>
+            <ThemePreviewSync />
             <ScrollToTop />
             <PersistReferralRef />
             <StaleTabReloader />
-            <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
+            <Suspense fallback={<RouteLoadingShell />}>
               <Routes>
                 <Route path="/login" element={<LoginGateway />} />
                 <Route path="/signup" element={<LoginGateway />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
-                {/* Public — keep indexed / crawlable */}
+                <Route element={<PublicLayout />}>
                 <Route path="/landing" element={<PeplabLandingRoute />} />
                 <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
                 <Route path="/contact" element={<Contact />} />
@@ -463,6 +466,7 @@ function LoginOnlyApp() {
                 */}
                 <Route path="/coa" element={<CoaArchive />} />
                 <Route path="/track-order" element={<TrackOrder />} />
+                </Route>
 
                 {/* `/` is indexable: lock page for guests, shop for members. `/login` + `/signup` stay unchanged. */}
                 <Route path="/" element={<HomeGate />} />
@@ -484,6 +488,7 @@ function LoginOnlyApp() {
         </AffiliateProvider>
       </RewardsProvider>
     </CartProvider>
+    </ThemeProvider>
   );
 }
 
@@ -505,16 +510,19 @@ function App() {
   }
 
   return (
+    <ThemeProvider>
     <CartProvider>
       <RewardsProvider>
         <AffiliateProvider>
         <BrowserRouter>
+          <ThemePreviewSync />
           <ScrollToTop />
           {CONFIG.FEATURES.ENABLE_SIGNUP_WELCOME_MODAL && <SignupWelcomeModal />}
           <PersistReferralRef />
           <StaleTabReloader />
-          <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
+          <Suspense fallback={<RouteLoadingShell />}>
             <Routes>
+              <Route element={<PublicLayout />}>
               <Route path="/" element={<ShopRoute />} />
               <Route path="/shop" element={<ShopRoute />} />
               <Route path="/landing" element={<PeplabLandingRoute />} />
@@ -528,14 +536,9 @@ function App() {
               <Route path="/shipping" element={<Shipping />} />
               <Route path="/contact-info" element={<ContactInfo />} />
               <Route path="/standards" element={<Standards />} />
-              <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/rewards-terms" element={<RewardsTerms />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/product/:slug" element={<ProductPage />} />
               <Route path="/promoter" element={<PromoterDashboard />} />
@@ -548,12 +551,19 @@ function App() {
               <Route path="/coa" element={<CoaArchive />} />
               <Route path="/track-order" element={<TrackOrder />} />
               <Route path="*" element={<NotFound />} />
+              </Route>
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
         </AffiliateProvider>
       </RewardsProvider>
     </CartProvider>
+    </ThemeProvider>
   );
 }
 

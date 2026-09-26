@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'r
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, Beaker, FileText, FlaskConical, Shield } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
-import StorefrontLayout from '@/components/StorefrontLayout';
+import Footer from '@/sections/Footer';
 import { SEO } from '@/components/SEO';
 import { JsonLd } from '@/components/JsonLd';
 import { buildProductJsonLd, buildProductSeo } from '@/lib/product-seo';
@@ -137,7 +137,7 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <StorefrontLayout surface="clean">
+      <>
         <main className="pdp-page nl-new-landing page-grid-bg min-h-screen pt-24 pb-16">
           <section className="pdp-section">
             <div className="max-w-6xl mx-auto px-6">
@@ -148,13 +148,13 @@ export default function ProductPage() {
           </div>
         </section>
         </main>
-      </StorefrontLayout>
+      </>
     );
   }
 
   if (!product || error) {
     return (
-      <StorefrontLayout surface="clean">
+      <>
         <main className="pdp-page nl-new-landing page-grid-bg min-h-screen pt-24 pb-16">
           <section className="pdp-section">
             <div className="max-w-6xl mx-auto px-6 flex min-h-[50vh] flex-col items-center justify-center text-center">
@@ -169,12 +169,12 @@ export default function ProductPage() {
           </div>
         </section>
         </main>
-      </StorefrontLayout>
+      </>
     );
   }
 
   return (
-    <StorefrontLayout surface="clean">
+    <>
       <ProductCardStyles />
       {seo && <SEO title={seo.title} description={seo.description} keywords={seo.keywords} />}
       {productJsonLd && <JsonLd data={productJsonLd} id={`product-jsonld-${slug}`} />}
@@ -375,7 +375,8 @@ export default function ProductPage() {
       {STOREFRONT_COA_ENABLED && (
         <CoaDialog open={coaOpen} onOpenChange={setCoaOpen} data={coaData} />
       )}
-    </StorefrontLayout>
+      <Footer />
+    </>
   );
 }
 

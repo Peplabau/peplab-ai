@@ -22,7 +22,7 @@ export default function CoaArchiveTable({ products, onView }: CoaArchiveTablePro
   };
 
   return (
-    <div className="rounded-xl sm:rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.55)] overflow-hidden">
+    <div className="coa-archive-table rounded-xl sm:rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.55)] overflow-hidden">
       {/* Desktop / tablet table */}
       <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-left">

@@ -8,6 +8,7 @@ import {
   type TrustpilotReviewRow,
 } from '@/lib/supabase-db';
 import { filterPublicTrustpilotReviews, statsFromPublicTrustpilotReviews } from '@/lib/trustpilot-filters';
+import { useLightShopPreview } from '@/context/ThemeContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -28,6 +29,7 @@ type TrustpilotReviewsProps = {
  */
 export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReviewsProps) {
   const isLanding = variant === 'landing';
+  const lightShop = useLightShopPreview();
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [reviews, setReviews] = useState<TrustpilotReviewRow[]>([]);
@@ -80,6 +82,7 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
   }, []);
 
   useEffect(() => {
+    if (lightShop) return;
     const section = sectionRef.current;
     if (!section) return;
 
@@ -103,7 +106,7 @@ export default function TrustpilotReviews({ variant = 'home' }: TrustpilotReview
     }, section);
 
     return () => ctx.revert();
-  }, []);
+  }, [lightShop]);
 
   useEffect(() => {
     if (!isAutoPlaying || visibleReviews.length <= reviewsPerView) return;

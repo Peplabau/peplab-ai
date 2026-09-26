@@ -3,6 +3,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Building2, FlaskConical, Handshake, PackageCheck, MessageCircle, ArrowRight } from 'lucide-react';
 import { CONFIG } from '@/lib/config';
+import { useLightShopPreview } from '@/context/ThemeContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -30,13 +31,14 @@ type BulkSalesProps = {
 };
 
 export default function BulkSales({ compact = false }: BulkSalesProps) {
+  const lightShop = useLightShopPreview();
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (compact) return;
+    if (compact || lightShop) return;
 
     const section = sectionRef.current;
     if (!section) return;
@@ -62,7 +64,7 @@ export default function BulkSales({ compact = false }: BulkSalesProps) {
     }, section);
 
     return () => ctx.revert();
-  }, [compact]);
+  }, [compact, lightShop]);
 
   return (
     <section
@@ -103,8 +105,8 @@ export default function BulkSales({ compact = false }: BulkSalesProps) {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Building2 className="w-4 h-4 text-[#C4B5FD]" />
-                <p className="text-xs uppercase tracking-[0.14em] text-[#C4B5FD]">Bulk Enquiries</p>
+                <Building2 className={`w-4 h-4 ${lightShop ? 'text-[#7c3aed]' : 'text-[#C4B5FD]'}`} />
+                <p className={`text-xs uppercase tracking-[0.14em] ${lightShop ? 'text-[#7c3aed]' : 'text-[#C4B5FD]'}`}>Bulk Enquiries</p>
               </div>
               <p className="text-[#F4F6FA] text-lg sm:text-xl font-semibold mb-2">
                 Request custom quote for higher-volume orders

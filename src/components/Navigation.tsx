@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Menu, X, User, LayoutDashboard, Award, Settings, Search, Package, TrendingUp, Trophy } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, LayoutDashboard, Award, Settings, Package, TrendingUp, Trophy, Sun, Moon } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useRewards } from '@/context/RewardsContext';
 import { useAffiliate } from '@/context/AffiliateContext';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
-import SearchBar from './SearchBar';
 import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
 // PROTOCOLS_PATH temporarily unused — restore with Protocols nav entry below
-// import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, PROTOCOLS_PATH } from '@/lib/routes';
+import { useTheme, useLightShopPreview } from '@/context/ThemeContext';
+import { useLocation } from 'react-router-dom';
 
 type NavigationProps = {
   /** Render inside a parent fixed header (e.g. below announce bar on /landing). */
@@ -20,10 +20,12 @@ export default function Navigation({ embedded = false }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminUser, setIsAdminUser] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
   const { balance } = useRewards();
   const { myPromoter } = useAffiliate();
+  const { theme, toggleTheme } = useTheme();
+  const lightShop = useLightShopPreview();
+  const { pathname } = useLocation();
 
   // Check login + admin state — read from Supabase session directly
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
         <div className={embedded ? 'nl-container' : 'w-full px-4 sm:px-6 lg:px-12'}>
           <div className={`nl-nav-bar flex items-center justify-between ${embedded ? '' : 'h-16 sm:h-20 lg:h-24'}`}>
             <a href={HOME_PATH} className="flex flex-col items-start" aria-label="PEPLAB Australia home" onClick={() => setIsMobileMenuOpen(false)}>
-              <span className={`font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-4xl' : 'text-3xl sm:text-4xl lg:text-5xl'}`}>
+              <span className={`pl-logo-word font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-4xl' : 'text-3xl sm:text-4xl lg:text-5xl'}`}>
                 PEPLAB
               </span>
               <span className={`nl-nav-tagline font-mono uppercase text-[#8B5CF6] mt-0.5 ${embedded ? 'text-[9px] sm:text-[10px] tracking-[0.35em]' : 'text-[10px] sm:text-xs lg:text-sm tracking-[0.45em] sm:tracking-[0.5em]'}`}>
@@ -114,26 +116,26 @@ export default function Navigation({ embedded = false }: NavigationProps) {
             </a>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-10">
-              {navEntries.map((entry) => (
-                <a key={entry.label} href={entry.href} className={navClassDesktop}>
-                  {entry.label}
-                </a>
-              ))}
+            <div className="pl-nav-links hidden lg:flex items-center gap-8 xl:gap-10">
+              {navEntries.map((entry) => {
+                const shopLink = entry.href === SHOP_PATH || entry.href === HOME_PATH;
+                const active = shopLink
+                  ? pathname === HOME_PATH || pathname === SHOP_PATH
+                  : pathname === entry.href || pathname.startsWith(`${entry.href}/`);
+                return (
+                  <a
+                    key={entry.label}
+                    href={entry.href}
+                    className={`${navClassDesktop}${active ? ' pl-nav-active' : ''}`}
+                  >
+                    {entry.label}
+                  </a>
+                );
+              })}
             </div>
 
             {/* Right Side */}
             <div className="flex items-center gap-2 sm:gap-4">
-              {/* Search Button */}
-              {/* <button
-                onClick={() => setIsSearchOpen(true)}
-                className="hidden sm:flex p-2.5 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
-                title="Search products"
-              >
-                <Search className="w-5 h-5 text-[#F4F6FA]" />
-              </button> */}
-
-              {/* Leaderboard Link - Desktop */}
               <a
                 href="/leaderboard"
                 className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
@@ -141,7 +143,6 @@ export default function Navigation({ embedded = false }: NavigationProps) {
               >
                 <Trophy className="w-5 h-5 text-amber-300" />
               </a>
-              {/* Track Order Link - Desktop */}
               <a
                 href="/track-order"
                 className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
@@ -193,6 +194,20 @@ export default function Navigation({ embedded = false }: NavigationProps) {
                   <span className="text-sm font-medium">Login</span>
                 </a>
               )}
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex items-center justify-center p-2.5 sm:p-3 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
+                aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+                title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-5 h-5 sm:w-6 sm:h-6 text-[#F4F6FA]" />
+                ) : (
+                  <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-[#F4F6FA]" />
+                )}
+              </button>
 
               {/* Cart Button */}
               <button
@@ -263,7 +278,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
             {/* Mobile Leaderboard Link */}
             <a
               href="/leaderboard"
-              className="flex items-center gap-2 text-lg font-medium text-amber-300 hover:text-amber-200 transition-colors duration-300 py-2"
+              className={`flex items-center gap-2 text-lg font-medium transition-colors duration-300 py-2 ${lightShop ? 'text-[#b54708] hover:text-[#6847f5]' : 'text-amber-300 hover:text-amber-200'}`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <Trophy className="w-5 h-5" />
@@ -307,12 +322,21 @@ export default function Navigation({ embedded = false }: NavigationProps) {
                 Login
               </a>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                toggleTheme();
+                setIsMobileMenuOpen(false);
+              }}
+              className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {theme === 'dark' ? 'Light theme' : 'Dark theme'}
+            </button>
           </div>
         </div>
       </nav>
-
-      {/* Search Bar Modal */}
-      <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 }

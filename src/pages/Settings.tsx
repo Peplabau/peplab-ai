@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  ArrowLeft,
   User,
   Lock,
   Mail,
@@ -20,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import BirthdayRewardCard from '@/components/BirthdayRewardCard';
 import { SEO } from '@/components/SEO';
 import { useRewards } from '@/context/RewardsContext';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import {
   EMPTY_CHECKOUT_SHIPPING,
   loadCheckoutDefaults,
@@ -67,10 +67,12 @@ function ToggleSwitch({
   checked,
   onChange,
   color = '#8B5CF6',
+  light = false,
 }: {
   checked: boolean;
   onChange: () => void;
   color?: string;
+  light?: boolean;
 }) {
   return (
     <button
@@ -79,7 +81,7 @@ function ToggleSwitch({
       aria-checked={checked}
       onClick={(e) => { e.stopPropagation(); onChange(); }}
       className="relative inline-flex h-7 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-      style={{ backgroundColor: checked ? color : 'rgba(244,246,250,0.12)' }}
+      style={{ backgroundColor: checked ? color : light ? '#e4e7ec' : 'rgba(244,246,250,0.12)' }}
     >
       <span
         className="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out"
@@ -95,6 +97,7 @@ export default function Settings() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userData, setUserData] = useState({ name: '', email: '', joinDate: '' });
   const { refreshPoints } = useRewards();
+  const lightShop = useLightShopPreview();
 
   const [settings, setSettings] = useState<UserSettings>({
     name: '',
@@ -277,19 +280,8 @@ export default function Settings() {
   // ── Loading skeleton ──────────────────────────────────────────────────────────
   if (isLoadingUser || !isLoggedIn) {
     return (
-      <div className="min-h-screen" style={{ background: '#070A12' }}>
+      <div className="min-h-screen pt-24 sm:pt-28 page-grid-bg">
         <div className="absolute inset-0 grid-overlay opacity-60" />
-        <nav className="relative z-50 flex items-center justify-between px-4 py-4 border-b border-[rgba(244,246,250,0.06)] lg:hidden">
-          <Skeleton className="h-9 w-9 rounded-xl" />
-          <Skeleton className="h-7 w-24 rounded-lg" />
-          <Skeleton className="h-9 w-9 rounded-xl opacity-0" />
-        </nav>
-        <nav className="hidden lg:block relative z-50 px-12 py-6">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <Skeleton className="h-10 w-36 rounded-lg" />
-            <Skeleton className="h-9 w-48 rounded-full" />
-          </div>
-        </nav>
         <main className="relative z-10 px-4 lg:px-12 py-6 lg:py-12 max-w-6xl mx-auto">
           <div className="hidden lg:block mb-8 space-y-2">
             <Skeleton className="h-9 w-64 rounded-lg" />
@@ -307,75 +299,38 @@ export default function Settings() {
     );
   }
 
-  const inputClass =
-    'w-full pl-12 pr-4 py-3.5 rounded-xl bg-[rgba(7,10,18,0.6)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] placeholder-[#6B7280] focus:outline-none focus:border-[#2ED1B4] focus:bg-[rgba(7,10,18,0.8)] transition-colors text-base';
+  const inputClass = lightShop
+    ? 'w-full pl-12 pr-4 py-3.5 rounded-xl bg-white border border-[#e4e7ec] text-[#101828] placeholder-[#98a2b3] focus:outline-none focus:border-[#6847f5] focus:bg-white transition-colors text-base'
+    : 'w-full pl-12 pr-4 py-3.5 rounded-xl bg-[rgba(7,10,18,0.6)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] placeholder-[#6B7280] focus:outline-none focus:border-[#2ED1B4] focus:bg-[rgba(7,10,18,0.8)] transition-colors text-base';
 
-  const passwordInputClass =
-    'w-full pl-12 pr-14 py-3.5 rounded-xl bg-[rgba(7,10,18,0.6)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] placeholder-[#6B7280] focus:outline-none focus:border-[#2ED1B4] focus:bg-[rgba(7,10,18,0.8)] transition-colors text-base';
+  const passwordInputClass = lightShop
+    ? 'w-full pl-12 pr-14 py-3.5 rounded-xl bg-white border border-[#e4e7ec] text-[#101828] placeholder-[#98a2b3] focus:outline-none focus:border-[#6847f5] focus:bg-white transition-colors text-base'
+    : 'w-full pl-12 pr-14 py-3.5 rounded-xl bg-[rgba(7,10,18,0.6)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] placeholder-[#6B7280] focus:outline-none focus:border-[#2ED1B4] focus:bg-[rgba(7,10,18,0.8)] transition-colors text-base';
 
   const tabButtonClass = (active: boolean) =>
     active
-      ? 'bg-[rgba(139,92,246,0.15)] text-[#8B5CF6] border border-[rgba(139,92,246,0.35)]'
-      : 'text-[#A9B3C7] bg-[rgba(244,246,250,0.05)] border border-transparent hover:bg-[rgba(244,246,250,0.08)] hover:text-[#F4F6FA]';
+      ? lightShop
+        ? 'bg-[#f3f0ff] text-[#6847f5] border border-[#d9d2ff]'
+        : 'bg-[rgba(139,92,246,0.15)] text-[#8B5CF6] border border-[rgba(139,92,246,0.35)]'
+      : lightShop
+        ? 'text-[#475467] bg-[#f2f4f7] border border-transparent hover:bg-[#eef2f8] hover:text-[#101828]'
+        : 'text-[#A9B3C7] bg-[rgba(244,246,250,0.05)] border border-transparent hover:bg-[rgba(244,246,250,0.08)] hover:text-[#F4F6FA]';
 
   const desktopTabButtonClass = (active: boolean) =>
     active
-      ? 'bg-[rgba(139,92,246,0.15)] text-[#8B5CF6]'
-      : 'text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.05)] hover:text-[#F4F6FA]';
+      ? lightShop
+        ? 'bg-[#f3f0ff] text-[#6847f5]'
+        : 'bg-[rgba(139,92,246,0.15)] text-[#8B5CF6]'
+      : lightShop
+        ? 'text-[#475467] hover:bg-[#f2f4f7] hover:text-[#101828]'
+        : 'text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.05)] hover:text-[#F4F6FA]';
 
   // ── Main render ───────────────────────────────────────────────────────────────
   return (
     <>
       <SEO title="Account settings | PEPLAB" noIndex />
-    <div className="min-h-screen pb-10 lg:pb-16" style={{ background: '#070A12' }}>
+    <div className="min-h-screen pt-24 sm:pt-28 pb-10 lg:pb-16 page-grid-bg">
       <div className="absolute inset-0 grid-overlay opacity-60" />
-
-      {/* Mobile nav */}
-      <nav className="lg:hidden relative z-50 flex items-center justify-between px-4 py-4 border-b border-[rgba(244,246,250,0.06)] bg-[rgba(7,10,18,0.8)] backdrop-blur-sm sticky top-0">
-        <a
-          href="/dashboard"
-          className="flex items-center justify-center w-9 h-9 rounded-xl bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.1)] transition-colors"
-          aria-label="Back to dashboard"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </a>
-        <a href="/" className="flex flex-col items-center">
-          <span className="text-xl font-bold tracking-[0.12em] gradient-text leading-none">PEPLAB</span>
-          <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-[#8B5CF6] mt-0.5">Settings</span>
-        </a>
-        <div className="w-9" aria-hidden="true" />
-      </nav>
-
-      {/* Desktop nav — matches dashboard */}
-      <nav className="hidden lg:block relative z-50 px-12 py-6 border-b border-[rgba(244,246,250,0.06)]">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <a href="/" className="flex flex-col items-start">
-            <span className="text-4xl font-bold tracking-[0.12em] gradient-text leading-none">PEPLAB</span>
-            <span className="text-sm font-mono uppercase tracking-[0.5em] text-[#8B5CF6] mt-0.5">PEPTIDES AUSTRALIA</span>
-          </a>
-          <div className="flex items-center gap-3">
-            <a
-              href="/dashboard"
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(244,246,250,0.06)] border border-[rgba(244,246,250,0.1)] text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.1)] transition-colors"
-            >
-              ← Dashboard
-            </a>
-            <a
-              href="/"
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(46,209,180,0.12)] border border-[rgba(46,209,180,0.28)] text-[#2ED1B4] hover:bg-[rgba(46,209,180,0.18)] transition-colors"
-            >
-              Shop now
-            </a>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(244,246,250,0.06)] border border-[rgba(244,246,250,0.1)] text-[#A9B3C7] hover:text-[#EF4444] hover:border-[rgba(239,68,68,0.25)] transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
 
       <main className="relative z-10 px-4 sm:px-6 lg:px-12 py-6 lg:py-12 max-w-6xl mx-auto">
 
@@ -407,7 +362,7 @@ export default function Settings() {
         <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8 lg:items-start">
 
           {/* Sidebar — desktop only */}
-          <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-8">
+          <aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:sticky lg:top-28">
             <div className="p-5 rounded-2xl bg-[rgba(17,24,39,0.7)] border border-[rgba(244,246,250,0.08)] text-center">
               <div
                 className="mx-auto w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl select-none mb-4"
@@ -435,6 +390,15 @@ export default function Settings() {
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-[rgba(239,68,68,0.3)] text-[#EF4444] font-medium hover:bg-[rgba(239,68,68,0.08)] transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
           </aside>
 
           <div className="min-w-0">
@@ -741,6 +705,7 @@ export default function Settings() {
                       </div>
                       <div className="ml-3 shrink-0">
                         <ToggleSwitch
+                          light={lightShop}
                           checked={settings.notifications.orderUpdates}
                           onChange={() => handleNotificationChange('orderUpdates')}
                           color="#2ED1B4"
@@ -764,6 +729,7 @@ export default function Settings() {
                       </div>
                       <div className="ml-3 shrink-0">
                         <ToggleSwitch
+                          light={lightShop}
                           checked={settings.notifications.promotions}
                           onChange={() => handleNotificationChange('promotions')}
                           color="#8B5CF6"
@@ -787,6 +753,7 @@ export default function Settings() {
                       </div>
                       <div className="ml-3 shrink-0">
                         <ToggleSwitch
+                          light={lightShop}
                           checked={settings.notifications.rewards}
                           onChange={() => handleNotificationChange('rewards')}
                           color="#EC4899"

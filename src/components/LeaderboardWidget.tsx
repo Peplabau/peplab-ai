@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Trophy, ArrowRight, Crown, Medal, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAffiliate } from '@/context/AffiliateContext';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import {
   getLeaderboard,
   getMyRank,
@@ -20,6 +21,7 @@ import {
  */
 export default function LeaderboardWidget() {
   const { myPromoter } = useAffiliate();
+  const lightShop = useLightShopPreview();
   const [top, setTop] = useState<LeaderboardRow[] | null>(null);
   const [myRank, setMyRank] = useState<{ rank: number; total: number } | null>(null);
 
@@ -58,17 +60,29 @@ export default function LeaderboardWidget() {
   }, [myPromoter]);
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-amber-500/10 via-[rgba(17,24,39,0.6)] to-[rgba(139,92,246,0.1)] border border-amber-500/20 p-4 sm:p-5">
+    <div
+      className={
+        lightShop
+          ? 'rounded-2xl bg-white border border-[#f7d9a8] shadow-[0_8px_24px_rgba(16,24,40,0.06)] p-4 sm:p-5'
+          : 'rounded-2xl bg-gradient-to-br from-amber-500/10 via-[rgba(17,24,39,0.6)] to-[rgba(139,92,246,0.1)] border border-amber-500/20 p-4 sm:p-5'
+      }
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
-            <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
+          <div
+            className={
+              lightShop
+                ? 'w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#fffaeb] border border-[#f7d9a8] flex items-center justify-center shrink-0'
+                : 'w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0'
+            }
+          >
+            <Trophy className={lightShop ? 'w-4 h-4 sm:w-5 sm:h-5 text-[#b54708]' : 'w-4 h-4 sm:w-5 sm:h-5 text-amber-300'} />
           </div>
           <div className="min-w-0">
             <h3 className="text-sm sm:text-base font-semibold text-[#F4F6FA] flex items-center gap-1.5">
               Promoter Leaderboard
-              <Sparkles className="w-3.5 h-3.5 text-amber-300/80" />
+              <Sparkles className={lightShop ? 'w-3.5 h-3.5 text-[#b54708]/80' : 'w-3.5 h-3.5 text-amber-300/80'} />
             </h3>
             <p className="text-[10px] sm:text-xs text-[#A9B3C7]">
               Top promoters by reward points earned
@@ -86,9 +100,21 @@ export default function LeaderboardWidget() {
 
       {/* My rank chip — only when the user has a promoter row */}
       {myPromoter && myRank && (
-        <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[rgba(46,209,180,0.1)] border border-[#2ED1B4]/25">
+        <div
+          className={
+            lightShop
+              ? 'mb-3 sm:mb-4 flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#f4f1ff] border border-[#ddd6fe]'
+              : 'mb-3 sm:mb-4 flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[rgba(46,209,180,0.1)] border border-[#2ED1B4]/25'
+          }
+        >
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#2ED1B4]/20 border border-[#2ED1B4]/30 flex items-center justify-center shrink-0">
+            <div
+              className={
+                lightShop
+                  ? 'w-7 h-7 rounded-lg bg-white border border-[#ddd6fe] flex items-center justify-center shrink-0'
+                  : 'w-7 h-7 rounded-lg bg-[#2ED1B4]/20 border border-[#2ED1B4]/30 flex items-center justify-center shrink-0'
+              }
+            >
               <Trophy className="w-3.5 h-3.5 text-[#2ED1B4]" />
             </div>
             <div className="min-w-0">
@@ -167,15 +193,25 @@ export default function LeaderboardWidget() {
 }
 
 function PlacementIcon({ placement }: { placement: 1 | 2 | 3 }) {
+  const lightShop = useLightShopPreview();
   if (placement === 1) {
     return (
-      <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
-        <Crown className="w-3.5 h-3.5 text-amber-300" />
+      <div
+        className={
+          lightShop
+            ? 'w-7 h-7 rounded-lg bg-[#fffaeb] border border-[#f7d9a8] flex items-center justify-center shrink-0'
+            : 'w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0'
+        }
+      >
+        <Crown className={lightShop ? 'w-3.5 h-3.5 text-[#b54708]' : 'w-3.5 h-3.5 text-amber-300'} />
       </div>
     );
   }
-  const accent =
-    placement === 2
+  const accent = lightShop
+    ? placement === 2
+      ? 'bg-[#f2f4f7] border-[#e4e7ec] text-[#475467]'
+      : 'bg-[#fff1e6] border-[#f3ceab] text-[#c2410c]'
+    : placement === 2
       ? 'bg-slate-400/15 border-slate-400/30 text-slate-200'
       : 'bg-orange-500/15 border-orange-500/30 text-orange-300';
   return (

@@ -2,6 +2,7 @@ import { Check, FileText, Shield } from 'lucide-react';
 import OzcaniumAnalyticsName from '@/components/OzcaniumAnalyticsName';
 import { CONFIG } from '@/lib/config';
 import { getCoaDisplayData, type CoaDisplayData } from '@/lib/coa-utils';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import type { Product } from '@/products';
 
 type CoaArchiveCardProps = {
@@ -13,27 +14,32 @@ export default function CoaArchiveCard({ product, onView }: CoaArchiveCardProps)
   const data = getCoaDisplayData(product);
   const blurred = CONFIG.COA_PDF_BLURRED;
   const pdfPreviewUrl = `${data.coaUrl}#toolbar=0&navpanes=0&view=FitH`;
+  const lightShop = useLightShopPreview();
+  const coaLabel = lightShop ? 'text-[#7c879a]' : 'text-[#8b93a8]';
+  const coaVerified = lightShop ? 'text-[#099250]' : 'text-[#36ea51]';
+  const coaPurity = lightShop ? 'text-[#099250]' : 'text-[#4ADE80]';
+  const coaHeaderBg = lightShop ? 'bg-[#f8fafc]' : 'bg-[rgba(16,18,32,0.85)]';
 
   return (
-    <article className="coa-archive-card group flex h-full flex-col overflow-hidden rounded-xl border border-[rgba(139,92,246,0.18)] bg-[#0a0e14] shadow-[0_8px_32px_rgba(0,0,0,0.35)] transition-all duration-300 sm:rounded-2xl hover:border-[rgba(34,197,94,0.35)] hover:shadow-[0_12px_40px_rgba(34,197,94,0.08)]">
+    <article className={`coa-archive-card group flex h-full flex-col overflow-hidden rounded-xl border transition-all duration-300 sm:rounded-2xl ${lightShop ? 'border-[#e4e7ec] bg-white shadow-[0_8px_28px_rgba(16,24,40,0.06)] hover:border-[#abefc6] hover:shadow-[0_12px_36px_rgba(16,185,129,0.1)]' : 'border-[rgba(139,92,246,0.18)] bg-[#0a0e14] shadow-[0_8px_32px_rgba(0,0,0,0.35)] hover:border-[rgba(34,197,94,0.35)] hover:shadow-[0_12px_40px_rgba(34,197,94,0.08)]'}`}>
       {/* Mobile header — compact */}
-      <div className="coa-archive-card-header coa-archive-card-header--mobile flex items-start justify-between gap-1.5 border-b border-[rgba(244,246,250,0.06)] bg-[rgba(16,18,32,0.85)] px-2 py-2 sm:hidden">
+      <div className={`coa-archive-card-header coa-archive-card-header--mobile flex items-start justify-between gap-1.5 border-b border-[rgba(244,246,250,0.06)] ${coaHeaderBg} px-2 py-2 sm:hidden`}>
         <p className="min-w-0 flex-1 text-[11px] font-semibold leading-tight text-[#F4F6FA] line-clamp-2">
           {data.productName}
         </p>
         <span
-          className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[rgba(32,248,53,0.4)] bg-[rgba(139,92,246,0.1)] px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.04em] text-[#36ea51]"
+          className={`inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[rgba(32,248,53,0.4)] bg-[rgba(139,92,246,0.1)] px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.04em] ${coaVerified}`}
           title="Verified"
         >
-          <Check size={8} strokeWidth={3} className="text-[#36ea51]" aria-hidden />
+          <Check size={8} strokeWidth={3} className={coaVerified} aria-hidden />
           <span className="hidden min-[360px]:inline">Verified</span>
         </span>
       </div>
 
       {/* Desktop header — full */}
-      <div className="coa-archive-card-header hidden items-center justify-between gap-2 border-b border-[rgba(244,246,250,0.06)] bg-[rgba(16,18,32,0.85)] px-4 py-3 sm:flex">
+      <div className={`coa-archive-card-header hidden items-center justify-between gap-2 border-b border-[rgba(244,246,250,0.06)] ${coaHeaderBg} px-4 py-3 sm:flex`}>
         <div className="flex min-w-0 items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgba(139,92,246,0.14)] text-[#36ea51]">
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgba(139,92,246,0.14)] ${coaVerified}`}>
             <Shield className="h-4 w-4" strokeWidth={2.2} />
           </div>
           <div className="min-w-0">
@@ -43,8 +49,8 @@ export default function CoaArchiveCard({ product, onView }: CoaArchiveCardProps)
             <p className="truncate text-sm font-semibold text-[#F4F6FA]">{data.productName}</p>
           </div>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[rgba(32,248,53,0.4)] bg-[rgba(139,92,246,0.1)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-[#36ea51]">
-          <Check size={10} strokeWidth={3} className="text-[#36ea51]" />
+        <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border border-[rgba(32,248,53,0.4)] bg-[rgba(139,92,246,0.1)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] ${coaVerified}`}>
+          <Check size={10} strokeWidth={3} className={coaVerified} />
           Verified
         </span>
       </div>

@@ -201,8 +201,8 @@ export default function Login() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#070A12' }}>
-        <div className="w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="pl-route-spin w-8 h-8 border-2 border-[#2ED1B4] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -211,7 +211,7 @@ export default function Login() {
   return (
     <>
       <SEO title="Sign in | PEPLAB" noIndex />
-    <div className="min-h-screen flex flex-col" style={{ background: '#070A12' }}>
+    <div className="min-h-screen flex flex-col">
       {/* Grid Overlay */}
       <div className="absolute inset-0 grid-overlay opacity-60" />
 

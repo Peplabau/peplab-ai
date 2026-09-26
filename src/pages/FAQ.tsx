@@ -3,6 +3,7 @@ import { ChevronDown, Search, HelpCircle, MessageCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import SEO from '@/components/SEO';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLightShopPreview } from '@/context/ThemeContext';
 
 interface FAQCategory {
   id: string;
@@ -24,6 +25,7 @@ export default function FAQ() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openItem, setOpenItem] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const lightShop = useLightShopPreview();
 
   useEffect(() => {
     loadFAQ();
@@ -66,7 +68,7 @@ export default function FAQ() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-24 pb-12" style={{ background: '#070A12' }}>
+      <div className="min-h-screen pt-24 pb-12 page-grid-bg">
         <div className="max-w-4xl mx-auto px-6 space-y-6">
           {/* Header */}
           <div className="text-center space-y-3 mb-10">
@@ -93,7 +95,7 @@ export default function FAQ() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#070A12' }}>
+    <div className="min-h-screen page-grid-bg">
       <SEO 
         title="FAQ | PEPLAB - Frequently Asked Questions"
         description="Find answers to common questions about ordering, shipping, products, and more."
@@ -133,7 +135,9 @@ export default function FAQ() {
               className={`px-4 py-2 rounded-full text-sm transition-colors ${
                 activeCategory === 'all'
                   ? 'bg-[#2ED1B4] text-white'
-                  : 'bg-[rgba(244,246,250,0.08)] text-[#A9B3C7] hover:text-[#F4F6FA]'
+                  : lightShop
+                    ? 'bg-[#f2f4f7] text-[#475467] hover:text-[#101828]'
+                    : 'bg-[rgba(244,246,250,0.08)] text-[#A9B3C7] hover:text-[#F4F6FA]'
               }`}
             >
               All
@@ -145,7 +149,9 @@ export default function FAQ() {
                 className={`px-4 py-2 rounded-full text-sm transition-colors ${
                   activeCategory === cat.id
                     ? 'bg-[#2ED1B4] text-white'
-                    : 'bg-[rgba(244,246,250,0.08)] text-[#A9B3C7] hover:text-[#F4F6FA]'
+                    : lightShop
+                      ? 'bg-[#f2f4f7] text-[#475467] hover:text-[#101828]'
+                      : 'bg-[rgba(244,246,250,0.08)] text-[#A9B3C7] hover:text-[#F4F6FA]'
                 }`}
               >
                 {cat.name}
@@ -157,7 +163,10 @@ export default function FAQ() {
           <div className="space-y-4">
             {filteredFAQs.length === 0 ? (
               <div className="text-center py-12">
-                <HelpCircle className="w-16 h-16 mx-auto text-[rgba(244,246,250,0.2)] mb-4" />
+                <HelpCircle
+                  className="w-16 h-16 mx-auto mb-4"
+                  style={{ color: lightShop ? 'rgba(16,24,40,0.2)' : 'rgba(244,246,250,0.2)' }}
+                />
                 <p className="text-[#A9B3C7]">No questions found. Try a different search.</p>
               </div>
             ) : (

@@ -16,7 +16,7 @@ import {
   REDEMPTION_TIERS,
   BONUS_POINTS,
 } from '@/context/RewardsContext';
-import { supabase, signOut, getCurrentUser } from '@/lib/supabase';
+import { supabase, getCurrentUser } from '@/lib/supabase';
 import { getUserOrders, getUserReviews, createReview, uploadReviewImage, getProductUuidBySlug, getUserReviewCount, checkIsAdmin, type OrderFromDB, type UserReview } from '@/lib/supabase-db';
 import { useAffiliate } from '@/context/AffiliateContext';
 import { createOrUpdatePromoterForUser } from '@/lib/affiliates';
@@ -38,7 +38,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdminUser, setIsAdminUser] = useState(false);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
   const [copiedPromoCode, setCopiedPromoCode] = useState(false);
   const [isGeneratingPromoCode, setIsGeneratingPromoCode] = useState(false);
@@ -91,7 +90,6 @@ export default function Dashboard() {
       return;
     }
     const admin = await checkIsAdmin(currentUser.id);
-    setIsAdminUser(admin);
     if (admin) localStorage.setItem('peplab_is_admin', 'true');
     else localStorage.removeItem('peplab_is_admin');
     setIsLoading(false);
@@ -169,19 +167,6 @@ export default function Dashboard() {
       .finally(() => { if (!cancelled) setUserReviewsLoading(false); });
     return () => { cancelled = true; };
   }, [user?.id, reviewSuccess]);
-
-  const handleLogout = async () => {
-    // 1. Wipe local UI state immediately so the click feels instant.
-    setUser(null);
-    localStorage.removeItem('peplab_logged_in');
-    localStorage.removeItem('peplab_is_admin');
-    // 2. Await the local sign-out so /login won't see a stale session and
-    //    bounce the user back here. Our signOut helper does only a local
-    //    clear synchronously and fires the slow server-side revoke in the
-    //    background, so this resolves in milliseconds.
-    try { await signOut(); } catch { /* always navigate, even on failure */ }
-    navigate('/login', { replace: true });
-  };
 
   const promoCode = myPromoter?.referral_code ?? '';
 
@@ -389,26 +374,8 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen" style={{ background: '#070A12' }}>
+      <div className="min-h-screen pt-24 sm:pt-28 page-grid-bg">
         <div className="absolute inset-0 grid-overlay opacity-60" />
-        {/* Nav skeleton — mobile */}
-        <nav className="lg:hidden relative z-50 px-4 py-3 border-b border-[rgba(244,246,250,0.06)]">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-9 w-9 rounded-xl" />
-            <Skeleton className="h-7 w-20 rounded" />
-            <Skeleton className="h-9 w-9 rounded-xl" />
-          </div>
-        </nav>
-        {/* Nav skeleton — desktop */}
-        <nav className="hidden lg:block relative z-50 px-12 py-6">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-10 w-36 rounded-lg" />
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-8 w-20 rounded-full" />
-              <Skeleton className="h-8 w-28 rounded-full" />
-            </div>
-          </div>
-        </nav>
         <main className="relative z-10 px-4 lg:px-12 py-5 lg:py-16">
           <div className="max-w-6xl mx-auto space-y-4 sm:space-y-8">
             {/* Profile card — mobile */}
@@ -491,90 +458,14 @@ export default function Dashboard() {
   return (
     <>
       <SEO title="My account | PEPLAB" noIndex />
-    <div className="min-h-screen" style={{ background: '#070A12' }}>
+    <div className="min-h-screen pt-24 sm:pt-28 page-grid-bg">
       <div className="absolute inset-0 grid-overlay opacity-60" />
-
-      {/* Mobile header */}
-      <nav className="lg:hidden relative z-50 sticky top-0 bg-[rgba(7,10,18,0.95)] backdrop-blur-sm border-b border-[rgba(244,246,250,0.06)]">
-        <div className="flex items-start justify-between gap-2 px-4 py-3">
-          <a
-            href="/"
-            className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl bg-[rgba(46,209,180,0.12)] border border-[rgba(46,209,180,0.28)] text-[#2ED1B4] hover:bg-[rgba(46,209,180,0.18)] transition-colors text-center leading-tight"
-          >
-            Shop now
-          </a>
-          <a href="/" className="flex flex-col items-center min-w-0 flex-1 pt-0.5">
-            <span className="text-xl font-bold tracking-[0.12em] gradient-text leading-none">PEPLAB</span>
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#8B5CF6] mt-0.5">DASHBOARD</span>
-          </a>
-          <div className="shrink-0 flex flex-col items-end gap-1 min-w-[4.5rem]">
-            {myPromoter && (
-              <a
-                href="/promoter"
-                className="text-[10px] font-semibold px-2.5 py-1.5 rounded-lg bg-[rgba(34,197,94,0.12)] border border-[rgba(34,197,94,0.25)] text-[#22C55E] hover:bg-[rgba(34,197,94,0.2)] transition-colors w-full text-center"
-              >
-                Promoter
-              </a>
-            )}
-            {isAdminUser && (
-              <a
-                href="/admin/dashboard"
-                className="text-[10px] font-semibold px-2.5 py-1.5 rounded-lg bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.25)] text-[#EF4444] hover:bg-[rgba(239,68,68,0.2)] transition-colors w-full text-center"
-              >
-                Admin
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-[10px] font-semibold px-2.5 py-1.5 rounded-lg bg-[rgba(244,246,250,0.06)] border border-[rgba(244,246,250,0.08)] text-[#A9B3C7] hover:text-[#EF4444] hover:border-[rgba(239,68,68,0.25)] transition-colors w-full text-center"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Desktop header */}
-      <nav className="hidden lg:block relative z-50 px-12 py-6">
-        <div className="flex items-center justify-between">
-          <a href="/" className="flex flex-col items-start">
-            <span className="text-4xl font-bold tracking-[0.12em] gradient-text leading-none">PEPLAB</span>
-            <span className="text-sm font-mono uppercase tracking-[0.5em] text-[#8B5CF6] mt-0.5">PEPTIDES AUSTRALIA</span>
-          </a>
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <a
-              href="/"
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(46,209,180,0.12)] border border-[rgba(46,209,180,0.28)] text-[#2ED1B4] hover:bg-[rgba(46,209,180,0.18)] transition-colors"
-            >
-              Shop now
-            </a>
-            {myPromoter && (
-              <a href="/promoter" className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(34,197,94,0.12)] border border-[rgba(34,197,94,0.25)] text-[#22C55E] hover:bg-[rgba(34,197,94,0.2)] transition-colors">
-                Promoter panel
-              </a>
-            )}
-            {isAdminUser && (
-              <a href="/admin/dashboard" className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.25)] text-[#EF4444] hover:bg-[rgba(239,68,68,0.2)] transition-colors">
-                Admin panel
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(244,246,250,0.06)] border border-[rgba(244,246,250,0.1)] text-[#A9B3C7] hover:text-[#EF4444] hover:border-[rgba(239,68,68,0.25)] transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
 
       <main className="relative z-10 px-4 lg:px-12 py-5 lg:py-20">
         <div className="max-w-6xl mx-auto">
           {/* Profile hero — mobile */}
           <div className="lg:hidden mb-4 p-4 rounded-2xl bg-[rgba(17,24,39,0.7)] border border-[rgba(244,246,250,0.08)] flex items-center gap-3">
-            <div className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg select-none" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #2ED1B4 100%)' }}>
+            <div className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg select-none" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #2ED1B4 100%)', color: '#ffffff' }}>
               {userName ? userName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) : <User className="w-6 h-6" />}
             </div>
             <div className="min-w-0">
@@ -633,7 +524,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#2ED1B4] flex items-center justify-center shrink-0">
-                    <Award className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    <Award className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: '#ffffff' }} />
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-base sm:text-xl font-semibold text-[#F4F6FA]">PEPLAB Rewards</h2>

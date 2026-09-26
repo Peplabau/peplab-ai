@@ -34,7 +34,7 @@ export default function ForgotPassword() {
   return (
     <>
       <SEO title="Forgot password | PEPLAB" noIndex />
-    <div className="min-h-screen" style={{ background: '#070A12' }}>
+    <div className="min-h-screen">
       {/* Grid Overlay */}
       <div className="absolute inset-0 grid-overlay opacity-60" />
 

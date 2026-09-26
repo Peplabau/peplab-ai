@@ -1,6 +1,4 @@
 import { Droplets, RotateCw, Syringe } from 'lucide-react';
-import Navigation from '@/components/Navigation';
-import CartDrawer from '@/components/CartDrawer';
 import ReconstitutionCalculator from '@/components/ReconstitutionCalculator';
 import Footer from '@/sections/Footer';
 import { SEO } from '@/components/SEO';
@@ -32,11 +30,10 @@ export default function Calculator() {
         keywords={['peptide calculator', 'reconstitution calculator', 'BAC water', 'research peptides', 'PEPLAB']}
       />
 
-      <Navigation />
-      <CartDrawer />
-
       <main className="relative z-10 pt-24 sm:pt-28 pb-16 lg:pb-24">
-        <ReconstitutionCalculator />
+        <div className="pl-wrap">
+          <ReconstitutionCalculator />
+        </div>
       </main>
 
       <Footer />

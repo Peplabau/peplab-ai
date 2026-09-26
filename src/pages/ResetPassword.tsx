@@ -60,7 +60,7 @@ export default function ResetPassword() {
     return (
       <>
         <SEO title="Reset password | PEPLAB" noIndex />
-      <div className="min-h-screen" style={{ background: '#070A12' }}>
+      <div className="min-h-screen">
         <div className="absolute inset-0 grid-overlay opacity-60" />
         <main className="relative z-10 px-6 lg:px-12 py-12 lg:py-20">
           <div className="max-w-md mx-auto text-center">
@@ -86,7 +86,7 @@ export default function ResetPassword() {
   return (
     <>
       <SEO title="Reset password | PEPLAB" noIndex />
-    <div className="min-h-screen" style={{ background: '#070A12' }}>
+    <div className="min-h-screen">
       {/* Grid Overlay */}
       <div className="absolute inset-0 grid-overlay opacity-60" />
 

@@ -1,5 +1,6 @@
 import { X, Plus, Minus, ShoppingBag, Truck, Gift, Droplets, Tag, Award, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import { useEffect, useState } from 'react';
 import { formatDosageLabel, getDefaultStorefrontDosage } from '@/products';
 import { loadEssentialProductsFromSupabase } from '@/lib/supabase-db';
@@ -22,6 +23,7 @@ export default function CartDrawer() {
     freeGiftAdded,
   } = useCart();
   const { loyaltyTier, isLoggedIn } = useRewards();
+  const lightShop = useLightShopPreview();
 
   const [showSydneyOption, setShowSydneyOption] = useState(false);
 
@@ -144,18 +146,26 @@ export default function CartDrawer() {
     };
   }, [isCartOpen]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('pl-cart-open', isCartOpen);
+    return () => {
+      root.classList.remove('pl-cart-open');
+    };
+  }, [isCartOpen]);
+
   if (!isCartOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] pl-cart-backdrop"
         onClick={() => setIsCartOpen(false)}
       />
 
       {/* Drawer - More compact on mobile */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-[#0D1117] border-l border-[rgba(244,246,250,0.08)] z-50 flex flex-col">
+      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-[#0D1117] border-l border-[rgba(244,246,250,0.08)] z-[70] flex flex-col pl-cart-drawer">
         {/* Header - Compact */}
         <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[rgba(244,246,250,0.08)]">
           <div className="flex items-center gap-2">
@@ -174,9 +184,9 @@ export default function CartDrawer() {
         </div>
 
         {hasPreorderLines && (
-          <div className="px-3 py-2 sm:px-4 sm:py-2.5 bg-[rgba(127,29,29,0.35)] border-b border-[rgba(239,68,68,0.35)]">
-            <p className="text-[10px] sm:text-xs text-[#FECACA] font-medium leading-snug">
-              This cart includes a <span className="font-bold text-[#FCA5A5]">preorder</span> — out-of-stock items at the listed price. Order reference will start with <span className="font-mono font-semibold">PRE-</span> at checkout.
+          <div className={`px-3 py-2 sm:px-4 sm:py-2.5 border-b ${lightShop ? 'bg-[#fff1f0] border-[#fecdca]' : 'bg-[rgba(127,29,29,0.35)] border-[rgba(239,68,68,0.35)]'}`}>
+            <p className={`text-[10px] sm:text-xs font-medium leading-snug ${lightShop ? 'text-[#b42318]' : 'text-[#FECACA]'}`}>
+              This cart includes a <span className={`font-bold ${lightShop ? 'text-[#d92d20]' : 'text-[#FCA5A5]'}`}>preorder</span> — out-of-stock items at the listed price. Order reference will start with <span className="font-mono font-semibold">PRE-</span> at checkout.
             </p>
           </div>
         )}
@@ -262,10 +272,10 @@ export default function CartDrawer() {
                 <div
                   key={`${item.productId}-${item.dosage}-${item.isPreorder ? 'pre' : 'stk'}`}
                   className={`flex gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border ${
-                    item.isFree 
-                      ? 'bg-[rgba(139,92,246,0.1)] border-[rgba(139,92,246,0.3)]' 
+                    item.isFree
+                      ? 'bg-[rgba(139,92,246,0.1)] border-[rgba(139,92,246,0.3)]'
                       : item.isPreorder
-                        ? 'bg-[rgba(127,29,29,0.25)] border-[rgba(239,68,68,0.25)]'
+                        ? (lightShop ? 'bg-[#fff1f0] border-[#fecdca]' : 'bg-[rgba(127,29,29,0.25)] border-[rgba(239,68,68,0.25)]')
                         : 'bg-[rgba(17,24,39,0.6)] border-[rgba(244,246,250,0.08)]'
                   }`}
                 >
@@ -285,7 +295,7 @@ export default function CartDrawer() {
                         </span>
                       )}
                       {!item.isFree && item.isPreorder && (
-                        <span className="px-1.5 py-0.5 rounded bg-[#7F1D1D] text-[#FECACA] text-[8px] sm:text-[10px] font-bold flex-shrink-0 border border-[#EF4444]/40">
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] sm:text-[10px] font-bold flex-shrink-0 border ${lightShop ? 'bg-[#fff1f0] text-[#b42318] border-[#fda29b]' : 'bg-[#7F1D1D] text-[#FECACA] border-[#EF4444]/40'}`}>
                           PREORDER
                         </span>
                       )}

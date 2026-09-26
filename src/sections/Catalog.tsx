@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, Search, Truck, Gift, Tag, MessageCircle, Award } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import LoyaltyProgressBar from '@/components/LoyaltyProgressBar';
+import { useLightShopPreview, useTheme } from '@/context/ThemeContext';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
 import {
@@ -403,6 +404,10 @@ export default function Catalog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const { lifetimeSpend, isLoggedIn } = useRewards();
+  const lightShop = useLightShopPreview();
+  const { theme } = useTheme();
+  const themeBootstrapped = useRef(false);
+  const [themeReloading, setThemeReloading] = useState(false);
   const initialProducts = rankCatalogBySales(cachedCatalogProducts ?? [], cachedCatalogSales ?? {});
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(initialProducts.length === 0);
@@ -410,6 +415,17 @@ export default function Catalog() {
   const [discountSettings, setDiscountSettings] = useState<DiscountSettings>(DEFAULT_DISCOUNT_SETTINGS);
   const [whatsappLink, setWhatsappLink] = useState(DEFAULT_SUPPORT_LINKS.whatsapp_link);
   const [researchDisclaimer, setResearchDisclaimer] = useState(DEFAULT_RESEARCH_DISCLAIMER_SETTINGS.message);
+  const showCatalogSkeleton = loading || themeReloading;
+
+  useEffect(() => {
+    if (!themeBootstrapped.current) {
+      themeBootstrapped.current = true;
+      return;
+    }
+    setThemeReloading(true);
+    const timer = window.setTimeout(() => setThemeReloading(false), 650);
+    return () => window.clearTimeout(timer);
+  }, [theme, lightShop]);
 
   useEffect(() => {
     let cancelled = false;
@@ -516,7 +532,7 @@ export default function Catalog() {
       cancelAnimationFrame(id);
       ctx?.revert();
     };
-  }, [products.length, loading]);
+  }, [products.length, loading, lightShop]);
 
   const selectedCategory = selectedCategoryId
     ? getResearchCategoryById(selectedCategoryId)
@@ -552,6 +568,7 @@ export default function Catalog() {
         product={product}
         discountSettings={discountSettings}
         imagePriority={priority}
+        layout="card"
       />
     );
   };
@@ -575,10 +592,10 @@ export default function Catalog() {
           </div>
 
           {/* Promotional Banner - Compact on mobile */}
-          <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
+          <div className="catalog-promo-banner mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
             <div className="grid grid-cols-3 gap-1 sm:gap-4">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
+                <div className="catalog-perk-icon catalog-perk-icon--ship p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
                   <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#2ED1B4]" />
                 </div>
                 <div>
@@ -587,7 +604,7 @@ export default function Catalog() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[#2a2050] flex-shrink-0">
+                <div className="catalog-perk-icon catalog-perk-icon--offer p-1.5 sm:p-2 rounded-full bg-[#2a2050] flex-shrink-0">
                   <Gift className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#8B5CF6]" />
                 </div>
                 <div>
@@ -596,7 +613,7 @@ export default function Catalog() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[#3d1a30] flex-shrink-0">
+                <div className="catalog-perk-icon catalog-perk-icon--match p-1.5 sm:p-2 rounded-full bg-[#3d1a30] flex-shrink-0">
                   <Tag className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#EC4899]" />
                 </div>
                 <div>
@@ -674,7 +691,7 @@ export default function Catalog() {
             href={CATALOG_TELEGRAM_COMMUNITY}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg bg-[#011d2e] border border-[rgba(0,136,204,0.3)] px-2 py-2 sm:px-3 hover:bg-[#022940] hover:border-[rgba(0,136,204,0.5)] transition-all"
+            className="catalog-support-chip catalog-support-tg flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg bg-[#011d2e] border border-[rgba(0,136,204,0.3)] px-2 py-2 sm:px-3 hover:bg-[#022940] hover:border-[rgba(0,136,204,0.5)] transition-all"
           >
             <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-[#0088CC]" />
             <span className="text-[11px] sm:text-xs font-medium text-[#F4F6FA]">
@@ -688,7 +705,7 @@ export default function Catalog() {
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg bg-[#0b261d] border border-[rgba(34,197,94,0.3)] px-2 py-2 sm:px-3 hover:bg-[#0e3925] hover:border-[rgba(34,197,94,0.5)] transition-all"
+              className="catalog-support-chip catalog-support-wa flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg bg-[#0b261d] border border-[rgba(34,197,94,0.3)] px-2 py-2 sm:px-3 hover:bg-[#0e3925] hover:border-[rgba(34,197,94,0.5)] transition-all"
             >
               <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-[#22C55E]" />
               <span className="text-[11px] sm:text-xs font-medium text-[#F4F6FA]">
@@ -736,10 +753,19 @@ export default function Catalog() {
 
         {/* Products Grid */}
         <div ref={gridRef} className="space-y-12">
-          {loading && (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+          {showCatalogSkeleton && (
+            <div className="space-y-4">
+              {themeReloading ? (
+                <p
+                  className="text-sm font-medium text-[#A9B3C7]"
+                  aria-live="polite"
+                >
+                  Searching catalogue…
+                </p>
+              ) : null}
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="rounded-2xl bg-[#111827] border border-[rgba(244,246,250,0.08)] overflow-hidden flex flex-col">
+                <div key={i} className="catalog-skel-card rounded-2xl bg-[#111827] border border-[rgba(244,246,250,0.08)] overflow-hidden flex flex-col">
                   {/* Square image area — matches ProductCard aspect-ratio: 1/1 */}
                   <div className="p-1.5 sm:p-2.5">
                     <Skeleton className="w-full aspect-square rounded-xl" />
@@ -759,6 +785,7 @@ export default function Catalog() {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           )}
           {error && (
@@ -772,12 +799,12 @@ export default function Catalog() {
               </button>
             </div>
           )}
-          {!loading && !error && products.length === 0 && (
+          {!showCatalogSkeleton && !error && products.length === 0 && (
             <div className="text-center py-16">
               <p className="text-[#A9B3C7] text-lg">No products available.</p>
             </div>
           )}
-          {!loading && !error && products.length > 0 && (
+          {!showCatalogSkeleton && !error && products.length > 0 && (
             <>
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-16">

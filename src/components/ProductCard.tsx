@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useLightShopPreview } from "@/context/ThemeContext";
 import { productExcludesVolumeBundle } from "@/utils/pricing";
 import CoaDialog from "@/components/CoaDialog";
 import ProductImage from "@/components/ProductImage";
@@ -27,6 +28,45 @@ import { getCoaDisplayData } from "@/lib/coa-utils";
   import { getStorefrontPrice, ... } from '@/utils/pricing';
   import { formatDosageLabel, getDefaultStorefrontDosage } from '@/products';
 */
+const VIAL_BG_VIDEO = "/peptide_vial_bg_loop.mp4";
+
+function VialBgVideo() {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      el.pause();
+      return;
+    }
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry) return;
+      if (entry.isIntersecting) {
+        el.play().catch(() => {});
+      } else {
+        el.pause();
+      }
+    }, { rootMargin: "240px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <video
+      ref={ref}
+      className="pc-vial-bg-video"
+      src={VIAL_BG_VIDEO}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      tabIndex={-1}
+    />
+  );
+}
+
 const formatDosageLabel = (mg, unit) => `${mg}${unit ?? "mg"}`;
 const getStorefrontPrice = (o, e, p) => (e ? +(o * (1 - p / 100)).toFixed(2) : o);
 const getStorefrontSavings = (o, e, p) => (e ? +(o * (p / 100)).toFixed(2) : 0);
@@ -78,6 +118,7 @@ export default function ProductCard({
   if (!product) return null;
   const isLanding = variant === 'landing';
   const isPdp = layout === 'pdp';
+  const shopLayout = layout === 'shop';
   const dosageToNum = (d) => {
     const n = typeof d?.mg === "number" ? d.mg : parseFloat(String(d?.mg));
     return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
@@ -91,6 +132,7 @@ export default function ProductCard({
   const [preorderAdding, setPreorderAdding] = useState(false);
   const [ddOpen, setDdOpen] = useState(false);
   const [imgOk, setImgOk] = useState(false);
+  const lightShop = useLightShopPreview();
   const [hovered, setHovered] = useState(false);
   const [coaOpen, setCoaOpen] = useState(false);
   const ddRef = useRef(null);
@@ -204,10 +246,59 @@ export default function ProductCard({
     ? getCoaDisplayData(product, formatDosageLabel(sel.mg, sel.unit))
     : null;
 
+  const ctaButtons = (
+    <>
+      {oos && (
+        <div className="pc-oos-actions">
+          <button
+            type="button"
+            className={`pc-cta pre ${preorderAdding ? "done" : ""}`}
+            onClick={doPreorder}
+            disabled={preorderAdding}
+          >
+            {preorderAdding ? (
+              <><Check size={13} /> Added to cart</>
+            ) : (
+              <><Clock size={14} strokeWidth={2.2} /> Preorder</>
+            )}
+          </button>
+        </div>
+      )}
+      {!oos && sel.inStock && (
+        <button
+          type="button"
+          className={`pc-cta ${adding ? "done" : "go"}`}
+          onClick={doAdd}
+          disabled={adding}
+        >
+          {adding ? (
+            <><Check size={13} /> Added!</>
+          ) : (
+            <>{shopLayout ? <span className="pc-cta-plus" aria-hidden>＋</span> : <Plus size={14} strokeWidth={2.5} />} Add to Cart</>
+          )}
+        </button>
+      )}
+      {!oos && !sel.inStock && (
+        <button
+          type="button"
+          className={`pc-cta pre ${preorderAdding ? "done" : ""}`}
+          onClick={doPreorder}
+          disabled={preorderAdding}
+        >
+          {preorderAdding ? (
+            <><Check size={13} /> Added to cart</>
+          ) : (
+            <><Clock size={14} strokeWidth={2.2} /> Preorder this size</>
+          )}
+        </button>
+      )}
+    </>
+  );
+
   return (
     <>
       <div
-        className={`pc ${isLanding ? 'pc-landing' : ''} ${isPdp ? 'pc-pdp' : ''} ${showcaseOnly ? 'pc-showcase' : ''} ${oos ? "pc-oos" : ""} ${ddOpen ? "pc-dd-open" : ""} ${linkToDetail ? "pc-clickable" : ""}`}
+        className={`pc ${isLanding ? 'pc-landing' : ''} ${isPdp ? 'pc-pdp' : ''} ${shopLayout ? 'pc-shop' : ''} ${showcaseOnly ? 'pc-showcase' : ''} ${oos ? "pc-oos" : ""} ${ddOpen ? "pc-dd-open" : ""} ${linkToDetail ? "pc-clickable" : ""}`}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={handleCardClick}
@@ -224,15 +315,45 @@ export default function ProductCard({
         {/* Accent line on hover — desktop only */}
         <div className={`pc-accent-line ${hovered ? "visible" : ""}`} />
 
+        {shopLayout && (
+          <div className="pc-shop-chrome">
+            <div className="pc-shop-badges">
+              {bdg ? <span className="pc-shop-badge">{bdg.label.toUpperCase()}</span> : null}
+              {dEn ? <span className="pc-sale-badge">-{dP}%</span> : null}
+            </div>
+            <div className="pc-shop-status">
+              <span className={`pc-shop-stock ${sel.inStock ? "in" : "out"}`}>
+                <span className="pc-stock-dot-sm" />
+                {sel.inStock ? "In stock" : "Out of stock"}
+              </span>
+              {STOREFRONT_COA_ENABLED ? (
+                <button
+                  type="button"
+                  className="pc-meta-link pc-meta-link--coa"
+                  data-no-navigate
+                  onClick={handleOpenCoa}
+                >
+                  <FileText size={10} /> COA
+                </button>
+              ) : null}
+            </div>
+          </div>
+        )}
+
         {/* ══════ IMAGE AREA ══════ */}
         <div className="pc-img-area">
+          {lightShop ? (
+            <div className="pc-peptide-bg" aria-hidden>
+              <VialBgVideo />
+            </div>
+          ) : null}
           <div className="pc-img-inner">
             <ProductImage
               src={selectedImage}
               alt={product.name}
               className={imgOk ? "ok" : ""}
               priority={imagePriority}
-              variant={showcaseOnly || isLanding ? 'detail' : 'card'}
+              variant={showcaseOnly || isLanding || shopLayout ? 'detail' : 'card'}
               onLoad={() => setImgOk(true)}
             />
           </div>
@@ -243,12 +364,12 @@ export default function ProductCard({
           <div className="pc-img-grad-top" />
 
           {/* Discount badge */}
-          {dEn && (
+          {!shopLayout && dEn && (
             <span className="pc-sale-badge">-{dP}%</span>
           )}
 
           {/* Category badge */}
-          {bdg && (
+          {!shopLayout && bdg && (
             <span className={`pc-cat-badge ${isLanding ? 'pc-landing-promo' : ''}`}>{bdg.label}</span>
           )}
 
@@ -264,7 +385,7 @@ export default function ProductCard({
           )}
 
           {/* Desktop hover overlay with quick-add */}
-          {(!isLanding || isPdp) && (
+          {(!isLanding || isPdp) && !shopLayout && (
           <div className={`pc-hover-overlay ${hovered ? "show" : ""}`}>
             {!oos && sel.inStock && (
               <button className="pc-quick-add" onClick={doAdd} disabled={adding}>
@@ -338,9 +459,11 @@ export default function ProductCard({
             </div>
           </div>
         ) : (
+        <>
         <div className="pc-body">
 
                 {/* Category + stock — desktop layout */}
+                {!shopLayout && (
                 <div className="pc-meta-top">
                   {product.categoryName && (
                     <span className="pc-cat-label">{product.categoryName}</span>
@@ -351,15 +474,19 @@ export default function ProductCard({
                     {sel.inStock ? "In stock" : "Out of stock"}
                   </span>
                 </div>
+                )}
 
                 {/* Name */}
                 <h3 className={`pc-name ${hovered ? "pc-name-hover" : ""}`}>{product.name}</h3>
+                {shopLayout && sel ? (
+                  <p className="pc-shop-dose">{formatDosageLabel(sel.mg, sel.unit)}</p>
+                ) : null}
 
                 {/* Mobile: research tag */}
-                <p className="pc-ruo-mobile">Research Use Only</p>
+                {!shopLayout && <p className="pc-ruo-mobile">Research Use Only</p>}
 
                 {/* COA — shown on every product */}
-                {STOREFRONT_COA_ENABLED && (
+                {!shopLayout && STOREFRONT_COA_ENABLED && (
                   <div className="pc-rating-row">
                     <div className="pc-links-group">
                       <button className="pc-meta-link pc-meta-link--coa" onClick={handleOpenCoa}>
@@ -370,12 +497,14 @@ export default function ProductCard({
                 )}
 
                 {/* Mobile stock indicator */}
+                {!shopLayout && (
                 <div className="pc-stock-mobile">
                   <span className={`pc-stk-dot ${sel.inStock ? "in" : "out"}`} />
-                  <span style={{ fontSize: 8, fontWeight: 600, color: sel.inStock ? "#4ADE80" : "#EF4444" }}>
+                  <span style={{ fontSize: 8, fontWeight: 600, color: sel.inStock ? "var(--pl-success, #4ADE80)" : "var(--pl-danger, #EF4444)" }}>
                     {sel.inStock ? "In Stock" : "Out of Stock"}
                   </span>
                 </div>
+                )}
 
                 {/* Dosage: mobile = dropdown, desktop = chips */}
                 {/* Desktop chips */}
@@ -402,7 +531,7 @@ export default function ProductCard({
                 <div className="pc-dosage-mobile" ref={ddRef}>
                   <button type="button" className="pc-dd-btn" onClick={() => setDdOpen(!ddOpen)}>
                     <span>{formatDosageLabel(sel.mg, sel.unit)}</span>
-                    <ChevronDown size={11} style={{ color: "rgba(255,255,255,0.3)", transition: "transform .2s", transform: ddOpen ? "rotate(180deg)" : "none", flexShrink: 0 }} />
+                    <ChevronDown size={11} style={{ color: "var(--pl-text-faint, rgba(255,255,255,0.3))", transition: "transform .2s", transform: ddOpen ? "rotate(180deg)" : "none", flexShrink: 0 }} />
                   </button>
                   {ddOpen && (
                     <div className="pc-dd-menu">
@@ -416,7 +545,7 @@ export default function ProductCard({
                             onClick={() => { selectDosage(d); setDdOpen(false); }}
                           >
                             <span>{formatDosageLabel(d.mg, d.unit)}</span>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: d.inStock ? "#4ADE80" : "#EF4444" }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: d.inStock ? "var(--pl-success, #4ADE80)" : "var(--pl-danger, #EF4444)" }}>
                               {d.inStock ? "✓" : "✕"}
                             </span>
                           </button>
@@ -427,7 +556,7 @@ export default function ProductCard({
                 </div>
 
                 {/* Price */}
-                <div className="pc-price">
+                <div className={`pc-price${shopLayout && showB ? " pc-price-shop-hidden" : ""}`}>
                   <div className="pc-price-main-row">
                     {dEn && !noVolBundle && <span className="pc-price-strike">${sel.originalPrice.toFixed(2)}</span>}
                     <span className={`pc-price-now ${dEn && !noVolBundle ? "accent" : ""}`}>${price.toFixed(2)}</span>
@@ -439,6 +568,7 @@ export default function ProductCard({
                 </div>
 
                 {/* Trust badges — desktop */}
+                {!shopLayout && (
                 <div className="pc-trust">
                   <div className="pc-trust-item">
                     <Shield size={11} /> Lab Verified
@@ -447,11 +577,15 @@ export default function ProductCard({
                     <Beaker size={11} /> HPLC Tested
                   </div>
                 </div>
+                )}
 
                 {/* Bundle */}
                 {showB && (
                   <div className="pc-bun">
-                    <div className="pc-bun-h"><Zap size={9} color="#C4B5FD" /><span>Bundle & Save</span></div>
+                    <div className="pc-bun-h">
+                      <Zap size={9} color={shopLayout ? "#806df1" : "#C4B5FD"} />
+                      <span>{shopLayout ? "BUNDLE & SAVE" : "Bundle & Save"}</span>
+                    </div>
                     <div className="pc-bun-list">
                       {tiers.map((tr) => {
                         const sv = (sel.originalPrice - tr.u) * tr.q;
@@ -463,14 +597,26 @@ export default function ProductCard({
                             onClick={(e) => (sel.inStock ? doAdd(e, tr.q) : doPreorder(e, tr.q))}
                           >
                             <span className="pc-bun-q">{tr.q}x</span>
-                            <div className="pc-bun-m">
-                              <span className="pc-bun-l">{tr.l}</span>
-                              <span className="pc-bun-u">${tr.u.toFixed(2)}/ea</span>
-                            </div>
-                            <div className="pc-bun-e">
-                              <span className="pc-bun-t">${tr.t.toFixed(2)}</span>
-                              <span className="pc-bun-s">Save ${sv.toFixed(2)}</span>
-                            </div>
+                            {shopLayout ? (
+                              <>
+                                <div className="pc-bun-m">
+                                  <span className="pc-bun-t">${tr.t.toFixed(2)}</span>
+                                  <span className="pc-bun-u">${tr.u.toFixed(2)} / ea</span>
+                                </div>
+                                <span className="pc-bun-s">Save ${sv.toFixed(2)}</span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="pc-bun-m">
+                                  <span className="pc-bun-l">{tr.l}</span>
+                                  <span className="pc-bun-u">${tr.u.toFixed(2)}/ea</span>
+                                </div>
+                                <div className="pc-bun-e">
+                                  <span className="pc-bun-t">${tr.t.toFixed(2)}</span>
+                                  <span className="pc-bun-s">Save ${sv.toFixed(2)}</span>
+                                </div>
+                              </>
+                            )}
                           </button>
                         );
                       })}
@@ -489,54 +635,10 @@ export default function ProductCard({
                   </div>
                 )}
 
-                {/* Fully OOS: preorder only */}
-                {oos && (
-                  <div className="pc-oos-actions">
-                    <button
-                      type="button"
-                      className={`pc-cta pre ${preorderAdding ? "done" : ""}`}
-                      onClick={doPreorder}
-                      disabled={preorderAdding}
-                    >
-                      {preorderAdding ? (
-                        <><Check size={13} /> Added to cart</>
-                      ) : (
-                        <><Clock size={14} strokeWidth={2.2} /> Preorder</>
-                      )}
-                    </button>
-                  </div>
-                )}
-
-                {/* CTA — in-stock add to cart; partial OOS preorder selected size */}
-                {!oos && sel.inStock && (
-                  <button
-                    type="button"
-                    className={`pc-cta ${adding ? "done" : "go"}`}
-                    onClick={doAdd}
-                    disabled={adding}
-                  >
-                    {adding ? (
-                      <><Check size={13} /> Added!</>
-                    ) : (
-                      <><Plus size={14} strokeWidth={2.5} /> Add to Cart</>
-                    )}
-                  </button>
-                )}
-                {!oos && !sel.inStock && (
-                  <button
-                    type="button"
-                    className={`pc-cta pre ${preorderAdding ? "done" : ""}`}
-                    onClick={doPreorder}
-                    disabled={preorderAdding}
-                  >
-                    {preorderAdding ? (
-                      <><Check size={13} /> Added to cart</>
-                    ) : (
-                      <><Clock size={14} strokeWidth={2.2} /> Preorder this size</>
-                    )}
-                  </button>
-                )}
+                {shopLayout ? null : ctaButtons}
               </div>
+              {shopLayout ? ctaButtons : null}
+        </>
             )}
           </>
         )}
@@ -1384,4 +1486,344 @@ const STYLES = `
     overflow: visible;
   }
 }
+
+/* ── Light shop product card ── */
+.pc.pc-shop {
+  display: grid;
+  grid-template-columns: 135px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  align-items: stretch;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 14px;
+  overflow: hidden;
+  border-radius: 16px;
+  font-family: Inter, system-ui, sans-serif;
+  color: #101828;
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  box-shadow: 0 6px 24px rgba(16, 24, 40, 0.045);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.pc.pc-shop:hover {
+  transform: translateY(-4px);
+  border-color: #cfc7ff;
+  box-shadow: 0 16px 38px rgba(16, 24, 40, 0.09);
+}
+.pc.pc-shop .pc-accent-line,
+.pc.pc-shop .pc-img-grad-bot,
+.pc.pc-shop .pc-img-grad-top { display: none; }
+
+.pc.pc-shop .pc-shop-chrome {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  min-height: 18px;
+}
+.pc.pc-shop .pc-shop-badges,
+.pc.pc-shop .pc-shop-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.pc.pc-shop .pc-shop-status { gap: 12px; }
+.pc.pc-shop .pc-shop-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border: 1px solid #d8d0ff;
+  border-radius: 7px;
+  background: #f4f1ff;
+  color: #5b3ee4;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.pc.pc-shop .pc-sale-badge {
+  position: static;
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: #f04438;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.pc.pc-shop .pc-shop-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pc.pc-shop .pc-shop-stock.in { color: #12b76a; }
+.pc.pc-shop .pc-shop-stock.out { color: #f04438; }
+.pc.pc-shop .pc-shop-stock .pc-stock-dot-sm {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px rgba(18, 183, 106, 0.08);
+}
+.pc.pc-shop .pc-shop-stock.out .pc-stock-dot-sm {
+  box-shadow: 0 0 0 3px rgba(240, 68, 56, 0.08);
+}
+.pc.pc-shop .pc-meta-link--coa {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 0;
+  color: #7c879a;
+  background: transparent;
+  border: 0;
+}
+.pc.pc-shop .pc-meta-link--coa:hover { color: #6847f5; }
+
+.pc.pc-shop .pc-img-area {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  aspect-ratio: auto;
+  width: auto;
+  height: auto;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #f5f8fb 58%, #edf2f7 100%);
+}
+.pc.pc-shop .pc-img-inner {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  min-height: 196px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pc.pc-shop .pc-img-inner > span {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+.pc.pc-shop .pc-img-inner img {
+  width: 100%;
+  height: auto;
+  max-width: 120px;
+  max-height: 195px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 13px rgba(16, 24, 40, 0.17));
+  transition: transform 0.25s ease, opacity 0.35s;
+}
+.pc.pc-shop:hover .pc-img-inner img.ok { transform: scale(1.025); }
+
+.pc.pc-shop .pc-body {
+  grid-column: 2;
+  grid-row: 2;
+  padding: 5px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.pc.pc-shop .pc-name {
+  margin: 0;
+  color: #101828;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.pc.pc-shop .pc-name-hover { color: #101828; }
+.pc.pc-shop .pc-shop-dose {
+  display: block;
+  margin-top: 3px;
+  margin-bottom: 0;
+  color: #7c879a;
+  font-size: 11px;
+  font-weight: 500;
+}
+.pc.pc-shop .pc-dosage-desktop { display: block; margin-top: 14px; margin-bottom: 0; }
+.pc.pc-shop .pc-dosage-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #475467;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.pc.pc-shop .pc-dosage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pc.pc-shop .pc-chip {
+  min-width: 45px;
+  height: 31px;
+  padding: 0 10px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475467;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.pc.pc-shop .pc-chip:hover {
+  border-color: #9c8cff;
+  color: #6847f5;
+}
+.pc.pc-shop .pc-chip.active {
+  border: 1.5px solid #7557ff;
+  background: #f4f1ff;
+  color: #5b3ee4;
+  box-shadow: 0 0 0 3px rgba(117, 87, 255, 0.08);
+}
+.pc.pc-shop .pc-dosage-mobile { display: none; }
+.pc.pc-shop .pc-price-shop-hidden { display: none; }
+.pc.pc-shop .pc-price { margin: 14px 0 0; }
+.pc.pc-shop .pc-price-now { font-size: 16px; color: #101828; }
+
+.pc.pc-shop .pc-bun {
+  margin-top: 15px;
+  margin-bottom: 0;
+  padding: 9px;
+  border: 1px solid #e5e0ff;
+  border-radius: 10px;
+  background: #f8f7ff;
+  overflow: hidden;
+}
+.pc.pc-shop .pc-bun-h {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+  padding: 0;
+  border-bottom: 0;
+  color: #806df1;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.25px;
+}
+.pc.pc-shop .pc-bun-list { padding: 0; gap: 0; }
+.pc.pc-shop .pc-bun-r {
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 5px 3px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+}
+.pc.pc-shop .pc-bun-r + .pc-bun-r { border-top: 1px solid #e8e4fa; }
+.pc.pc-shop .pc-bun-r:hover { background: rgba(104, 71, 245, 0.04); border-color: transparent; }
+.pc.pc-shop .pc-bun-q {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: #eee9ff;
+  color: #6847f5;
+  font-size: 9px;
+  font-weight: 800;
+}
+.pc.pc-shop .pc-bun-m { display: flex; flex-direction: column; gap: 2px; }
+.pc.pc-shop .pc-bun-t { color: #101828; font-size: 11px; font-weight: 800; line-height: 1.1; }
+.pc.pc-shop .pc-bun-u { color: #8b95a6; font-size: 7px; font-family: inherit; }
+.pc.pc-shop .pc-bun-s {
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: #ecfdf3;
+  color: #12a861;
+  font-size: 7px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pc.pc-shop .pc-cta,
+.pc.pc-shop .pc-oos-actions {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  width: 100%;
+  height: 44px;
+  margin-top: 13px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pc.pc-shop .pc-oos-actions {
+  height: auto;
+}
+.pc.pc-shop .pc-oos-actions .pc-cta {
+  margin-top: 0;
+}
+.pc.pc-shop .pc-cta-plus { font-size: 17px; line-height: 1; }
+.pc.pc-shop .pc-cta.go {
+  background: linear-gradient(100deg, #7557ff 0%, #6041ee 100%);
+  color: #ffffff;
+  box-shadow: 0 7px 18px rgba(104, 71, 245, 0.2);
+}
+.pc.pc-shop .pc-cta.go:hover {
+  transform: translateY(-1px);
+  background: #5938e8;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(104, 71, 245, 0.28);
+}
+.pc.pc-shop .pc-cta.done {
+  background: #f4f1ff;
+  color: #6847f5;
+  box-shadow: none;
+}
+.pc.pc-shop .pc-cta.pre {
+  background: #fff7ed;
+  color: #9a6700;
+}
+
+@media (max-width: 1100px) {
+  .pc.pc-shop {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .pc.pc-shop {
+    padding: 12px;
+    grid-template-columns: 105px minmax(0, 1fr);
+  }
+  .pc.pc-shop .pc-shop-chrome { align-items: flex-start; }
+  .pc.pc-shop .pc-shop-status {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+  }
+  .pc.pc-shop .pc-img-area {
+    min-height: 185px;
+    padding: 8px;
+  }
+  .pc.pc-shop .pc-img-inner { min-height: 165px; }
+  .pc.pc-shop .pc-img-inner img {
+    max-width: 95px;
+    max-height: 165px;
+  }
+  .pc.pc-shop .pc-name { font-size: 14px; }
+  .pc.pc-shop .pc-bun-s { font-size: 6px; }
+}
+
 `;

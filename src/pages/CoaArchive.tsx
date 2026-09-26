@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FileText } from 'lucide-react';
-import Navigation from '@/components/Navigation';
-import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/sections/Footer';
 import CoaArchiveHero from '@/components/CoaArchiveHero';
 import CoaArchiveTable from '@/components/CoaArchiveTable';
@@ -91,9 +89,6 @@ export default function CoaArchive() {
           'research peptide COA',
         ]}
       />
-
-      <Navigation />
-      <CartDrawer />
 
       <main className="relative z-10 pt-24 sm:pt-28 pb-16 lg:pb-24">
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

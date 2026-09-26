@@ -18,6 +18,7 @@ import {
   whenPageVisible,
 } from '@/lib/signup-welcome';
 import { cn } from '@/lib/utils';
+import { useLightShopPreview } from '@/context/ThemeContext';
 
 const FEATURE_BULLETS = [
   'EVERY BATCH TESTED',
@@ -29,6 +30,8 @@ export default function SignupWelcomeModal() {
   const enabled = isSignupWelcomeEnabled();
   const location = useLocation();
   const navigate = useNavigate();
+  const lightShop = useLightShopPreview();
+  const accentClass = lightShop ? 'text-[#12B76A]' : 'text-[#2CF357]';
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -143,7 +146,7 @@ export default function SignupWelcomeModal() {
             <div className="shrink-0 pt-0.5 text-right">
               <div className="mb-3">
                 <p className="text-[2.15rem] font-extrabold leading-none tracking-[-0.04em] text-[#F4F6FA]">
-                  10<span className="text-[#2CF357]">%</span>
+                  10<span className={accentClass}>%</span>
                 </p>
                 <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#A9B3C7]">
                   Off first order
@@ -151,7 +154,7 @@ export default function SignupWelcomeModal() {
               </div>
               <div>
                 <p className="text-[1.85rem] font-extrabold leading-none tracking-[-0.04em] text-[#F4F6FA]">
-                  +5<span className="text-[#2CF357]">%</span>
+                  +5<span className={accentClass}>%</span>
                 </p>
                 <p className="mt-1 max-w-[8.5rem] text-[9px] font-semibold uppercase leading-snug tracking-[0.16em] text-[#A9B3C7]">
                   Credit on every order
@@ -163,15 +166,15 @@ export default function SignupWelcomeModal() {
           {/* Headline */}
           <div className="mb-6 text-center">
             <h2 className="text-[1.05rem] font-extrabold uppercase leading-[1.2] tracking-[-0.015em] text-[#F4F6FA] sm:text-[1.15rem]">
-              We handle the <span className="text-[#2CF357]">purity</span>.
+              We handle the <span className={accentClass}>purity</span>.
               <br />
-              You handle the <span className="text-[#2CF357]">discovery</span>.
+              You handle the <span className={accentClass}>discovery</span>.
             </h2>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-[9px] font-semibold uppercase tracking-[0.13em] text-[#A9B3C7]">
               {FEATURE_BULLETS.map((item, index) => (
                 <span key={item} className="inline-flex items-center gap-2.5">
                   {index > 0 && (
-                    <span className="text-[#2CF357]" aria-hidden>
+                    <span className={accentClass} aria-hidden>
                       •
                     </span>
                   )}
@@ -205,7 +208,7 @@ export default function SignupWelcomeModal() {
                 className="h-11 w-full rounded-lg border border-[rgba(244,246,250,0.12)] bg-[#111827] px-3.5 text-sm text-[#F4F6FA] placeholder:text-[#6B7280] outline-none transition-colors focus:border-[rgba(44,243,87,0.5)] focus:ring-2 focus:ring-[rgba(44,243,87,0.16)]"
               />
               {emailError && (
-                <p className="mt-2 text-xs text-[#F87171]">{emailError}</p>
+                <p className={cn('mt-2 text-xs', lightShop ? 'text-[#DC2626]' : 'text-[#F87171]')}>{emailError}</p>
               )}
             </div>
 

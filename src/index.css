@@ -4755,6 +4755,135 @@
   }
 }
 
+/* ── Light theme — COA archive + COA dialog (dark-by-default system above) ── */
+html[data-theme-preview="home"] .coa-rg-dialog {
+  border-color: #ddd6fe !important;
+  background: #ffffff !important;
+  color: #101828;
+}
+html[data-theme-preview="home"] .coa-rg-dialog-glow,
+html[data-theme-preview="home"] .coa-rg-panel-glow,
+html[data-theme-preview="home"] .coa-rg-panel::before {
+  display: none !important;
+}
+html[data-theme-preview="home"] .coa-rg-panel {
+  border-color: #e4e7ec !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+}
+html[data-theme-preview="home"] .coa-rg-lab,
+html[data-theme-preview="home"] .coa-rg-verified {
+  color: #12b76a;
+}
+html[data-theme-preview="home"] .coa-rg-badge {
+  color: #12b76a;
+  border-color: #abefc6;
+  background: #f4f1ff;
+}
+html[data-theme-preview="home"] .coa-rg-verified {
+  border-color: #abefc6;
+  background: #ecfdf3;
+}
+html[data-theme-preview="home"] .coa-rg-chart {
+  background: linear-gradient(180deg, #ffffff 0%, #f7f5ff 100%);
+  border-color: #e4e7ec;
+}
+html[data-theme-preview="home"] .coa-rg-progress-track {
+  background: #f0edff;
+}
+html[data-theme-preview="home"] .coa-archive-hero-title,
+html[data-theme-preview="home"] .coa-archive-hero-stat-value {
+  color: #101828;
+}
+html[data-theme-preview="home"] .coa-archive-hero-kicker,
+html[data-theme-preview="home"] .coa-archive-hero-points li {
+  color: #667085;
+}
+html[data-theme-preview="home"] .coa-archive-hero-mobile-meta,
+html[data-theme-preview="home"] .coa-archive-hero-lead {
+  color: #475467;
+}
+html[data-theme-preview="home"] .coa-archive-hero-stats {
+  border-color: #e4e7ec;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
+}
+html[data-theme-preview="home"] .coa-archive-hero-stat {
+  border-right-color: #e4e7ec;
+}
+html[data-theme-preview="home"] .coa-archive-hero-search-input {
+  border-color: #d8dee9;
+  background: #ffffff;
+  color: #101828;
+}
+html[data-theme-preview="home"] .coa-archive-hero-search-input::placeholder {
+  color: #98a2b3;
+}
+html[data-theme-preview="home"] .coa-archive-hero-icon {
+  background: #f4f1ff;
+  color: #12b76a;
+}
+
+/* COA — recolour badge/verified/pale-text tokens that are unreadable on white */
+html[data-theme-preview="home"] [class*="text-[#36ea51]"],
+html[data-theme-preview="home"] [fill="#36ea51"] {
+  color: #12b76a !important;
+  fill: #12b76a !important;
+}
+html[data-theme-preview="home"] [class*="text-[#4ADE80]"] {
+  color: #12b76a !important;
+}
+html[data-theme-preview="home"] [class*="text-[#8b93a8]"] {
+  color: #667085 !important;
+}
+html[data-theme-preview="home"] [class*="text-[#a9b3c7]"] {
+  color: #667085 !important;
+}
+html[data-theme-preview="home"] [class*="text-[#5A667E]"] {
+  color: #98a2b3 !important;
+}
+html[data-theme-preview="home"] svg text[fill="#F4F6FA"] {
+  fill: #101828 !important;
+}
+html[data-theme-preview="home"] svg text[fill="#C4B5FD"],
+html[data-theme-preview="home"] [fill="#C4B5FD"] {
+  fill: #7c3aed !important;
+}
+html[data-theme-preview="home"] svg rect[fill="rgba(244,246,250,0.08)"] {
+  fill: rgba(104, 71, 245, 0.08) !important;
+}
+html[data-theme-preview="home"] svg line[stroke="rgba(244,246,250,0.05)"],
+html[data-theme-preview="home"] svg line[stroke="rgba(244,246,250,0.1)"] {
+  stroke: rgba(16, 24, 40, 0.08) !important;
+}
+
+/* COA archive card / table — headers + dividers that aren't caught by the generic rgba(17,24,39…) rule */
+html[data-theme-preview="home"] .coa-archive-card [class*="bg-[rgba(16,18,32"] {
+  background-color: #ffffff !important;
+}
+html[data-theme-preview="home"] .coa-archive-card [class*="bg-[#0a0e14]"] {
+  background-color: #ffffff !important;
+}
+html[data-theme-preview="home"] .coa-archive-card [class*="bg-[rgba(244,246,250"] {
+  background-color: #e4e7ec !important;
+}
+html[data-theme-preview="home"] .coa-archive-table [class*="bg-[rgba(16,18,32"] {
+  background-color: #ffffff !important;
+}
+html[data-theme-preview="home"] .coa-archive-table [class~="bg-[rgba(244,246,250,0.03)]"] {
+  background-color: #f3f6fc !important;
+}
+html[data-theme-preview="home"] .coa-archive-table [class*="hover:bg-[rgba(244,246,250"]:hover,
+html[data-theme-preview="home"] .coa-archive-table [class*="active:bg-[rgba(244,246,250"]:active {
+  background-color: #f3f6fc !important;
+}
+html[data-theme-preview="home"] .coa-archive-table [class*="divide-[rgba(244,246,250"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e4e7ec !important;
+}
+html[data-theme-preview="home"] .coa-archive-table [class*="text-[rgba(244,246,250"] {
+  color: #98a2b3 !important;
+}
+
 /* ═══════════════════════════════════════════════
    Product detail — matches nl-new-landing (sharp, solid panels)
    ════════════════════════════════════════════════ */

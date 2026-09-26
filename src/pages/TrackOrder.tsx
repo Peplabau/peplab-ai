@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import {
-  ArrowLeft,
   Package,
   Search,
   Check,
@@ -90,6 +90,7 @@ function formatShippingMethod(m: string | null): string {
 
 export default function TrackOrder() {
   const location = useLocation();
+  const lightShop = useLightShopPreview();
 
   const [orderInput, setOrderInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
@@ -213,29 +214,8 @@ export default function TrackOrder() {
           { name: 'Track Order', path: '/track-order' },
         ])}
       />
-    <div className="min-h-screen" style={{ background: '#070A12' }}>
+    <div className="min-h-screen pt-24 sm:pt-28 page-grid-bg">
       <div className="absolute inset-0 grid-overlay opacity-60" />
-
-      {/* Top nav */}
-      <nav className="relative z-50 px-6 lg:px-12 py-6">
-        <div className="flex items-center justify-between">
-          <a href="/" className="flex flex-col items-start">
-            <span className="text-3xl lg:text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
-              PEPLAB
-            </span>
-            <span className="text-xs lg:text-sm font-mono uppercase tracking-[0.5em] text-[#8B5CF6] mt-0.5">
-              PEPTIDES AUSTRALIA
-            </span>
-          </a>
-          <a
-            href="/"
-            className="flex items-center gap-2 text-sm text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Shop
-          </a>
-        </div>
-      </nav>
 
       <main className="relative z-10 px-6 lg:px-12 py-12 lg:py-20">
         <div className="max-w-3xl mx-auto">
@@ -322,7 +302,7 @@ export default function TrackOrder() {
             </button>
 
             {error && (
-              <div className="mt-4 flex items-start gap-2 p-3 rounded-xl bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)]">
+              <div className={`mt-4 flex items-start gap-2 p-3 rounded-xl ${lightShop ? 'bg-[#fff1f0] border border-[#f9d2d0]' : 'bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)]'}`}>
                 <AlertCircle className="w-4 h-4 text-[#EF4444] flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-[#F4F6FA]">{error}</p>
               </div>
@@ -351,7 +331,7 @@ export default function TrackOrder() {
                       type="button"
                       onClick={copyOrderNumber}
                       title="Copy order number"
-                      className="p-1.5 rounded-lg text-[#A9B3C7] hover:text-[#2ED1B4] hover:bg-[rgba(46,209,180,0.08)] transition-colors"
+                      className={`p-1.5 rounded-lg text-[#A9B3C7] hover:text-[#2ED1B4] transition-colors ${lightShop ? 'hover:bg-[#f4f1ff]' : 'hover:bg-[rgba(46,209,180,0.08)]'}`}
                     >
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
@@ -371,7 +351,7 @@ export default function TrackOrder() {
 
               {/* Timeline or cancelled banner */}
               {cancelled ? (
-                <div className="p-5 rounded-xl bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)] flex items-start gap-3">
+                <div className={`p-5 rounded-xl flex items-start gap-3 ${lightShop ? 'bg-[#fff1f0] border border-[#f9d2d0]' : 'bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)]'}`}>
                   <XCircle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-[#F4F6FA] mb-1">
@@ -390,7 +370,7 @@ export default function TrackOrder() {
               {/* Tracking number + live AusPost */}
               {result.tracking_number && !cancelled && (
                 <div className="mt-6 space-y-4">
-                  <div className="p-4 rounded-xl bg-[rgba(46,209,180,0.06)] border border-[rgba(46,209,180,0.2)]">
+                  <div className={`p-4 rounded-xl ${lightShop ? 'bg-[#f4f1ff] border border-[#ddd6fe]' : 'bg-[rgba(46,209,180,0.06)] border border-[rgba(46,209,180,0.2)]'}`}>
                     <div className="flex items-start gap-3">
                       <Truck className="w-5 h-5 text-[#2ED1B4] flex-shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
@@ -435,7 +415,7 @@ export default function TrackOrder() {
                           <p className="text-sm font-medium text-[#F4F6FA] truncate">
                             {item.name}
                             {item.is_free && (
-                              <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold text-[#34D399] bg-[rgba(52,211,153,0.1)] uppercase tracking-wider">
+                              <span className={`ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${lightShop ? 'text-[#12b76a] bg-[#ecfdf3]' : 'text-[#34D399] bg-[rgba(52,211,153,0.1)]'}`}>
                                 Free
                               </span>
                             )}
@@ -495,6 +475,7 @@ function AusPostLiveTracking({
   loading: boolean;
   track: AusPostPublicTrackResult | null;
 }) {
+  const lightShop = useLightShopPreview();
   if (loading) {
     return (
       <div className="p-4 rounded-xl bg-[rgba(17,24,39,0.5)] border border-[rgba(244,246,250,0.08)] flex items-center gap-3">
@@ -508,7 +489,7 @@ function AusPostLiveTracking({
 
   if (track.error && !track.parcels?.length) {
     return (
-      <div className="p-4 rounded-xl bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)]">
+      <div className={`p-4 rounded-xl ${lightShop ? 'bg-[#fffaeb] border border-[#f7d9a8]' : 'bg-[rgba(245,158,11,0.08)] border border-[rgba(245,158,11,0.2)]'}`}>
         <p className="text-sm text-[#F4F6FA]">{track.error}</p>
         {track.auspost_url && (
           <a
@@ -577,14 +558,14 @@ function AusPostLiveTracking({
                       {!isLast && (
                         <span
                           aria-hidden
-                          className="absolute left-[7px] top-4 bottom-0 w-px bg-[rgba(244,246,250,0.1)]"
+                          className={`absolute left-[7px] top-4 bottom-0 w-px ${lightShop ? 'bg-[#e4e7ec]' : 'bg-[rgba(244,246,250,0.1)]'}`}
                         />
                       )}
                       <span
                         className="relative z-10 mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
                         style={{
-                          background: isFirst ? '#2ED1B4' : 'rgba(169,179,199,0.45)',
-                          boxShadow: isFirst ? '0 0 8px rgba(46,209,180,0.45)' : 'none',
+                          background: isFirst ? (lightShop ? '#6847f5' : '#2ED1B4') : (lightShop ? '#d0d5dd' : 'rgba(169,179,199,0.45)'),
+                          boxShadow: isFirst ? (lightShop ? '0 0 8px rgba(104,71,245,0.35)' : '0 0 8px rgba(46,209,180,0.45)') : 'none',
                         }}
                       />
                       <div className="min-w-0 flex-1">
@@ -609,7 +590,7 @@ function AusPostLiveTracking({
               </ol>
             ) : (
               awaitingDetails && (
-                <div className="rounded-xl bg-[rgba(46,209,180,0.06)] border border-[rgba(46,209,180,0.18)] p-4">
+                <div className={`rounded-xl p-4 ${lightShop ? 'bg-[#f4f1ff] border border-[#ddd6fe]' : 'bg-[rgba(46,209,180,0.06)] border border-[rgba(46,209,180,0.18)]'}`}>
                   <p className="text-sm font-semibold text-[#F4F6FA]">
                     Try checking again in 24 hours
                   </p>
@@ -638,30 +619,31 @@ function AusPostLiveTracking({
 }
 
 function StatusBadge({ status, cancelled }: { status: string; cancelled: boolean }) {
+  const lightShop = useLightShopPreview();
   const s = (status || '').toLowerCase();
-  let color = '#A9B3C7';
-  let bg = 'rgba(169,179,199,0.12)';
+  let color = lightShop ? '#475467' : '#A9B3C7';
+  let bg = lightShop ? '#f2f4f7' : 'rgba(169,179,199,0.12)';
   let label = status || 'Unknown';
 
   if (cancelled) {
-    color = '#EF4444';
-    bg = 'rgba(239,68,68,0.12)';
+    color = lightShop ? '#f04438' : '#EF4444';
+    bg = lightShop ? '#fff1f0' : 'rgba(239,68,68,0.12)';
     label = 'Cancelled';
   } else if (s === 'delivered') {
-    color = '#22C55E';
-    bg = 'rgba(34,197,94,0.12)';
+    color = lightShop ? '#12b76a' : '#22C55E';
+    bg = lightShop ? '#ecfdf3' : 'rgba(34,197,94,0.12)';
     label = 'Delivered';
   } else if (s === 'shipped') {
-    color = '#2ED1B4';
-    bg = 'rgba(46,209,180,0.12)';
+    color = lightShop ? '#4e7cff' : '#2ED1B4';
+    bg = lightShop ? '#eff6ff' : 'rgba(46,209,180,0.12)';
     label = 'Shipped';
   } else if (s === 'processing' || s === 'finalised') {
-    color = '#8B5CF6';
-    bg = 'rgba(139,92,246,0.12)';
+    color = lightShop ? '#6847f5' : '#8B5CF6';
+    bg = lightShop ? '#f4f1ff' : 'rgba(139,92,246,0.12)';
     label = 'Processing';
   } else if (s === 'pending_payment') {
-    color = '#F59E0B';
-    bg = 'rgba(245,158,11,0.12)';
+    color = lightShop ? '#b54708' : '#F59E0B';
+    bg = lightShop ? '#fffaeb' : 'rgba(245,158,11,0.12)';
     label = 'Awaiting Payment';
   }
 
@@ -680,6 +662,7 @@ function StatusBadge({ status, cancelled }: { status: string; cancelled: boolean
 }
 
 function Timeline({ currentStage, order }: { currentStage: number; order: TrackOrderResult }) {
+  const lightShop = useLightShopPreview();
   return (
     <ol className="relative">
       {TRACKING_STAGES.map((stage, idx) => {
@@ -694,8 +677,12 @@ function Timeline({ currentStage, order }: { currentStage: number; order: TrackO
         if (idx === 0) ts = formatDate(order.created_at);
         else if (idx === 1) ts = formatDate(order.paid_at);
 
-        const dotColor = isDone ? '#22C55E' : isActive ? '#2ED1B4' : 'rgba(169,179,199,0.25)';
-        const labelColor = isUpcoming ? '#5A667E' : '#F4F6FA';
+        const dotColor = isDone
+          ? (lightShop ? '#12b76a' : '#22C55E')
+          : isActive
+            ? (lightShop ? '#6847f5' : '#2ED1B4')
+            : (lightShop ? '#d0d5dd' : 'rgba(169,179,199,0.25)');
+        const labelColor = isUpcoming ? '#5A667E' : (lightShop ? '#101828' : '#F4F6FA');
 
         return (
           <li key={stage.key} className="relative flex gap-4 pb-6 last:pb-0">
@@ -706,8 +693,10 @@ function Timeline({ currentStage, order }: { currentStage: number; order: TrackO
                 className="absolute left-[15px] top-8 bottom-0 w-[2px]"
                 style={{
                   background: isDone
-                    ? '#22C55E'
-                    : 'linear-gradient(to bottom, rgba(46,209,180,0.25), rgba(169,179,199,0.1))',
+                    ? (lightShop ? '#12b76a' : '#22C55E')
+                    : lightShop
+                      ? 'linear-gradient(to bottom, rgba(104,71,245,0.25), rgba(228,231,236,0.6))'
+                      : 'linear-gradient(to bottom, rgba(46,209,180,0.25), rgba(169,179,199,0.1))',
                 }}
               />
             )}
@@ -717,8 +706,12 @@ function Timeline({ currentStage, order }: { currentStage: number; order: TrackO
               className="relative z-10 flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full border-2"
               style={{
                 borderColor: dotColor,
-                background: isActive ? 'rgba(46,209,180,0.12)' : isDone ? 'rgba(34,197,94,0.12)' : 'rgba(7,10,18,0.6)',
-                boxShadow: isActive ? `0 0 0 4px rgba(46,209,180,0.15)` : 'none',
+                background: isActive
+                  ? (lightShop ? '#f4f1ff' : 'rgba(46,209,180,0.12)')
+                  : isDone
+                    ? (lightShop ? '#ecfdf3' : 'rgba(34,197,94,0.12)')
+                    : (lightShop ? '#f2f4f7' : 'rgba(7,10,18,0.6)'),
+                boxShadow: isActive ? (lightShop ? '0 0 0 4px rgba(104,71,245,0.12)' : '0 0 0 4px rgba(46,209,180,0.15)') : 'none',
               }}
             >
               {isDone ? (
@@ -726,7 +719,7 @@ function Timeline({ currentStage, order }: { currentStage: number; order: TrackO
               ) : (
                 <Icon
                   className="w-3.5 h-3.5"
-                  style={{ color: isActive ? '#2ED1B4' : '#5A667E' }}
+                  style={{ color: isActive ? (lightShop ? '#6847f5' : '#2ED1B4') : '#5A667E' }}
                 />
               )}
             </span>
@@ -738,7 +731,7 @@ function Timeline({ currentStage, order }: { currentStage: number; order: TrackO
                   {stage.label}
                 </p>
                 {isActive && (
-                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold text-[#2ED1B4] bg-[rgba(46,209,180,0.12)] uppercase tracking-wider">
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${lightShop ? 'text-[#6847f5] bg-[#f4f1ff]' : 'text-[#2ED1B4] bg-[rgba(46,209,180,0.12)]'}`}>
                     Current
                   </span>
                 )}
@@ -762,18 +755,17 @@ function EmailStatusStrip({
   state: 'sending' | 'sent' | 'cooldown' | 'failed';
   email: string;
 }) {
+  const lightShop = useLightShopPreview();
   let tone: { color: string; bg: string; border: string };
   let icon: React.ReactNode;
   let message: React.ReactNode;
 
   switch (state) {
     case 'sending':
-      tone = {
-        color: '#A9B3C7',
-        bg: 'rgba(169,179,199,0.08)',
-        border: 'rgba(169,179,199,0.2)',
-      };
-      icon = <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: '#A9B3C7' }} />;
+      tone = lightShop
+        ? { color: '#475467', bg: '#f2f4f7', border: '#e4e7ec' }
+        : { color: '#A9B3C7', bg: 'rgba(169,179,199,0.08)', border: 'rgba(169,179,199,0.2)' };
+      icon = <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" style={{ color: lightShop ? '#475467' : '#A9B3C7' }} />;
       message = (
         <>
           Sending a copy of this update to <strong className="text-[#F4F6FA]">{email}</strong>…
@@ -781,12 +773,10 @@ function EmailStatusStrip({
       );
       break;
     case 'sent':
-      tone = {
-        color: '#2ED1B4',
-        bg: 'rgba(46,209,180,0.08)',
-        border: 'rgba(46,209,180,0.24)',
-      };
-      icon = <Mail className="w-4 h-4 flex-shrink-0" style={{ color: '#2ED1B4' }} />;
+      tone = lightShop
+        ? { color: '#6847f5', bg: '#f4f1ff', border: '#ddd6fe' }
+        : { color: '#2ED1B4', bg: 'rgba(46,209,180,0.08)', border: 'rgba(46,209,180,0.24)' };
+      icon = <Mail className="w-4 h-4 flex-shrink-0" style={{ color: lightShop ? '#6847f5' : '#2ED1B4' }} />;
       message = (
         <>
           We’ve emailed this update to <strong className="text-[#F4F6FA]">{email}</strong>. Check
@@ -795,12 +785,10 @@ function EmailStatusStrip({
       );
       break;
     case 'cooldown':
-      tone = {
-        color: '#A9B3C7',
-        bg: 'rgba(169,179,199,0.06)',
-        border: 'rgba(244,246,250,0.08)',
-      };
-      icon = <Mail className="w-4 h-4 flex-shrink-0" style={{ color: '#A9B3C7' }} />;
+      tone = lightShop
+        ? { color: '#475467', bg: '#f2f4f7', border: '#e4e7ec' }
+        : { color: '#A9B3C7', bg: 'rgba(169,179,199,0.06)', border: 'rgba(244,246,250,0.08)' };
+      icon = <Mail className="w-4 h-4 flex-shrink-0" style={{ color: lightShop ? '#475467' : '#A9B3C7' }} />;
       message = (
         <>
           We already emailed this status to <strong className="text-[#F4F6FA]">{email}</strong> a
@@ -810,12 +798,10 @@ function EmailStatusStrip({
       break;
     case 'failed':
     default:
-      tone = {
-        color: '#F59E0B',
-        bg: 'rgba(245,158,11,0.08)',
-        border: 'rgba(245,158,11,0.24)',
-      };
-      icon = <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#F59E0B' }} />;
+      tone = lightShop
+        ? { color: '#b54708', bg: '#fffaeb', border: '#f7d9a8' }
+        : { color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.24)' };
+      icon = <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: lightShop ? '#b54708' : '#F59E0B' }} />;
       message = (
         <>
           We couldn’t send the status email to <strong className="text-[#F4F6FA]">{email}</strong>{' '}

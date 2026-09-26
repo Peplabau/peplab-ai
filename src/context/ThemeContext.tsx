@@ -29,12 +29,8 @@ function readStoredTheme(): ThemeMode {
   }
 }
 
-/** Auth + admin stay dark; every other public route can use the home light theme. */
+/** Admin stays dark. Customer auth follows the saved theme. */
 const DARK_ONLY_PATHS = new Set([
-  '/login',
-  '/signup',
-  '/forgot-password',
-  '/reset-password',
   '/admin/login',
   '/admin/dashboard',
 ]);
@@ -82,7 +78,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-/** Syncs `data-theme-preview="home"` while light mode is on any public (non-admin/auth) route. */
+/** Syncs `data-theme-preview="home"` while light mode is on any non-admin route, including auth. */
 export function ThemePreviewSync() {
   const { theme } = useTheme();
   const { pathname } = useLocation();
@@ -104,11 +100,6 @@ export function ThemePreviewSync() {
       themeColor.setAttribute('content', lightPreviewActive ? '#F7F9FC' : '#070A12');
     }
 
-    return () => {
-      delete root.dataset.themePreview;
-      root.style.colorScheme = 'dark';
-      if (themeColor) themeColor.setAttribute('content', '#070A12');
-    };
   }, [theme, lightPreviewActive]);
 
   return null;

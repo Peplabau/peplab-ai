@@ -3,6 +3,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Trophy, Crown, Medal, ArrowRight, Sparkles, Gift } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import {
   getLeaderboard,
   formatPoints,
@@ -23,6 +24,7 @@ gsap.registerPlugin(ScrollTrigger);
  * the landing page never shows an awkward empty state to first-time visitors.
  */
 export default function LeaderboardTop3() {
+  const lightShop = useLightShopPreview();
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const podiumRef = useRef<HTMLDivElement>(null);
@@ -44,6 +46,7 @@ export default function LeaderboardTop3() {
   }, []);
 
   useEffect(() => {
+    if (lightShop) return;
     const section = sectionRef.current;
     if (!section) return;
 
@@ -87,7 +90,7 @@ export default function LeaderboardTop3() {
     }, section);
 
     return () => ctx.revert();
-  }, [rows]);
+  }, [rows, lightShop]);
 
   // Hide the entire section gracefully on first render until we know if there
   // are any ranked promoters. Avoid laying out a placeholder block on a fresh
@@ -171,6 +174,15 @@ const PODIUM_ACCENTS = [
   { wrap: 'bg-[#111827] border-orange-500/30', label: 'text-orange-300', icon: 'text-orange-300' },
 ];
 
+const PODIUM_ACCENTS_LIGHT = [
+  // 1st — gold
+  { wrap: 'bg-white border-[#f7d9a8]', label: 'text-[#b54708]', icon: 'text-[#b54708]' },
+  // 2nd — silver
+  { wrap: 'bg-white border-[#d8dee9]', label: 'text-[#475467]', icon: 'text-[#475467]' },
+  // 3rd — bronze
+  { wrap: 'bg-white border-[#f3ceab]', label: 'text-[#c2410c]', icon: 'text-[#c2410c]' },
+];
+
 const TIER_CHIP: Record<string, string> = {
   platinum: 'bg-[rgba(229,231,235,0.1)] border-[rgba(229,231,235,0.25)] text-[#E5E7EB]',
   gold: 'bg-amber-500/10 border-amber-500/25 text-amber-300',
@@ -178,9 +190,19 @@ const TIER_CHIP: Record<string, string> = {
   standard: 'bg-white/5 border-white/10 text-[#A9B3C7]',
 };
 
+const TIER_CHIP_LIGHT: Record<string, string> = {
+  platinum: 'bg-[#f2f4f7] border-[#e4e7ec] text-[#475467]',
+  gold: 'bg-[#fffaeb] border-[#f7d9a8] text-[#b54708]',
+  silver: 'bg-[#f2f4f7] border-[#e4e7ec] text-[#475467]',
+  standard: 'bg-[#f4f1ff] border-[#ddd6fe] text-[#6847f5]',
+};
+
 function PodiumCard({ row, placement }: { row: LeaderboardRow; placement: 1 | 2 | 3 }) {
-  const accent = PODIUM_ACCENTS[placement - 1];
-  const tierChip = TIER_CHIP[row.tier] ?? TIER_CHIP.standard;
+  const lightShop = useLightShopPreview();
+  const accent = lightShop ? PODIUM_ACCENTS_LIGHT[placement - 1] : PODIUM_ACCENTS[placement - 1];
+  const tierChip = lightShop
+    ? (TIER_CHIP_LIGHT[row.tier] ?? TIER_CHIP_LIGHT.standard)
+    : (TIER_CHIP[row.tier] ?? TIER_CHIP.standard);
   // Make the #1 card visibly taller — classic podium silhouette.
   const heightClass = placement === 1 ? 'sm:pt-10 sm:pb-9' : placement === 2 ? 'sm:pt-7 sm:pb-6' : 'sm:pt-5 sm:pb-4';
   return (

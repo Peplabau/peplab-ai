@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <>
       <SEO title="Page not found | PEPLAB" noIndex />
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#070A12' }}>
+    <div className="min-h-screen flex items-center justify-center page-grid-bg">
       <div className="absolute inset-0 grid-overlay opacity-40" />
       
       <div className="relative z-10 text-center px-6 max-w-2xl mx-auto">

@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './styles/home-light-theme.css'
 import App from './App.tsx'
 import { supabase } from '@/lib/supabase'
 import { CROSS_DOMAIN_LOGIN_HASH_TYPE, applyLoginGatewayDocumentBranding } from '@/lib/domain'

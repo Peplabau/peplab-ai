@@ -10,7 +10,7 @@ const items = [
 export default function NewLandingTrustBar() {
   return (
     <section
-      className="relative z-20 border-y border-[rgba(244,246,250,0.08)]"
+      className="nl-trust-bar relative z-20 border-y border-[rgba(244,246,250,0.08)]"
       style={{ background: 'rgba(17,24,39,0.85)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-5">

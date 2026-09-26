@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   Trophy,
   Crown,
   Medal,
@@ -13,6 +12,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { SEO } from '@/components/SEO';
 import { useAffiliate } from '@/context/AffiliateContext';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import {
   getLeaderboard,
   formatPoints,
@@ -43,6 +43,29 @@ const TIER_STYLES: Record<string, { ring: string; chipBg: string; chipText: stri
   },
 };
 
+const TIER_STYLES_LIGHT: Record<string, { ring: string; chipBg: string; chipText: string }> = {
+  platinum: {
+    ring: 'ring-2 ring-[#d8dee9]',
+    chipBg: 'bg-[#f2f4f7] border-[#e4e7ec]',
+    chipText: 'text-[#475467]',
+  },
+  gold: {
+    ring: 'ring-2 ring-[#f7d9a8]',
+    chipBg: 'bg-[#fffaeb] border-[#f7d9a8]',
+    chipText: 'text-[#b54708]',
+  },
+  silver: {
+    ring: 'ring-2 ring-[#e4e7ec]',
+    chipBg: 'bg-[#f2f4f7] border-[#e4e7ec]',
+    chipText: 'text-[#475467]',
+  },
+  standard: {
+    ring: 'ring-1 ring-[#e4e7ec]',
+    chipBg: 'bg-[#f4f1ff] border-[#ddd6fe]',
+    chipText: 'text-[#6847f5]',
+  },
+};
+
 const PODIUM_ACCENTS = [
   // 1st — gold
   { wrap: 'bg-gradient-to-br from-amber-400/20 to-amber-600/10 border-amber-400/40', label: 'text-amber-300', icon: 'text-amber-300' },
@@ -52,8 +75,18 @@ const PODIUM_ACCENTS = [
   { wrap: 'bg-gradient-to-br from-orange-500/20 to-orange-700/10 border-orange-500/30', label: 'text-orange-300', icon: 'text-orange-300' },
 ];
 
-function tierStyles(tier: string) {
-  return TIER_STYLES[tier] ?? TIER_STYLES.standard;
+const PODIUM_ACCENTS_LIGHT = [
+  // 1st — gold
+  { wrap: 'bg-white border-[#f7d9a8]', label: 'text-[#b54708]', icon: 'text-[#b54708]' },
+  // 2nd — silver
+  { wrap: 'bg-white border-[#d8dee9]', label: 'text-[#475467]', icon: 'text-[#475467]' },
+  // 3rd — bronze
+  { wrap: 'bg-white border-[#f3ceab]', label: 'text-[#c2410c]', icon: 'text-[#c2410c]' },
+];
+
+function tierStyles(tier: string, lightShop: boolean) {
+  const map = lightShop ? TIER_STYLES_LIGHT : TIER_STYLES;
+  return map[tier] ?? map.standard;
 }
 
 export default function Leaderboard() {
@@ -94,30 +127,8 @@ export default function Leaderboard() {
         title="Rewards Leaderboard | PEPLAB"
         description="See top PEPLAB rewards members and referral points. Earn points on every research peptide order."
       />
-    <div className="min-h-screen" style={{ background: '#070A12' }}>
+    <div className="min-h-screen pt-24 sm:pt-28 page-grid-bg">
       <div className="absolute inset-0 grid-overlay opacity-60" />
-
-      {/* Header */}
-      <nav className="relative z-50 sticky top-0 bg-[rgba(7,10,18,0.95)] backdrop-blur-sm border-b border-[rgba(244,246,250,0.06)]">
-        <div className="max-w-5xl mx-auto flex items-center justify-between px-4 lg:px-6 py-3">
-          <a
-            href="/"
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors"
-            aria-label="Back to shop"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </a>
-          <div className="flex flex-col items-center">
-            <span className="text-xl lg:text-2xl font-bold tracking-[0.12em] gradient-text leading-none">
-              PEPLAB
-            </span>
-            <span className="text-[10px] lg:text-xs font-mono uppercase tracking-[0.3em] text-[#F59E0B] mt-0.5">
-              LEADERBOARD
-            </span>
-          </div>
-          <div className="w-9 h-9" />
-        </div>
-      </nav>
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 lg:px-6 py-6 lg:py-10 space-y-6 lg:space-y-8">
         {/* Hero */}
@@ -258,8 +269,9 @@ function PodiumCard({
   placement: 1 | 2 | 3;
   isYou: boolean;
 }) {
-  const accent = PODIUM_ACCENTS[placement - 1];
-  const tier = tierStyles(row.tier);
+  const lightShop = useLightShopPreview();
+  const accent = (lightShop ? PODIUM_ACCENTS_LIGHT : PODIUM_ACCENTS)[placement - 1];
+  const tier = tierStyles(row.tier, lightShop);
   const heightClass = placement === 1 ? 'sm:pt-8 sm:pb-7' : placement === 2 ? 'sm:pt-6 sm:pb-5' : 'sm:pt-5 sm:pb-4';
   return (
     <div
@@ -301,7 +313,8 @@ function RowItem({
   row: LeaderboardRow;
   isYou: boolean;
 }) {
-  const tier = tierStyles(row.tier);
+  const lightShop = useLightShopPreview();
+  const tier = tierStyles(row.tier, lightShop);
   return (
     <li
       className={`grid grid-cols-[60px_1fr_auto] sm:grid-cols-[60px_1fr_auto_auto] gap-3 px-4 py-3 items-center ${
@@ -315,7 +328,13 @@ function RowItem({
             {isYou ? 'You' : row.displayName}
           </span>
           {isYou && (
-            <span className="px-1.5 py-0.5 rounded-md bg-[#2ED1B4]/15 border border-[#2ED1B4]/30 text-[9px] font-bold text-[#2ED1B4] uppercase tracking-wider">
+            <span
+              className={
+                lightShop
+                  ? 'px-1.5 py-0.5 rounded-md bg-white border border-[#ddd6fe] text-[9px] font-bold text-[#6847f5] uppercase tracking-wider'
+                  : 'px-1.5 py-0.5 rounded-md bg-[#2ED1B4]/15 border border-[#2ED1B4]/30 text-[9px] font-bold text-[#2ED1B4] uppercase tracking-wider'
+              }
+            >
               You
             </span>
           )}
@@ -349,6 +368,7 @@ function YouChip({
   const [rank, setRank] = useState<number | null>(myInTop?.rank ?? null);
   const [points, setPoints] = useState<number | null>(myInTop?.totalPoints ?? null);
   const [total, setTotal] = useState<number | null>(null);
+  const lightShop = useLightShopPreview();
 
   useEffect(() => {
     if (myInTop) {
@@ -376,9 +396,21 @@ function YouChip({
   if (!rank) return null;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#2ED1B4]/25 bg-[rgba(46,209,180,0.08)] px-4 py-3">
+    <div
+      className={
+        lightShop
+          ? 'flex items-center justify-between gap-3 rounded-2xl border border-[#ddd6fe] bg-[#f4f1ff] px-4 py-3'
+          : 'flex items-center justify-between gap-3 rounded-2xl border border-[#2ED1B4]/25 bg-[rgba(46,209,180,0.08)] px-4 py-3'
+      }
+    >
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-xl bg-[#2ED1B4]/15 border border-[#2ED1B4]/30 flex items-center justify-center shrink-0">
+        <div
+          className={
+            lightShop
+              ? 'w-9 h-9 rounded-xl bg-white border border-[#ddd6fe] flex items-center justify-center shrink-0'
+              : 'w-9 h-9 rounded-xl bg-[#2ED1B4]/15 border border-[#2ED1B4]/30 flex items-center justify-center shrink-0'
+          }
+        >
           <Trophy className="w-4 h-4 text-[#2ED1B4]" />
         </div>
         <div className="min-w-0">

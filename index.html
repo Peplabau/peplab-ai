@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#070A12" />
     <meta name="color-scheme" content="dark" />
+    <script>
+      (function () {
+        var theme = 'dark';
+        try {
+          theme = localStorage.getItem('peplab_theme') === 'light' ? 'light' : 'dark';
+        } catch (e) {}
+        var path = (location.pathname || '/').replace(/\/+$/, '') || '/';
+        var darkOnly = path.indexOf('/admin') === 0;
+        var light = theme === 'light' && !darkOnly;
+        document.documentElement.setAttribute('data-theme', theme);
+        var themeColor = document.querySelector('meta[name="theme-color"]');
+        var colorScheme = document.querySelector('meta[name="color-scheme"]');
+        if (light) {
+          document.documentElement.setAttribute('data-theme-preview', 'home');
+          document.documentElement.style.colorScheme = 'light';
+          if (themeColor) themeColor.setAttribute('content', '#EEF3FF');
+          if (colorScheme) colorScheme.setAttribute('content', 'light');
+        } else if (themeColor) {
+          themeColor.setAttribute('content', '#070A12');
+        }
+      })();
+    </script>
 
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -14,9 +36,10 @@
     })(window,document,'script','dataLayer','GTM-WDZMTMVQ');</script>
     <!-- End Google Tag Manager -->
 
-    <!-- Critical paint — dark shell before JS/CSS bundles load (prevents mobile FOUC) -->
+    <!-- Critical paint — theme shell before JS/CSS bundles load (prevents FOUC) -->
     <style>
       html { background-color: #070A12; color-scheme: dark; }
+      html[data-theme-preview="home"] { background-color: #EEF3FF; color-scheme: light; }
       body {
         margin: 0;
         background-color: #070A12;
@@ -26,10 +49,22 @@
         -moz-osx-font-smoothing: grayscale;
         font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
+      html[data-theme-preview="home"] body { background-color: #EEF3FF; color: #101828; }
       #root {
         min-height: 100vh;
         min-height: 100dvh;
         background-color: #070A12;
+      }
+      html[data-theme-preview="home"] #root { background-color: #EEF3FF; }
+      #app-loading { background: #070A12; }
+      html[data-theme-preview="home"] #app-loading { background: #EEF3FF; }
+      #app-loading-spin {
+        border: 2px solid rgba(46, 209, 180, 0.15);
+        border-top-color: #2ED1B4;
+      }
+      html[data-theme-preview="home"] #app-loading-spin {
+        border-color: rgba(104, 71, 245, 0.18);
+        border-top-color: #6847f5;
       }
       @keyframes _plspin { to { transform: rotate(360deg); } }
       @keyframes _plpulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
@@ -43,7 +78,7 @@
     <script type="text/javascript" src="https://widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async></script>
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
     />
 
     <!-- Google tag (gtag.js) -->
@@ -224,7 +259,6 @@
     <div id="app-loading" style="
       position: fixed;
       inset: 0;
-      background: #070A12;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -259,11 +293,9 @@
         ">PEPTIDES AUSTRALIA</span>
       </div>
       <!-- Spinner -->
-      <div style="
+      <div id="app-loading-spin" style="
         width: 24px;
         height: 24px;
-        border: 2px solid rgba(46, 209, 180, 0.15);
-        border-top-color: #2ED1B4;
         border-radius: 50%;
         animation: _plspin 0.75s linear infinite;
         margin-top: 0.5rem;

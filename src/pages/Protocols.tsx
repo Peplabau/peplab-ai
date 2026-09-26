@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useLightShopPreview } from '@/context/ThemeContext';
 import {
   ArrowDown,
   ArrowUp,
@@ -9,8 +10,6 @@ import {
   FlaskConical,
   Search,
 } from 'lucide-react';
-import Navigation from '@/components/Navigation';
-import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/sections/Footer';
 import { SEO } from '@/components/SEO';
 import { CALCULATOR_PATH, SHOP_PATH } from '@/lib/routes';
@@ -32,6 +31,7 @@ function compareRows(a: ProtocolChartRow, b: ProtocolChartRow, key: SortKey): nu
 }
 
 export default function Protocols() {
+  const lightShop = useLightShopPreview();
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('name');
@@ -90,15 +90,12 @@ export default function Protocols() {
         ]}
       />
 
-      <Navigation />
-      <CartDrawer />
-
       <main className="relative z-10 pt-24 sm:pt-28 pb-16 lg:pb-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero */}
           <header className="mb-8 sm:mb-10">
             <div className="flex items-center gap-2 mb-3">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-[rgba(46,209,180,0.12)] text-[#2ED1B4] border border-[rgba(46,209,180,0.25)]">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${lightShop ? 'bg-[#f4f1ff] text-[#6847f5] border-[#ddd6fe]' : 'bg-[rgba(46,209,180,0.12)] text-[#2ED1B4] border-[rgba(46,209,180,0.25)]'}`}>
                 <FlaskConical className="w-3.5 h-3.5" />
                 Research reference
               </span>
@@ -142,7 +139,7 @@ export default function Protocols() {
             </Link>
             <Link
               to={SHOP_PATH}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(244,246,250,0.12)] text-[#A9B3C7] text-sm font-medium hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${lightShop ? 'border-[#e4e7ec] text-[#475467] hover:text-[#101828] hover:bg-[#f4f1ff]' : 'border-[rgba(244,246,250,0.12)] text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)]'}`}
             >
               <Beaker className="w-4 h-4" />
               Browse catalogue
@@ -176,7 +173,9 @@ export default function Protocols() {
                   className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
                     typeFilter === key
                       ? 'bg-[#2ED1B4] text-[#070A12]'
-                      : 'bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.1)]'
+                      : lightShop
+                        ? 'bg-[#f2f4f7] text-[#475467] hover:bg-[#e4e7ec]'
+                        : 'bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.1)]'
                   }`}
                 >
                   {label}
@@ -229,7 +228,7 @@ export default function Protocols() {
                     filtered.map((row) => (
                       <tr
                         key={row.id}
-                        className="border-b border-[rgba(244,246,250,0.04)] hover:bg-[rgba(244,246,250,0.02)]"
+                        className={`border-b ${lightShop ? 'border-[#eef0f3] hover:bg-[#f7f9fc]' : 'border-[rgba(244,246,250,0.04)] hover:bg-[rgba(244,246,250,0.02)]'}`}
                       >
                         <td className="px-3 sm:px-4 py-3">
                           <Link
@@ -249,8 +248,12 @@ export default function Protocols() {
                           <span
                             className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${
                               row.type === 'blend'
-                                ? 'bg-[rgba(139,92,246,0.15)] text-[#A78BFA]'
-                                : 'bg-[rgba(46,209,180,0.12)] text-[#2ED1B4]'
+                                ? lightShop
+                                  ? 'bg-[#f4f1ff] text-[#6847f5]'
+                                  : 'bg-[rgba(139,92,246,0.15)] text-[#A78BFA]'
+                                : lightShop
+                                  ? 'bg-[#eff6ff] text-[#4e7cff]'
+                                  : 'bg-[rgba(46,209,180,0.12)] text-[#2ED1B4]'
                             }`}
                           >
                             {row.type}

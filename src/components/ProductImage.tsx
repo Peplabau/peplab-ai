@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   getOriginalProductImageUrl,
+  getOptimizedProductImageUrl,
   getProductImageSources,
   PRODUCT_CARD_IMAGE_SIZES,
   PRODUCT_DETAIL_IMAGE_SIZES,

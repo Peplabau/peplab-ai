@@ -1,26 +1,15 @@
-import { ArrowLeft, Scale, Shield, FileText, AlertTriangle, Gavel, ExternalLink } from 'lucide-react';
+import { Scale, Shield, FileText, AlertTriangle, Gavel, ExternalLink } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import Footer from '@/sections/Footer';
 
 export default function Legal() {
   return (
-    <div className="min-h-screen bg-[#070A12]">
+    <div className="min-h-screen page-grid-bg pt-24 sm:pt-28">
       <SEO 
         title="Legal & Compliance | PEPLAB"
         description="PEPLAB Legal & Compliance Information - TGA, Australian Consumer Law, and research product regulations."
       />
       
-      {/* Navigation */}
-      <nav className="px-4 py-4 border-b border-white/10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-2xl font-bold tracking-wider gradient-text">PEPLAB</a>
-          <a href="/" className="text-sm text-gray-400 flex items-center gap-2 hover:text-white transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </a>
-        </div>
-      </nav>
-
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="text-center mb-12">

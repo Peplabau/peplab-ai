@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowLeft, MessageCircle, Clock, MapPin, ExternalLink, Send, Mail } from 'lucide-react';
+import { MessageCircle, Clock, MapPin, ExternalLink, Send, Mail } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { CONFIG } from '@/lib/config';
@@ -134,30 +134,9 @@ export default function ContactInfo() {
         title="Contact & Support | PEPLAB — Peptides Australia"
         description="PEPLAB contact details, Telegram support, business hours, and registered address. Australian research peptide supplier."
       />
-    <div className="min-h-screen" style={{ background: '#070A12' }}>
+    <div className="min-h-screen pt-24 sm:pt-28 page-grid-bg">
       {/* Grid Overlay */}
       <div className="absolute inset-0 grid-overlay opacity-60" />
-
-      {/* Navigation */}
-      <nav className="relative z-50 px-6 lg:px-12 py-6">
-        <div className="flex items-center justify-between">
-          <a href="/" className="flex flex-col items-start">
-            <span className="text-3xl lg:text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
-              PEPLAB
-            </span>
-            <span className="text-xs lg:text-sm font-mono uppercase tracking-[0.5em] text-[#8B5CF6] mt-0.5">
-              PEPTIDES AUSTRALIA
-            </span>
-          </a>
-          <a
-            href="/"
-            className="flex items-center gap-2 text-sm text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Shop
-          </a>
-        </div>
-      </nav>
 
       {/* Main Content */}
       <main className="relative z-10 px-6 lg:px-12 py-12 lg:py-20">

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangle, Calculator, Copy, RotateCcw, Syringe } from 'lucide-react';
+import { useLightShopPreview } from '@/context/ThemeContext';
 
 const SYRINGE_OPTIONS = [0.3, 0.5, 1] as const;
 const COMPOUND_MG = [5, 10, 15, 20, 30, 40, 50, 60, 100] as const;
@@ -61,10 +62,15 @@ function formatConcentration(value: number, unit: CompoundUnit): string {
 }
 
 function SyringeIcon({ selected }: { selected: boolean }) {
-  const barrel = selected ? '#22C55E' : '#A9B3C7';
+  const lightShop = useLightShopPreview();
+  const barrel = selected ? '#22C55E' : lightShop ? '#98a2b3' : '#A9B3C7';
   const plunger = selected ? '#16A34A' : '#6B7280';
   const needle = selected ? '#15803D' : '#4B5563';
-  const mark = selected ? 'rgba(255,255,255,0.35)' : 'rgba(244,246,250,0.15)';
+  const mark = selected
+    ? 'rgba(255,255,255,0.35)'
+    : lightShop
+      ? 'rgba(16,24,40,0.15)'
+      : 'rgba(244,246,250,0.15)';
 
   return (
     <svg viewBox="0 0 120 40" className="rcalc-syringe-icon" aria-hidden>
