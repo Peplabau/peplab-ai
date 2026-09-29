@@ -24,6 +24,7 @@ import { handoffToMainApp } from '@/lib/login-redirect';
 import Catalog from '@/sections/Catalog';
 import BulkSales from '@/sections/BulkSales';
 import Quality from '@/sections/Quality';
+import HomeSeoContent from '@/sections/HomeSeoContent';
 import TrustpilotReviews from '@/sections/TrustpilotReviews';
 import LeaderboardTop3 from '@/sections/LeaderboardTop3';
 import Footer from '@/sections/Footer';
@@ -149,6 +150,9 @@ function HomePage() {
 
         {/* Quality Section (merged purity/standards/quality/trust) */}
         <Quality />
+
+        {/* Elite Peptides Australia — long-form SEO content */}
+        <HomeSeoContent />
 
         {/* Footer */}
         <Footer />

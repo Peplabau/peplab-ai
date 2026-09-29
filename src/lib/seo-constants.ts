@@ -1,9 +1,10 @@
 /** Shared SEO copy — peplab.ai branded homepage and site defaults. */
 
-export const HOMEPAGE_SEO_TITLE = 'PEPLAB | Peptides Australia';
+export const HOMEPAGE_SEO_TITLE =
+  'Elite Peptides Australia | HPLC-Tested Research Peptides – PEPLAB';
 
 export const HOMEPAGE_SEO_DESCRIPTION =
-  "Australia's independent research peptide supplier. Every batch HPLC tested with published COAs. Express same-day dispatch Mon–Fri. Research use only.";
+  "Elite Peptides Australia's most trusted research supplier. PEPLAB ships HPLC-tested peptides from Sydney with published COAs, same-day domestic dispatch, and research-use-only materials.";
 
 export const SITE_BRAND_NAME = 'PEPLAB Australia';
 
