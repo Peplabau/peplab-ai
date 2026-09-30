@@ -701,14 +701,11 @@ export default function Catalog() {
 
         {/* Header */}
         <div ref={headerRef} className="mb-8">
-          <h1 className="mb-2 text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA]">
-            Elite Peptides <span className="gradient-text">Australia</span>
+          <h1 className="mb-4 text-2xl sm:text-3xl md:text-4xl font-bold text-[#F4F6FA]">
+            Shop{' '}
+            <span className="tabular-nums">{shopPeptideHeadlineCount}+</span>{' '}
+            <span className="gradient-text">peptides</span>
           </h1>
-          <p className="mb-4 max-w-2xl text-sm text-[#A9B3C7] sm:text-base">
-            HPLC-tested research peptides — shop{' '}
-            <span className="tabular-nums text-[#F4F6FA]">{shopPeptideHeadlineCount}+</span>{' '}
-            compounds with published COAs.
-          </p>
 
           {/* Search + research category filter — full content width */}
           <div className="catalog-search">
