@@ -427,15 +427,17 @@ type ProductInput = {
 
 function lookupSales(
   sales: Map<string, number>,
+  productId: string,
   slug: string,
   name: string,
   dosage: string,
 ): number {
   const d = normalizeAdminDosageKey(dosage);
   const keys = [
-    `${slug.toLowerCase()}||${d}`,
-    `${normalizeAdminDosageKey(name)}||${d}`,
-  ];
+    productId ? `${productId.toLowerCase()}||${d}` : '',
+    slug ? `${slug.toLowerCase()}||${d}` : '',
+    name ? `${normalizeAdminDosageKey(name)}||${d}` : '',
+  ].filter(Boolean);
   for (const key of keys) {
     const n = sales.get(key);
     if (n) return n;
@@ -462,8 +464,8 @@ export function buildInventoryLedger(
       const inStock = d.in_stock !== false;
       const label = dosageLabel(d);
       const unitPrice = Number(d.original_price ?? d.originalPrice ?? d.price ?? 0) || 0;
-      const sold7 = lookupSales(sales7d, slug, name, label);
-      const sold30 = lookupSales(sales30d, slug, name, label);
+      const sold7 = lookupSales(sales7d, product.id, slug, name, label);
+      const sold30 = lookupSales(sales30d, product.id, slug, name, label);
       const daily = sold30 > 0 ? sold30 / 30 : 0;
       const daysOfCover = daily > 0 ? Math.round((qty / daily) * 10) / 10 : null;
 
@@ -738,4 +740,104 @@ export function aggregateWeeklyRevenue(
   }
 
   return rows;
+}
+
+export interface DailyRevenueRow {
+  day: string;
+  label: string;
+  revenue: number;
+  orders: number;
+}
+
+/** Last N calendar days in Australia/Sydney (oldest → newest), paid revenue only. */
+export function aggregateDailyRevenue(
+  orders: Array<{ total?: number | string | null; status?: string | null; created_at?: string | null }>,
+  days = 7,
+  now = new Date(),
+): DailyRevenueRow[] {
+  const { ymd: today } = calendarDateInZone(now);
+  const rows: DailyRevenueRow[] = [];
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const day = addDaysYmd(today, -i);
+    const dt = new Date(`${day}T12:00:00Z`);
+    rows.push({
+      day,
+      label: dt.toLocaleDateString('en-AU', { weekday: 'short', timeZone: 'UTC' }),
+      revenue: 0,
+      orders: 0,
+    });
+  }
+  const byDay = new Map(rows.map((row) => [row.day, row]));
+  const oldest = rows[0]?.day;
+
+  for (const order of orders) {
+    const status = (order.status || '').toLowerCase();
+    if (!PAID_REVENUE_STATUSES.has(status) || !order.created_at) continue;
+    const { ymd: orderDay } = calendarDateInZone(new Date(order.created_at));
+    if (oldest && orderDay < oldest) continue;
+    const row = byDay.get(orderDay);
+    if (!row) continue;
+    row.revenue += Number(order.total) || 0;
+    row.orders += 1;
+  }
+
+  return rows;
+}
+
+export interface OverviewPeriodStats {
+  revenue: number;
+  paidOrders: number;
+  awaitingPayment: number;
+  ordersToShip: number;
+}
+
+const TO_SHIP_STATUSES = new Set(['processing', 'finalised']);
+
+/** KPI totals for orders whose created_at falls in [startYmd, endYmd] inclusive (Sydney days). */
+export function summarizeOverviewPeriod(
+  orders: Array<{ total?: number | string | null; status?: string | null; created_at?: string | null }>,
+  startYmd: string,
+  endYmd: string,
+): OverviewPeriodStats {
+  const stats: OverviewPeriodStats = {
+    revenue: 0,
+    paidOrders: 0,
+    awaitingPayment: 0,
+    ordersToShip: 0,
+  };
+
+  for (const order of orders) {
+    if (!order.created_at) continue;
+    const { ymd: orderDay } = calendarDateInZone(new Date(order.created_at));
+    if (orderDay < startYmd || orderDay > endYmd) continue;
+    const status = (order.status || '').toLowerCase();
+    const total = Number(order.total) || 0;
+
+    if (status === 'pending_payment') stats.awaitingPayment += 1;
+    if (PAID_REVENUE_STATUSES.has(status)) {
+      stats.revenue += total;
+      stats.paidOrders += 1;
+    }
+    if (TO_SHIP_STATUSES.has(status)) stats.ordersToShip += 1;
+  }
+
+  return stats;
+}
+
+/** Sydney calendar day range: current N days and the N days before that. */
+export function overviewCompareWindows(
+  days = 7,
+  now = new Date(),
+): {
+  currentStart: string;
+  currentEnd: string;
+  previousStart: string;
+  previousEnd: string;
+} {
+  const { ymd: today } = calendarDateInZone(now);
+  const currentEnd = today;
+  const currentStart = addDaysYmd(today, -(days - 1));
+  const previousEnd = addDaysYmd(currentStart, -1);
+  const previousStart = addDaysYmd(previousEnd, -(days - 1));
+  return { currentStart, currentEnd, previousStart, previousEnd };
 }

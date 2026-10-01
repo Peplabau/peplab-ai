@@ -43,8 +43,8 @@ async function fetchSupabasePages<T>(
   return all;
 }
 
-type StockFilter = 'all' | 'needs_attention' | StockStatus;
-type SortKey = 'priority' | 'qty_asc' | 'qty_desc' | 'sold30' | 'name';
+type StockFilter = 'all' | 'needs_attention' | 'not_selling' | StockStatus;
+type SortKey = 'priority' | 'qty_asc' | 'qty_desc' | 'sold30' | 'sold30_asc' | 'name';
 
 export default function StockInventorySection() {
   const [products, setProducts] = useState<any[]>([]);
@@ -149,8 +149,9 @@ export default function StockInventorySection() {
   );
 
   const statusCounts = useMemo(() => {
-    const counts: Record<StockStatus | 'needs_attention', number> = {
+    const counts: Record<StockStatus | 'needs_attention' | 'not_selling', number> = {
       needs_attention: 0,
+      not_selling: 0,
       healthy: 0,
       low: 0,
       critical: 0,
@@ -163,6 +164,14 @@ export default function StockInventorySection() {
       if (row.status === 'critical' || row.status === 'low' || row.status === 'oos' || row.status === 'mismatch') {
         counts.needs_attention += 1;
       }
+      if (
+        row.isActive &&
+        row.unitsSold30d === 0 &&
+        (row.inStock || row.stockQuantity > 0) &&
+        row.status !== 'inactive'
+      ) {
+        counts.not_selling += 1;
+      }
     }
     return counts;
   }, [ledger]);
@@ -172,6 +181,17 @@ export default function StockInventorySection() {
     let rows = ledger.filter((row) => {
       if (filter === 'needs_attention') {
         if (!['critical', 'low', 'oos', 'mismatch'].includes(row.status)) return false;
+      } else if (filter === 'not_selling') {
+        if (
+          !(
+            row.isActive &&
+            row.unitsSold30d === 0 &&
+            (row.inStock || row.stockQuantity > 0) &&
+            row.status !== 'inactive'
+          )
+        ) {
+          return false;
+        }
       } else if (filter !== 'all' && row.status !== filter) {
         return false;
       }
@@ -188,7 +208,14 @@ export default function StockInventorySection() {
     if (sortKey === 'qty_asc') rows.sort((a, b) => a.stockQuantity - b.stockQuantity);
     else if (sortKey === 'qty_desc') rows.sort((a, b) => b.stockQuantity - a.stockQuantity);
     else if (sortKey === 'sold30') rows.sort((a, b) => b.unitsSold30d - a.unitsSold30d);
-    else if (sortKey === 'name') {
+    else if (sortKey === 'sold30_asc') {
+      rows.sort(
+        (a, b) =>
+          a.unitsSold30d - b.unitsSold30d ||
+          b.stockQuantity - a.stockQuantity ||
+          a.productName.localeCompare(b.productName),
+      );
+    } else if (sortKey === 'name') {
       rows.sort((a, b) => a.productName.localeCompare(b.productName) || a.dosageLabel.localeCompare(b.dosageLabel));
     }
     // priority = buildInventoryLedger default order
@@ -332,11 +359,16 @@ export default function StockInventorySection() {
         <Kpi label="Needs attention" value={String(statusCounts.needs_attention)} color="#F59E0B" icon={MinusCircle} />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
           <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">Fully OOS products</p>
           <p className="text-lg font-bold text-[#F4F6FA] mt-1">{summary.fullyOutOfStockProducts}</p>
           <p className="text-[11px] text-[#5A667E]">Active products with no live dosage</p>
+        </div>
+        <div className="p-3 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
+          <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">Not selling (30d)</p>
+          <p className="text-lg font-bold text-[#F87171] mt-1">{statusCounts.not_selling}</p>
+          <p className="text-[11px] text-[#5A667E]">Active stock with 0 paid units</p>
         </div>
         <div className="p-3 rounded-xl bg-[rgba(17,24,39,0.6)] border border-[rgba(244,246,250,0.08)]">
           <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">Qty 0 but still live</p>
@@ -373,6 +405,7 @@ export default function StockInventorySection() {
           <option value="qty_asc">Sort: Qty low → high</option>
           <option value="qty_desc">Sort: Qty high → low</option>
           <option value="sold30">Sort: Best sellers (30d)</option>
+          <option value="sold30_asc">Sort: Least sold (30d)</option>
           <option value="name">Sort: Product name</option>
         </select>
       </div>
@@ -381,6 +414,7 @@ export default function StockInventorySection() {
         {(
           [
             ['needs_attention', `Needs attention (${statusCounts.needs_attention})`],
+            ['not_selling', `Not selling (${statusCounts.not_selling})`],
             ['all', `All variants (${ledger.length})`],
             ['critical', `Critical (${statusCounts.critical})`],
             ['low', `Low (${statusCounts.low})`],
