@@ -47,7 +47,6 @@ const OVERVIEW_CACHE_KEY = 'admin:overview:v8';
 
 type BsSortBy = 'units' | 'revenue';
 type SalesPeriod = Extract<BsTimeFilter, '7d' | '30d'>;
-type ChartMode = 'weekly' | 'daily';
 
 type OrderItemRow = {
   items: unknown;
@@ -103,6 +102,33 @@ function pctChange(current: number, previous: number): number | null {
 
 function formatAud(value: number): string {
   return `$${Math.round(value).toLocaleString('en-AU')}`;
+}
+
+function RevenueChartTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    value?: number;
+    payload?: {
+      label?: string;
+      revenue?: number;
+      orders?: number;
+      shortLabel?: string;
+    };
+  }>;
+}) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload;
+  if (!row) return null;
+  const amount = Number(payload[0]?.value ?? row.revenue ?? 0);
+  return (
+    <div className="rounded-xl border border-[rgba(244,246,250,0.16)] bg-[#0B1220] px-3.5 py-2.5 shadow-xl">
+      <p className="text-[11px] text-[#A9B3C7]">{row.label || row.shortLabel}</p>
+      <p className="mt-0.5 text-base font-bold tabular-nums text-[#F4F6FA]">{formatAud(amount)}</p>
+    </div>
+  );
 }
 
 function formatStatusLabel(status: string): string {
@@ -214,7 +240,7 @@ export default function AdminOverviewSection({
   const [bsSort, setBsSort] = useState<BsSortBy>('units');
   const [salesPeriod, setSalesPeriod] = useState<SalesPeriod>('7d');
   const [inventoryTab, setInventoryTab] = useState<InventoryTab>('not_selling');
-  const [chartMode, setChartMode] = useState<ChartMode>('weekly');
+  const [focusedWeekStart, setFocusedWeekStart] = useState<string | null>(null);
 
   const loadStats = useCallback(async (bust = false) => {
     if (bust) invalidateCache(OVERVIEW_CACHE_KEY);
@@ -401,23 +427,35 @@ export default function AdminOverviewSection({
     [dailyRevenue],
   );
 
-  const weeklyChartData = useMemo(() => {
-    // oldest → newest for the chart
-    return [...weeklyRevenue].reverse().map((row) => ({
-      ...row,
-      shortLabel: row.isCurrent
-        ? 'This week'
-        : row.label.split('–')[0]?.trim() || row.label,
-    }));
-  }, [weeklyRevenue]);
-
   const thisWeek = weeklyRevenue.find((w) => w.isCurrent) ?? null;
   const lastWeek = weeklyRevenue.find((w) => !w.isCurrent) ?? null;
-  const weekChange = thisWeek && lastWeek ? pctChange(thisWeek.revenue, lastWeek.revenue) : null;
+  const thisWeekChange =
+    thisWeek && lastWeek ? pctChange(thisWeek.revenue, lastWeek.revenue) : null;
   const weekMax = useMemo(
     () => Math.max(1, ...weeklyRevenue.map((w) => w.revenue)),
     [weeklyRevenue],
   );
+  const weeklyChartData = useMemo(
+    () =>
+      [...weeklyRevenue].reverse().map((row) => ({
+        ...row,
+        shortLabel: row.isCurrent
+          ? 'Now'
+          : row.label.replace(/\s*2026\s*/g, ' ').split('–')[0]?.trim() || row.label,
+      })),
+    [weeklyRevenue],
+  );
+  const focusedWeek =
+    weeklyRevenue.find((w) => w.weekStart === focusedWeekStart) ?? thisWeek ?? null;
+  const focusedPrior = useMemo(() => {
+    if (!focusedWeek) return null;
+    const idx = weeklyRevenue.findIndex((w) => w.weekStart === focusedWeek.weekStart);
+    return idx >= 0 ? weeklyRevenue[idx + 1] ?? null : null;
+  }, [focusedWeek, weeklyRevenue]);
+  const focusedChange =
+    focusedWeek && focusedPrior
+      ? pctChange(focusedWeek.revenue, focusedPrior.revenue)
+      : null;
 
   if (loading) {
     return (
@@ -461,52 +499,10 @@ export default function AdminOverviewSection({
         </div>
       </div>
 
-      {/* This week highlight */}
-      <div className="rounded-2xl border border-[rgba(46,209,180,0.25)] bg-[rgba(46,209,180,0.06)] p-4 sm:p-5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2ED1B4]">
-              This week so far
-            </p>
-            <p className="mt-1 text-3xl font-bold tabular-nums text-[#F4F6FA] sm:text-4xl">
-              {formatAud(thisWeek?.revenue ?? 0)}
-            </p>
-            <p className="mt-1 text-sm text-[#A9B3C7]">
-              {thisWeek?.orders ?? 0} paid order{(thisWeek?.orders ?? 0) === 1 ? '' : 's'}
-              {thisWeek ? ` · ${thisWeek.label}` : ''}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-[11px] uppercase tracking-wide text-[#6B7280]">vs last week</p>
-            <p className="mt-1 text-lg font-bold tabular-nums text-[#F4F6FA]">
-              {formatAud(lastWeek?.revenue ?? 0)}
-            </p>
-            <div className="mt-1">
-              {weekChange == null ? (
-                <span className="text-[11px] text-[#6B7280]">No prior week</span>
-              ) : (
-                <span
-                  className={`inline-flex items-center gap-0.5 text-[11px] font-semibold ${
-                    weekChange >= 0 ? 'text-[#2ED1B4]' : 'text-[#F87171]'
-                  }`}
-                >
-                  {weekChange >= 0 ? (
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                  ) : (
-                    <ArrowDownRight className="h-3.5 w-3.5" />
-                  )}
-                  {Math.abs(weekChange).toFixed(0)}%
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard
-          label="Last 7 days revenue"
+          label="Revenue (7 days)"
           value={formatAud(current.revenue)}
           icon={BarChart3}
           iconBg="rgba(46,209,180,0.12)"
@@ -539,158 +535,225 @@ export default function AdminOverviewSection({
         />
       </div>
 
-      {/* Sales + Needs attention */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.72)] p-4 sm:p-5 lg:col-span-3">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 className="text-base font-semibold text-[#F4F6FA]">
-                {chartMode === 'weekly' ? 'Weekly revenue' : 'Daily revenue'}
-              </h2>
-              <p className="text-[11px] text-[#6B7280]">
-                {chartMode === 'weekly'
-                  ? 'Paid revenue by week · Mon–Sun · Sydney'
-                  : 'Paid revenue · last 7 days'}
-              </p>
-            </div>
-            <div className="inline-flex rounded-lg border border-[rgba(244,246,250,0.1)] p-0.5">
-              {([
-                ['weekly', 'Weekly'],
-                ['daily', 'Daily'],
-              ] as const).map(([mode, label]) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setChartMode(mode)}
-                  className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                    chartMode === mode
-                      ? 'bg-[rgba(46,209,180,0.18)] text-[#2ED1B4]'
-                      : 'text-[#6B7280] hover:text-[#A9B3C7]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+      {/* Weekly revenue — graphical */}
+      <div className="overflow-hidden rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[linear-gradient(165deg,rgba(17,24,39,0.95)_0%,rgba(12,18,32,0.98)_55%,rgba(8,14,26,1)_100%)]">
+        <div className="flex flex-wrap items-end justify-between gap-4 px-5 pt-5 pb-2">
+          <div>
+            <p className="text-xs font-medium text-[#A9B3C7]">Weekly revenue</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-[#F4F6FA] sm:text-4xl">
+              {formatAud(thisWeek?.revenue ?? 0)}
+            </p>
+            <p className="mt-1 text-sm text-[#6B7280]">
+              This week · {thisWeek?.label ?? '—'} · {thisWeek?.orders ?? 0} orders
+            </p>
           </div>
+          <div className="rounded-xl border border-[rgba(244,246,250,0.08)] bg-[rgba(244,246,250,0.03)] px-4 py-3 text-right">
+            <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">vs last week</p>
+            <p className="mt-0.5 text-lg font-semibold tabular-nums text-[#F4F6FA]">
+              {formatAud(lastWeek?.revenue ?? 0)}
+            </p>
+            {thisWeekChange != null && (
+              <p
+                className={`mt-0.5 inline-flex items-center gap-0.5 text-xs font-semibold ${
+                  thisWeekChange >= 0 ? 'text-[#2ED1B4]' : 'text-[#F87171]'
+                }`}
+              >
+                {thisWeekChange >= 0 ? (
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowDownRight className="h-3.5 w-3.5" />
+                )}
+                {Math.abs(thisWeekChange).toFixed(0)}%
+              </p>
+            )}
+          </div>
+        </div>
 
-          {chartMode === 'weekly' ? (
-            <>
-              <div className="h-56 w-full sm:h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <CartesianGrid stroke="rgba(244,246,250,0.06)" vertical={false} />
-                    <XAxis
-                      dataKey="shortLabel"
-                      tick={{ fill: '#6B7280', fontSize: 10 }}
-                      axisLine={false}
-                      tickLine={false}
-                      interval={0}
-                    />
-                    <YAxis
-                      tick={{ fill: '#6B7280', fontSize: 11 }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={40}
-                      tickFormatter={(v) => (v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`)}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: '#111827',
-                        border: '1px solid rgba(244,246,250,0.12)',
-                        borderRadius: 12,
-                        color: '#F4F6FA',
-                        fontSize: 12,
-                      }}
-                      formatter={(value: number) => [formatAud(value), 'Revenue']}
-                      labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ''}
-                    />
-                    <Bar dataKey="revenue" radius={[6, 6, 0, 0]} maxBarSize={42}>
-                      {weeklyChartData.map((row) => (
-                        <Cell
-                          key={row.weekStart}
-                          fill={row.isCurrent ? '#2ED1B4' : 'rgba(46,209,180,0.35)'}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <ul className="mt-4 space-y-2 border-t border-[rgba(244,246,250,0.06)] pt-3">
-                {weeklyRevenue.slice(0, 5).map((row) => {
-                  const pct = weekMax > 0 ? (row.revenue / weekMax) * 100 : 0;
+        <div className="h-52 w-full px-2 sm:h-60 sm:px-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={weeklyChartData}
+              margin={{ top: 12, right: 12, left: 0, bottom: 4 }}
+              onMouseMove={(state) => {
+                const weekStart = (
+                  state as { activePayload?: Array<{ payload?: { weekStart?: string } }> }
+                )?.activePayload?.[0]?.payload?.weekStart;
+                if (weekStart) setFocusedWeekStart(weekStart);
+              }}
+            >
+              <defs>
+                <linearGradient id="weekBarFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#5EEAD4" stopOpacity={0.95} />
+                  <stop offset="100%" stopColor="#2ED1B4" stopOpacity={0.55} />
+                </linearGradient>
+                <linearGradient id="weekBarMuted" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2ED1B4" stopOpacity={0.45} />
+                  <stop offset="100%" stopColor="#2ED1B4" stopOpacity={0.18} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(244,246,250,0.05)" vertical={false} />
+              <XAxis
+                dataKey="shortLabel"
+                tick={{ fill: '#8B95A8', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                interval={0}
+              />
+              <YAxis
+                tick={{ fill: '#6B7280', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                width={42}
+                tickFormatter={(v) => (v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`)}
+              />
+              <Tooltip
+                cursor={{ fill: 'rgba(244,246,250,0.04)', radius: 8 }}
+                content={<RevenueChartTooltip />}
+                wrapperStyle={{ outline: 'none', zIndex: 30 }}
+              />
+              <Bar dataKey="revenue" radius={[8, 8, 4, 4]} maxBarSize={44}>
+                {weeklyChartData.map((row) => {
+                  const focused =
+                    (focusedWeekStart ?? thisWeek?.weekStart) === row.weekStart;
                   return (
-                    <li key={row.weekStart} className="space-y-1">
-                      <div className="flex items-center justify-between gap-2 text-sm">
-                        <span className={`font-medium ${row.isCurrent ? 'text-[#2ED1B4]' : 'text-[#F4F6FA]'}`}>
-                          {row.isCurrent ? 'This week' : row.label}
-                        </span>
-                        <span className="tabular-nums font-semibold text-[#F4F6FA]">
-                          {formatAud(row.revenue)}
-                          <span className="ml-2 text-[11px] font-normal text-[#6B7280]">
-                            {row.orders} orders
-                          </span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-[rgba(244,246,250,0.08)]">
-                        <div
-                          className={`h-full rounded-full ${row.isCurrent ? 'bg-[#2ED1B4]' : 'bg-[rgba(46,209,180,0.4)]'}`}
-                          style={{ width: `${Math.max(pct, row.revenue > 0 ? 4 : 0)}%` }}
-                        />
-                      </div>
-                    </li>
+                    <Cell
+                      key={row.weekStart}
+                      fill={
+                        row.isCurrent || focused
+                          ? 'url(#weekBarFill)'
+                          : 'url(#weekBarMuted)'
+                      }
+                      stroke={focused ? 'rgba(94,234,212,0.5)' : 'transparent'}
+                      strokeWidth={focused ? 1.5 : 0}
+                      cursor="pointer"
+                      onClick={() => setFocusedWeekStart(row.weekStart)}
+                    />
                   );
                 })}
-              </ul>
-            </>
-          ) : (
-            <div className="h-56 w-full sm:h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="overviewRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#2ED1B4" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#2ED1B4" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="rgba(244,246,250,0.06)" vertical={false} />
-                  <XAxis
-                    dataKey="shortLabel"
-                    tick={{ fill: '#6B7280', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: '#6B7280', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={40}
-                    tickFormatter={(v) => (v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`)}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#111827',
-                      border: '1px solid rgba(244,246,250,0.12)',
-                      borderRadius: 12,
-                      color: '#F4F6FA',
-                      fontSize: 12,
-                    }}
-                    formatter={(value: number) => [formatAud(value), 'Revenue']}
-                    labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ''}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#2ED1B4"
-                    strokeWidth={2.5}
-                    fill="url(#overviewRevenueFill)"
-                    dot={{ r: 4, fill: '#2ED1B4', stroke: '#070A12', strokeWidth: 2 }}
-                    activeDot={{ r: 5 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {focusedWeek && (
+          <div className="mx-5 mb-5 mt-1 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[rgba(46,209,180,0.22)] bg-[rgba(46,209,180,0.08)] px-4 py-3.5">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2ED1B4]">
+                {focusedWeek.isCurrent ? 'This week' : 'Highlighted week'}
+              </p>
+              <p className="mt-0.5 text-sm text-[#A9B3C7]">{focusedWeek.label}</p>
             </div>
-          )}
+            <div className="text-right">
+              <p className="text-2xl font-bold tabular-nums text-[#F4F6FA]">
+                {formatAud(focusedWeek.revenue)}
+              </p>
+              <p className="text-xs text-[#6B7280]">
+                {focusedWeek.orders} orders
+                {focusedChange != null && (
+                  <span
+                    className={`ml-2 font-semibold ${
+                      focusedChange >= 0 ? 'text-[#2ED1B4]' : 'text-[#F87171]'
+                    }`}
+                  >
+                    {focusedChange >= 0 ? '+' : ''}
+                    {focusedChange.toFixed(0)}% vs prior
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Compact graphical strip */}
+        <div className="space-y-2.5 border-t border-[rgba(244,246,250,0.06)] px-5 py-4">
+          {weeklyRevenue.slice(0, 6).map((row) => {
+            const pct = (row.revenue / weekMax) * 100;
+            const focused = focusedWeek?.weekStart === row.weekStart;
+            return (
+              <button
+                key={row.weekStart}
+                type="button"
+                onClick={() => setFocusedWeekStart(row.weekStart)}
+                className="group flex w-full items-center gap-3 text-left"
+              >
+                <span
+                  className={`w-28 shrink-0 truncate text-xs sm:w-36 ${
+                    focused || row.isCurrent ? 'font-semibold text-[#2ED1B4]' : 'text-[#8B95A8]'
+                  }`}
+                >
+                  {row.isCurrent
+                    ? 'This week'
+                    : row.label.replace(/\s*\d{4}\s*/g, ' ').split('–')[0]?.trim() || row.label}
+                </span>
+                <div className="relative h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[rgba(244,246,250,0.06)]">
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all ${
+                      focused || row.isCurrent
+                        ? 'bg-gradient-to-r from-[#2ED1B4] to-[#5EEAD4]'
+                        : 'bg-[rgba(46,209,180,0.35)] group-hover:bg-[rgba(46,209,180,0.55)]'
+                    }`}
+                    style={{ width: `${Math.max(pct, row.revenue > 0 ? 4 : 0)}%` }}
+                  />
+                </div>
+                <span
+                  className={`w-20 shrink-0 text-right text-sm font-bold tabular-nums sm:w-24 ${
+                    focused || row.isCurrent ? 'text-[#F4F6FA]' : 'text-[#A9B3C7]'
+                  }`}
+                >
+                  {formatAud(row.revenue)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Daily chart + Needs attention */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.72)] p-4 sm:p-5 lg:col-span-3">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-[#F4F6FA]">Daily revenue</h2>
+            <p className="mt-0.5 text-xs text-[#A9B3C7]">Paid revenue · last 7 days</p>
+          </div>
+          <div className="h-56 w-full sm:h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="overviewRevenueFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2ED1B4" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#2ED1B4" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="rgba(244,246,250,0.06)" vertical={false} />
+                <XAxis
+                  dataKey="shortLabel"
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: '#6B7280', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={40}
+                  tickFormatter={(v) => (v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`)}
+                />
+                <Tooltip
+                  content={<RevenueChartTooltip />}
+                  wrapperStyle={{ outline: 'none', zIndex: 20 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#2ED1B4"
+                  strokeWidth={2.5}
+                  fill="url(#overviewRevenueFill)"
+                  dot={{ r: 4, fill: '#2ED1B4', stroke: '#070A12', strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.72)] p-4 sm:p-5 lg:col-span-2">
