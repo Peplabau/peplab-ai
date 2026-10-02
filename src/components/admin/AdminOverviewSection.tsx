@@ -15,7 +15,10 @@ import {
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -28,20 +31,23 @@ import {
   aggregateBestSellers,
   aggregateDailyRevenue,
   aggregateVariantSales,
+  aggregateWeeklyRevenue,
   buildInventoryLedger,
   overviewCompareWindows,
   summarizeOverviewPeriod,
   type BsTimeFilter,
   type InventoryLedgerRow,
   type OverviewPeriodStats,
+  type WeeklyRevenueRow,
 } from '@/lib/admin-analytics';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
 
 const LOW_STOCK_THRESHOLD = 10;
-const OVERVIEW_CACHE_KEY = 'admin:overview:v7';
+const OVERVIEW_CACHE_KEY = 'admin:overview:v8';
 
 type BsSortBy = 'units' | 'revenue';
 type SalesPeriod = Extract<BsTimeFilter, '7d' | '30d'>;
+type ChartMode = 'weekly' | 'daily';
 
 type OrderItemRow = {
   items: unknown;
@@ -199,6 +205,7 @@ export default function AdminOverviewSection({
   const [dailyRevenue, setDailyRevenue] = useState<
     Array<{ day: string; label: string; revenue: number; orders: number }>
   >([]);
+  const [weeklyRevenue, setWeeklyRevenue] = useState<WeeklyRevenueRow[]>([]);
   const [recentOrders, setRecentOrders] = useState<OverviewOrder[]>([]);
   const [allOrderItems, setAllOrderItems] = useState<OrderItemRow[]>([]);
   const [ledgerRows, setLedgerRows] = useState<InventoryLedgerRow[]>([]);
@@ -207,6 +214,7 @@ export default function AdminOverviewSection({
   const [bsSort, setBsSort] = useState<BsSortBy>('units');
   const [salesPeriod, setSalesPeriod] = useState<SalesPeriod>('7d');
   const [inventoryTab, setInventoryTab] = useState<InventoryTab>('not_selling');
+  const [chartMode, setChartMode] = useState<ChartMode>('weekly');
 
   const loadStats = useCallback(async (bust = false) => {
     if (bust) invalidateCache(OVERVIEW_CACHE_KEY);
@@ -281,6 +289,7 @@ export default function AdminOverviewSection({
         ),
       );
       setDailyRevenue(aggregateDailyRevenue(result.orderStatusTotals, 7));
+      setWeeklyRevenue(aggregateWeeklyRevenue(result.orderStatusTotals, 8));
       setRecentOrders(result.recent);
       setAllOrderItems(result.itemOrders);
 
@@ -392,6 +401,24 @@ export default function AdminOverviewSection({
     [dailyRevenue],
   );
 
+  const weeklyChartData = useMemo(() => {
+    // oldest → newest for the chart
+    return [...weeklyRevenue].reverse().map((row) => ({
+      ...row,
+      shortLabel: row.isCurrent
+        ? 'This week'
+        : row.label.split('–')[0]?.trim() || row.label,
+    }));
+  }, [weeklyRevenue]);
+
+  const thisWeek = weeklyRevenue.find((w) => w.isCurrent) ?? null;
+  const lastWeek = weeklyRevenue.find((w) => !w.isCurrent) ?? null;
+  const weekChange = thisWeek && lastWeek ? pctChange(thisWeek.revenue, lastWeek.revenue) : null;
+  const weekMax = useMemo(
+    () => Math.max(1, ...weeklyRevenue.map((w) => w.revenue)),
+    [weeklyRevenue],
+  );
+
   if (loading) {
     return (
       <div className="space-y-5">
@@ -426,7 +453,7 @@ export default function AdminOverviewSection({
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-2 rounded-xl border border-[rgba(244,246,250,0.1)] bg-[rgba(17,24,39,0.8)] px-3 py-2 text-xs font-medium text-[#F4F6FA]">
             <CalendarDays className="h-3.5 w-3.5 text-[#2ED1B4]" />
-            Last 7 days
+            {thisWeek ? `This week · ${thisWeek.label}` : 'This week'}
           </div>
           <div className="rounded-xl border border-[rgba(244,246,250,0.08)] px-3 py-2 text-[11px] text-[#A9B3C7]">
             AUD · Sydney time
@@ -434,10 +461,52 @@ export default function AdminOverviewSection({
         </div>
       </div>
 
+      {/* This week highlight */}
+      <div className="rounded-2xl border border-[rgba(46,209,180,0.25)] bg-[rgba(46,209,180,0.06)] p-4 sm:p-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2ED1B4]">
+              This week so far
+            </p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-[#F4F6FA] sm:text-4xl">
+              {formatAud(thisWeek?.revenue ?? 0)}
+            </p>
+            <p className="mt-1 text-sm text-[#A9B3C7]">
+              {thisWeek?.orders ?? 0} paid order{(thisWeek?.orders ?? 0) === 1 ? '' : 's'}
+              {thisWeek ? ` · ${thisWeek.label}` : ''}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[11px] uppercase tracking-wide text-[#6B7280]">vs last week</p>
+            <p className="mt-1 text-lg font-bold tabular-nums text-[#F4F6FA]">
+              {formatAud(lastWeek?.revenue ?? 0)}
+            </p>
+            <div className="mt-1">
+              {weekChange == null ? (
+                <span className="text-[11px] text-[#6B7280]">No prior week</span>
+              ) : (
+                <span
+                  className={`inline-flex items-center gap-0.5 text-[11px] font-semibold ${
+                    weekChange >= 0 ? 'text-[#2ED1B4]' : 'text-[#F87171]'
+                  }`}
+                >
+                  {weekChange >= 0 ? (
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  ) : (
+                    <ArrowDownRight className="h-3.5 w-3.5" />
+                  )}
+                  {Math.abs(weekChange).toFixed(0)}%
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard
-          label="Revenue"
+          label="Last 7 days revenue"
           value={formatAud(current.revenue)}
           icon={BarChart3}
           iconBg="rgba(46,209,180,0.12)"
@@ -475,59 +544,153 @@ export default function AdminOverviewSection({
         <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.72)] p-4 sm:p-5 lg:col-span-3">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="text-base font-semibold text-[#F4F6FA]">Sales Overview</h2>
-              <p className="text-[11px] text-[#6B7280]">Paid revenue · last 7 days</p>
+              <h2 className="text-base font-semibold text-[#F4F6FA]">
+                {chartMode === 'weekly' ? 'Weekly revenue' : 'Daily revenue'}
+              </h2>
+              <p className="text-[11px] text-[#6B7280]">
+                {chartMode === 'weekly'
+                  ? 'Paid revenue by week · Mon–Sun · Sydney'
+                  : 'Paid revenue · last 7 days'}
+              </p>
             </div>
-            <div className="rounded-lg border border-[rgba(244,246,250,0.1)] px-2.5 py-1 text-[11px] font-medium text-[#A9B3C7]">
-              Revenue
+            <div className="inline-flex rounded-lg border border-[rgba(244,246,250,0.1)] p-0.5">
+              {([
+                ['weekly', 'Weekly'],
+                ['daily', 'Daily'],
+              ] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setChartMode(mode)}
+                  className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                    chartMode === mode
+                      ? 'bg-[rgba(46,209,180,0.18)] text-[#2ED1B4]'
+                      : 'text-[#6B7280] hover:text-[#A9B3C7]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="h-56 w-full sm:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="overviewRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2ED1B4" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#2ED1B4" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="rgba(244,246,250,0.06)" vertical={false} />
-                <XAxis
-                  dataKey="shortLabel"
-                  tick={{ fill: '#6B7280', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: '#6B7280', fontSize: 11 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                  tickFormatter={(v) => (v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`)}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: '#111827',
-                    border: '1px solid rgba(244,246,250,0.12)',
-                    borderRadius: 12,
-                    color: '#F4F6FA',
-                    fontSize: 12,
-                  }}
-                  formatter={(value: number) => [formatAud(value), 'Revenue']}
-                  labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ''}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#2ED1B4"
-                  strokeWidth={2.5}
-                  fill="url(#overviewRevenueFill)"
-                  dot={{ r: 4, fill: '#2ED1B4', stroke: '#070A12', strokeWidth: 2 }}
-                  activeDot={{ r: 5 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+
+          {chartMode === 'weekly' ? (
+            <>
+              <div className="h-56 w-full sm:h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid stroke="rgba(244,246,250,0.06)" vertical={false} />
+                    <XAxis
+                      dataKey="shortLabel"
+                      tick={{ fill: '#6B7280', fontSize: 10 }}
+                      axisLine={false}
+                      tickLine={false}
+                      interval={0}
+                    />
+                    <YAxis
+                      tick={{ fill: '#6B7280', fontSize: 11 }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={40}
+                      tickFormatter={(v) => (v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`)}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#111827',
+                        border: '1px solid rgba(244,246,250,0.12)',
+                        borderRadius: 12,
+                        color: '#F4F6FA',
+                        fontSize: 12,
+                      }}
+                      formatter={(value: number) => [formatAud(value), 'Revenue']}
+                      labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ''}
+                    />
+                    <Bar dataKey="revenue" radius={[6, 6, 0, 0]} maxBarSize={42}>
+                      {weeklyChartData.map((row) => (
+                        <Cell
+                          key={row.weekStart}
+                          fill={row.isCurrent ? '#2ED1B4' : 'rgba(46,209,180,0.35)'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="mt-4 space-y-2 border-t border-[rgba(244,246,250,0.06)] pt-3">
+                {weeklyRevenue.slice(0, 5).map((row) => {
+                  const pct = weekMax > 0 ? (row.revenue / weekMax) * 100 : 0;
+                  return (
+                    <li key={row.weekStart} className="space-y-1">
+                      <div className="flex items-center justify-between gap-2 text-sm">
+                        <span className={`font-medium ${row.isCurrent ? 'text-[#2ED1B4]' : 'text-[#F4F6FA]'}`}>
+                          {row.isCurrent ? 'This week' : row.label}
+                        </span>
+                        <span className="tabular-nums font-semibold text-[#F4F6FA]">
+                          {formatAud(row.revenue)}
+                          <span className="ml-2 text-[11px] font-normal text-[#6B7280]">
+                            {row.orders} orders
+                          </span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-[rgba(244,246,250,0.08)]">
+                        <div
+                          className={`h-full rounded-full ${row.isCurrent ? 'bg-[#2ED1B4]' : 'bg-[rgba(46,209,180,0.4)]'}`}
+                          style={{ width: `${Math.max(pct, row.revenue > 0 ? 4 : 0)}%` }}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          ) : (
+            <div className="h-56 w-full sm:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="overviewRevenueFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2ED1B4" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#2ED1B4" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="rgba(244,246,250,0.06)" vertical={false} />
+                  <XAxis
+                    dataKey="shortLabel"
+                    tick={{ fill: '#6B7280', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: '#6B7280', fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={40}
+                    tickFormatter={(v) => (v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${v}`)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#111827',
+                      border: '1px solid rgba(244,246,250,0.12)',
+                      borderRadius: 12,
+                      color: '#F4F6FA',
+                      fontSize: 12,
+                    }}
+                    formatter={(value: number) => [formatAud(value), 'Revenue']}
+                    labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ''}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#2ED1B4"
+                    strokeWidth={2.5}
+                    fill="url(#overviewRevenueFill)"
+                    dot={{ r: 4, fill: '#2ED1B4', stroke: '#070A12', strokeWidth: 2 }}
+                    activeDot={{ r: 5 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.72)] p-4 sm:p-5 lg:col-span-2">
