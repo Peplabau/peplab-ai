@@ -1,11 +1,10 @@
 /**
  * Edge Function: auspost-validate-address
  *
- * Checkout uses this before an order is created.
- * 1) Optional suburb/postcode autocomplete: POST { q } → PAC search.json
- * 2) Suburb/state/postcode against AusPost locality data
- * 3) If street/PO Box/locker lines are sent, Validate Shipments
- *    (POST /shipments/validation) — the same Shipping API as labels
+ * 1) Suburb/postcode autocomplete: POST { q } → PAC search.json (still used at checkout)
+ * 2) Address validate path: soft-pass only (basic suburb/state/postcode format).
+ *    Hard AusPost locality / shipment checks were removed so customers are not blocked;
+ *    admin corrects delivery details before creating labels.
  */
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -421,79 +420,24 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  const suburb = normalizeSuburb(body.suburb || "");
+  // Soft validation only — do not block checkout on AusPost locality/shipment checks.
+  // Autocomplete (body.q) above still helps users pick a real suburb/postcode.
+  const suburbRaw = (body.suburb || "").trim();
   const state = normalizeState(body.state || "");
   const postcode = normalizePostcode(body.postcode || "");
   if (!/^\d{4}$/.test(postcode)) {
     return jsonOk({ valid: false, error: "Enter a valid 4-digit Australian postcode." });
   }
   if (!state) return jsonOk({ valid: false, error: "Select an Australian state." });
-  if (suburb.length < 2) {
-    return jsonOk({ valid: false, error: "Enter a suburb Australia Post can deliver to." });
+  if (suburbRaw.length < 2) {
+    return jsonOk({ valid: false, error: "Enter a suburb." });
   }
 
-  try {
-    const locality = await validateLocality(suburb, state, postcode);
-    if (!locality.valid) {
-      return jsonOk({
-        valid: false,
-        error: locality.error,
-        suggestions: locality.suggestions,
-      });
-    }
-
-    const lines = [
-      ...(Array.isArray(body.lines) ? body.lines : []),
-      body.address || "",
-      body.apartment || "",
-    ]
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .slice(0, 3);
-
-    if (!lines.length) {
-      return jsonOk({
-        valid: true,
-        suburb: locality.suburb,
-        state: locality.state,
-        postcode: locality.postcode,
-        suggestions: locality.suggestions,
-      });
-    }
-
-    const to: Address = {
-      name: (body.name || "Customer").trim().slice(0, 40) || "Customer",
-      lines,
-      suburb: locality.suburb,
-      state: locality.state,
-      postcode: locality.postcode,
-    };
-    const email = (body.email || "").trim();
-    if (email) to.email = email;
-    const type = inferType(lines, body.address_type);
-    if (type) to.type = type;
-
-    const shipment = await validateShipment(to, body.shipping_method);
-    if (!shipment.ok) {
-      return jsonOk({
-        valid: false,
-        error: shipment.error,
-        suburb: locality.suburb,
-        state: locality.state,
-        postcode: locality.postcode,
-        suggestions: locality.suggestions,
-      });
-    }
-
-    return jsonOk({
-      valid: true,
-      suburb: locality.suburb,
-      state: locality.state,
-      postcode: locality.postcode,
-      suggestions: locality.suggestions,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Australia Post lookup failed";
-    return jsonOk({ valid: false, error: message }, 502);
-  }
+  return jsonOk({
+    valid: true,
+    suburb: suburbRaw,
+    state,
+    postcode,
+    suggestions: [] as string[],
+  });
 });
