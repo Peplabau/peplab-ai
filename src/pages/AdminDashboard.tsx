@@ -7,7 +7,8 @@ import {
   CreditCard, Box, Send, Ban, Save, Tag, Gift, X, Pencil, Trash2,
   ChevronUp, ChevronDown, Star, MessageSquare, Upload, Image as ImageIcon,
   Printer, ArrowUp, ArrowDown, MinusCircle, PlusCircle, Link2, Copy, Check,
-  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square, Clock, CalendarDays
+  TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square, Clock, CalendarDays,
+  MapPin,
 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -900,6 +901,33 @@ function formatOrderShippingAddressOneLine(
   return `${street}, ${suburbLine}`;
 }
 
+type AdminShippingDraft = {
+  customer_first_name: string;
+  customer_last_name: string;
+  customer_email: string;
+  customer_phone: string;
+  shipping_address: string;
+  shipping_suburb: string;
+  shipping_state: string;
+  shipping_postcode: string;
+};
+
+function shippingDraftFromOrder(order: Order): AdminShippingDraft {
+  return {
+    customer_first_name: order.customer_first_name || '',
+    customer_last_name: order.customer_last_name || '',
+    customer_email: order.customer_email || '',
+    customer_phone: order.customer_phone || '',
+    shipping_address: order.shipping_address || '',
+    shipping_suburb: order.shipping_suburb || '',
+    shipping_state: (order.shipping_state || '').toUpperCase(),
+    shipping_postcode: (order.shipping_postcode || '').replace(/\D/g, '').slice(0, 4),
+  };
+}
+
+const ADMIN_SHIPPING_INPUT =
+  'w-full px-3 py-2 rounded-lg bg-[rgba(0,0,0,0.35)] border border-[rgba(244,246,250,0.12)] text-sm text-[#F4F6FA] outline-none focus:border-[#2ED1B4]';
+
 function formatAdminLabelMoney(value: number | string | null | undefined): string {
   const n = Number(value);
   return Number.isFinite(n) ? `$${n.toFixed(2)}` : '$0.00';
@@ -1097,6 +1125,10 @@ function OrdersSection() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [copiedShippingField, setCopiedShippingField] = useState<string | null>(null);
+  const [editingShipping, setEditingShipping] = useState(false);
+  const [shippingDraft, setShippingDraft] = useState<AdminShippingDraft | null>(null);
+  const [isSavingShipping, setIsSavingShipping] = useState(false);
+  const [shippingSaveError, setShippingSaveError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCreatingAusPostLabel, setIsCreatingAusPostLabel] = useState(false);
   const [isSyncingDeliveries, setIsSyncingDeliveries] = useState(false);
@@ -1130,6 +1162,9 @@ function OrdersSection() {
     if (showOrderModal) {
       setTrackingNumber('');
       setCopiedShippingField(null);
+      setEditingShipping(false);
+      setShippingDraft(null);
+      setShippingSaveError(null);
     }
   }, [showOrderModal, selectedOrder?.id]);
 
@@ -1920,6 +1955,86 @@ function OrdersSection() {
     if (ok) {
       setCopiedShippingField(key);
       window.setTimeout(() => setCopiedShippingField((prev) => (prev === key ? null : prev)), 2000);
+    }
+  };
+
+  const beginEditShipping = () => {
+    if (!selectedOrder) return;
+    setShippingDraft(shippingDraftFromOrder(selectedOrder));
+    setShippingSaveError(null);
+    setEditingShipping(true);
+  };
+
+  const cancelEditShipping = () => {
+    setEditingShipping(false);
+    setShippingDraft(null);
+    setShippingSaveError(null);
+  };
+
+  const saveShippingDetails = async () => {
+    if (!selectedOrder || !shippingDraft) return;
+    const firstName = shippingDraft.customer_first_name.trim();
+    const lastName = shippingDraft.customer_last_name.trim();
+    const email = shippingDraft.customer_email.trim();
+    const phone = shippingDraft.customer_phone.trim();
+    const address = shippingDraft.shipping_address.trim();
+    const suburb = shippingDraft.shipping_suburb.trim();
+    const state = shippingDraft.shipping_state.trim().toUpperCase();
+    const postcode = shippingDraft.shipping_postcode.replace(/\D/g, '').slice(0, 4);
+
+    if (!firstName || !lastName) {
+      setShippingSaveError('First and last name are required.');
+      return;
+    }
+    if (!email) {
+      setShippingSaveError('Customer email is required.');
+      return;
+    }
+    if (!address) {
+      setShippingSaveError('Street / delivery address is required.');
+      return;
+    }
+    if (suburb.length < 2) {
+      setShippingSaveError('Suburb is required.');
+      return;
+    }
+    if (!state) {
+      setShippingSaveError('State is required.');
+      return;
+    }
+    if (!/^\d{4}$/.test(postcode)) {
+      setShippingSaveError('Postcode must be 4 digits.');
+      return;
+    }
+
+    setIsSavingShipping(true);
+    setShippingSaveError(null);
+    try {
+      const updates = {
+        customer_first_name: firstName,
+        customer_last_name: lastName,
+        customer_email: email,
+        customer_phone: phone,
+        shipping_address: address,
+        shipping_suburb: suburb,
+        shipping_state: state,
+        shipping_postcode: postcode,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from('orders').update(updates).eq('id', selectedOrder.id);
+      if (error) throw error;
+
+      const merged: Order = { ...selectedOrder, ...updates };
+      setSelectedOrder(merged);
+      setOrders((prev) => prev.map((o) => (o.id === merged.id ? { ...o, ...updates } : o)));
+      setEditingShipping(false);
+      setShippingDraft(null);
+      invalidateCache('admin:orders');
+    } catch (err) {
+      console.error('Failed to save shipping details:', err);
+      setShippingSaveError(err instanceof Error ? err.message : 'Could not save address.');
+    } finally {
+      setIsSavingShipping(false);
     }
   };
 
@@ -2805,12 +2920,15 @@ function OrdersSection() {
             )}
 
             <div className="p-4 rounded-xl bg-[rgba(7,10,18,0.55)] border border-[rgba(244,246,250,0.1)] mb-6">
+              <p className="text-[11px] text-[#A9B3C7] mb-3 leading-snug">
+                Review the delivery address below before creating a label. Use <span className="text-[#F4F6FA] font-medium">Edit address</span> if suburb, state, or postcode need fixing.
+              </p>
               <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.25 })}
-                    disabled={isCreatingAusPostLabel || isUpdating}
+                    disabled={isCreatingAusPostLabel || isUpdating || editingShipping}
                     className="px-4 py-2 rounded-lg bg-[#F59E0B] text-[#070A12] text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
                     title="Create Australia Post label at 0.250 kg"
                   >
@@ -2820,7 +2938,7 @@ function OrdersSection() {
                   <button
                     type="button"
                     onClick={() => void createAusPostLabelForOrder(selectedOrder, { weightKg: 0.5 })}
-                    disabled={isCreatingAusPostLabel || isUpdating}
+                    disabled={isCreatingAusPostLabel || isUpdating || editingShipping}
                     className="px-4 py-2 rounded-lg bg-[#F59E0B] text-[#070A12] text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
                     title="Create Australia Post label at 0.5 kg"
                   >
@@ -2835,7 +2953,7 @@ function OrdersSection() {
                         weightKg: 0.5,
                       })
                     }
-                    disabled={isCreatingAusPostLabel || isUpdating}
+                    disabled={isCreatingAusPostLabel || isUpdating || editingShipping}
                     className="px-4 py-2 rounded-lg bg-[#0EA5E9] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
                     title="Force AusPost address type PARCEL_LOCKER (requires customer email)"
                   >
@@ -2893,30 +3011,232 @@ function OrdersSection() {
                 </div>
                 <hr className="border-0 border-t border-[rgba(244,246,250,0.2)]" />
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#A9B3C7] mb-2">To</p>
-                  <div className="space-y-2">
-                    <AdminCopyBox
-                      label="Name"
-                      value={`${selectedOrder.customer_first_name} ${selectedOrder.customer_last_name}`.trim()}
-                      copiedKey="name"
-                      activeCopiedKey={copiedShippingField}
-                      onCopy={copyShippingField}
-                    />
-                    <AdminCopyBox
-                      label="Address"
-                      value={formatOrderShippingAddressOneLine(selectedOrder)}
-                      copiedKey="address"
-                      activeCopiedKey={copiedShippingField}
-                      onCopy={copyShippingField}
-                    />
-                    <AdminCopyBox
-                      label="Email"
-                      value={selectedOrder.customer_email}
-                      copiedKey="email"
-                      activeCopiedKey={copiedShippingField}
-                      onCopy={copyShippingField}
-                    />
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#A9B3C7] flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#8B5CF6]" />
+                      Delivery address
+                    </p>
+                    {!editingShipping ? (
+                      <button
+                        type="button"
+                        onClick={beginEditShipping}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[rgba(244,246,250,0.12)] text-[11px] font-semibold text-[#A9B3C7] hover:text-[#F4F6FA] hover:border-[#8B5CF6]/50"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Edit address
+                      </button>
+                    ) : null}
                   </div>
+
+                  {editingShipping && shippingDraft ? (
+                    <div className="space-y-2.5">
+                      <p className="text-[11px] text-[#A9B3C7] leading-snug">
+                        Fix suburb / state / postcode here if checkout was incomplete — then create the AusPost label.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-1 block">First name</span>
+                          <input
+                            className={ADMIN_SHIPPING_INPUT}
+                            value={shippingDraft.customer_first_name}
+                            onChange={(e) =>
+                              setShippingDraft((prev) =>
+                                prev ? { ...prev, customer_first_name: e.target.value } : prev,
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-1 block">Last name</span>
+                          <input
+                            className={ADMIN_SHIPPING_INPUT}
+                            value={shippingDraft.customer_last_name}
+                            onChange={(e) =>
+                              setShippingDraft((prev) =>
+                                prev ? { ...prev, customer_last_name: e.target.value } : prev,
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                      <label className="block">
+                        <span className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-1 block">Street / PO Box / Parcel Locker</span>
+                        <input
+                          className={ADMIN_SHIPPING_INPUT}
+                          value={shippingDraft.shipping_address}
+                          onChange={(e) =>
+                            setShippingDraft((prev) =>
+                              prev ? { ...prev, shipping_address: e.target.value } : prev,
+                            )
+                          }
+                        />
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <label className="block sm:col-span-2">
+                          <span className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-1 block">Suburb</span>
+                          <input
+                            className={ADMIN_SHIPPING_INPUT}
+                            value={shippingDraft.shipping_suburb}
+                            onChange={(e) =>
+                              setShippingDraft((prev) =>
+                                prev ? { ...prev, shipping_suburb: e.target.value } : prev,
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-1 block">State</span>
+                          <select
+                            className={ADMIN_SHIPPING_INPUT}
+                            value={shippingDraft.shipping_state}
+                            onChange={(e) =>
+                              setShippingDraft((prev) =>
+                                prev ? { ...prev, shipping_state: e.target.value } : prev,
+                              )
+                            }
+                          >
+                            <option value="">—</option>
+                            {['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-1 block">Postcode</span>
+                          <input
+                            className={ADMIN_SHIPPING_INPUT}
+                            inputMode="numeric"
+                            maxLength={4}
+                            value={shippingDraft.shipping_postcode}
+                            onChange={(e) =>
+                              setShippingDraft((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      shipping_postcode: e.target.value.replace(/\D/g, '').slice(0, 4),
+                                    }
+                                  : prev,
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-1 block">Phone</span>
+                          <input
+                            className={ADMIN_SHIPPING_INPUT}
+                            value={shippingDraft.customer_phone}
+                            onChange={(e) =>
+                              setShippingDraft((prev) =>
+                                prev ? { ...prev, customer_phone: e.target.value } : prev,
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-[10px] uppercase tracking-wide text-[#6B7280] mb-1 block">Email</span>
+                          <input
+                            type="email"
+                            className={ADMIN_SHIPPING_INPUT}
+                            value={shippingDraft.customer_email}
+                            onChange={(e) =>
+                              setShippingDraft((prev) =>
+                                prev ? { ...prev, customer_email: e.target.value } : prev,
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                      {shippingSaveError && (
+                        <p className="text-[11px] text-[#F87171] leading-snug">{shippingSaveError}</p>
+                      )}
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => void saveShippingDetails()}
+                          disabled={isSavingShipping}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#2ED1B4] text-[#070A12] text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          {isSavingShipping ? 'Saving…' : 'Save address'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEditShipping}
+                          disabled={isSavingShipping}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(244,246,250,0.12)] text-xs font-semibold text-[#A9B3C7] hover:text-[#F4F6FA] disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <AdminCopyBox
+                        label="Name"
+                        value={`${selectedOrder.customer_first_name} ${selectedOrder.customer_last_name}`.trim()}
+                        copiedKey="name"
+                        activeCopiedKey={copiedShippingField}
+                        onCopy={copyShippingField}
+                      />
+                      <AdminCopyBox
+                        label="Street"
+                        value={selectedOrder.shipping_address || ''}
+                        copiedKey="street"
+                        activeCopiedKey={copiedShippingField}
+                        onCopy={copyShippingField}
+                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <AdminCopyBox
+                          label="Suburb"
+                          value={selectedOrder.shipping_suburb || ''}
+                          copiedKey="suburb"
+                          activeCopiedKey={copiedShippingField}
+                          onCopy={copyShippingField}
+                        />
+                        <AdminCopyBox
+                          label="State"
+                          value={selectedOrder.shipping_state || ''}
+                          copiedKey="state"
+                          activeCopiedKey={copiedShippingField}
+                          onCopy={copyShippingField}
+                        />
+                        <AdminCopyBox
+                          label="Postcode"
+                          value={selectedOrder.shipping_postcode || ''}
+                          copiedKey="postcode"
+                          activeCopiedKey={copiedShippingField}
+                          onCopy={copyShippingField}
+                        />
+                      </div>
+                      <AdminCopyBox
+                        label="Full address (copy)"
+                        value={formatOrderShippingAddressOneLine(selectedOrder)}
+                        copiedKey="address"
+                        activeCopiedKey={copiedShippingField}
+                        onCopy={copyShippingField}
+                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <AdminCopyBox
+                          label="Phone"
+                          value={selectedOrder.customer_phone || ''}
+                          copiedKey="phone"
+                          activeCopiedKey={copiedShippingField}
+                          onCopy={copyShippingField}
+                        />
+                        <AdminCopyBox
+                          label="Email"
+                          value={selectedOrder.customer_email}
+                          copiedKey="email"
+                          activeCopiedKey={copiedShippingField}
+                          onCopy={copyShippingField}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <hr className="border-0 border-t border-[rgba(244,246,250,0.2)]" />
                 <div className="text-sm space-y-1 text-[#A9B3C7]">
@@ -2946,18 +3266,6 @@ function OrdersSection() {
                   )}
                 </div>
               </div>
-
-              {selectedOrder.customer_phone ? (
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                  <AdminCopyBox
-                    label="Phone"
-                    value={selectedOrder.customer_phone}
-                    copiedKey="phone"
-                    activeCopiedKey={copiedShippingField}
-                    onCopy={copyShippingField}
-                  />
-                </div>
-              ) : null}
             </div>
 
             {/* Order Items */}

@@ -607,8 +607,16 @@ export default function Catalog() {
             </div>
           </div>
 
-          {/* Rewards level bar + Halloween Treat — bar spans full card width */}
-          <div className="catalog-halloween-promo relative overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.4)] bg-[#0c0a14] shadow-[0_0_24px_rgba(139,92,246,0.18)]">
+          {/* Rewards + Halloween Treat — single tap target, no hover states */}
+          <Link
+            to={isLoggedIn ? '/dashboard#rewards' : '/login?redirect=/dashboard'}
+            aria-label={
+              isLoggedIn
+                ? 'PEPLAB Rewards — Halloween Treat, free BAC water on all orders'
+                : 'Sign in to view PEPLAB Rewards — Halloween Treat, free BAC water on all orders'
+            }
+            className="catalog-halloween-promo relative block overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.4)] bg-[#0c0a14] shadow-[0_0_24px_rgba(139,92,246,0.18)] no-underline text-inherit"
+          >
             <div className="catalog-halloween-jacks" aria-hidden="true">
               <span className="catalog-halloween-jack catalog-halloween-jack--a">
                 <HalloweenPumpkinIcon className="w-full h-full" />
@@ -619,10 +627,7 @@ export default function Catalog() {
             </div>
 
             <div className="grid grid-cols-2 items-start">
-              <Link
-                to={isLoggedIn ? '/dashboard#rewards' : '/login?redirect=/dashboard'}
-                className="relative z-10 flex items-center gap-2 sm:gap-3 px-3 pt-3 sm:px-5 sm:pt-4 hover:bg-[rgba(139,92,246,0.06)] transition-colors"
-              >
+              <div className="relative z-10 flex items-center gap-2 sm:gap-3 px-3 pt-3 sm:px-5 sm:pt-4">
                 <div className="p-1.5 sm:p-2 rounded-full bg-[rgba(139,92,246,0.2)] flex-shrink-0">
                   <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#A78BFA]" />
                 </div>
@@ -637,13 +642,9 @@ export default function Catalog() {
                     Store credit back on every order, by tier
                   </p>
                 </div>
-              </Link>
+              </div>
 
-              <div
-                className="catalog-halloween-treat relative overflow-hidden px-2 pt-2.5 pb-0 sm:px-4 sm:pt-4"
-                role="region"
-                aria-label="Halloween Treat — Free BAC Water on all orders"
-              >
+              <div className="catalog-halloween-treat relative overflow-hidden px-2 pt-2.5 pb-0 sm:px-4 sm:pt-4">
                 <div className="catalog-halloween-web" aria-hidden="true" />
                 <div className="catalog-halloween-copy">
                   <p className="catalog-halloween-title">HALLOWEEN TREAT</p>
@@ -653,10 +654,7 @@ export default function Catalog() {
               </div>
             </div>
 
-            <Link
-              to={isLoggedIn ? '/dashboard#rewards' : '/login?redirect=/dashboard'}
-              className="relative z-10 block px-3 pb-3 pt-1 pr-10 sm:px-5 sm:pb-4 sm:pr-14 hover:bg-[rgba(139,92,246,0.04)] transition-colors"
-            >
+            <div className="relative z-10 block px-3 pb-3 pt-1 pr-10 sm:px-5 sm:pb-4 sm:pr-14 pointer-events-none">
               <LoyaltyProgressBar
                 compact
                 hideTitle
@@ -664,8 +662,8 @@ export default function Catalog() {
                 lifetimeSpend={lifetimeSpend}
                 className="w-full"
               />
-            </Link>
-          </div>
+            </div>
+          </Link>
         </div>
 
         {/* Support chips — forced single row on mobile (no wrap); abbreviated labels below sm */}

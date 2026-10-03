@@ -15,7 +15,8 @@ export default function AusPostLocalityField({
   value: string;
   onChange: (value: string) => void;
   onPick: (suggestion: AusPostLocalitySuggestion) => void;
-  onBlurVerify: () => void;
+  /** Optional — checkout no longer hard-blocks on AusPost locality checks. */
+  onBlurVerify?: () => void;
 }) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const blurTimer = useRef<number | null>(null);
@@ -75,7 +76,7 @@ export default function AusPostLocalityField({
         onBlur={() => {
           blurTimer.current = window.setTimeout(() => {
             setOpen(false);
-            onBlurVerify();
+            onBlurVerify?.();
           }, 160);
         }}
         onKeyDown={(e) => {

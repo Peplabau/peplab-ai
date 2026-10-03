@@ -50,12 +50,7 @@ import {
   saveCheckoutProfile,
   type CheckoutShippingDetails,
 } from '@/lib/checkout-profile';
-import {
-  inferCheckoutAddressType,
-  validateAusPostAddress,
-  validateAusPostLocality,
-  validateCheckoutAddressFormat,
-} from '@/lib/auspost-address';
+import { validateCheckoutAddressFormat } from '@/lib/auspost-address';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ShippingMethod {
@@ -101,10 +96,6 @@ export default function Checkout() {
   });
   /** Shown when we autofilled from saved profile / last order. */
   const [autofillNotice, setAutofillNotice] = useState<string | null>(null);
-  const [localityError, setLocalityError] = useState<string | null>(null);
-  const [localitySuggestions, setLocalitySuggestions] = useState<string[]>([]);
-  const [localityOk, setLocalityOk] = useState(false);
-  const [isVerifyingAddress, setIsVerifyingAddress] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState<string>('express');
 
   // Redemption: selected tier held locally — points deducted ONLY on order submit.
@@ -266,43 +257,7 @@ export default function Checkout() {
   });
 
   const updateShipping = (patch: Partial<CheckoutShippingDetails>) => {
-    if (patch.suburb !== undefined || patch.state !== undefined || patch.postcode !== undefined) {
-      setLocalityOk(false);
-      setLocalityError(null);
-    }
     setShippingAddress((prev) => ({ ...prev, ...patch }));
-  };
-
-  const verifyLocality = async (
-    details = shippingAddress,
-    opts?: { quietIfIncomplete?: boolean },
-  ): Promise<{ ok: boolean; error?: string }> => {
-    const suburb = details.suburb.trim();
-    const state = details.state.trim();
-    const postcode = details.postcode.replace(/\D/g, '').slice(0, 4);
-    if (opts?.quietIfIncomplete && (suburb.length < 2 || !state || postcode.length !== 4)) {
-      return { ok: false };
-    }
-    setIsVerifyingAddress(true);
-    setLocalityError(null);
-    setLocalitySuggestions([]);
-    try {
-      const result = await validateAusPostLocality({ suburb, state, postcode });
-      setLocalitySuggestions(result.suggestions || []);
-      if (!result.valid) {
-        const message = result.error || 'This address is not recognised by Australia Post.';
-        setLocalityOk(false);
-        setLocalityError(message);
-        return { ok: false, error: message };
-      }
-      setLocalityOk(true);
-      if (result.suburb && result.suburb.toUpperCase() !== suburb.toUpperCase()) {
-        setShippingAddress((prev) => ({ ...prev, suburb: result.suburb || prev.suburb }));
-      }
-      return { ok: true };
-    } finally {
-      setIsVerifyingAddress(false);
-    }
   };
 
   const handleSelectTier = (tier: typeof REDEMPTION_TIERS[0]) => {
@@ -338,6 +293,7 @@ export default function Checkout() {
     setOrderEmailNotice(null);
 
     try {
+      // Soft validation only — AusPost locality is checked/corrected by admin at label time.
       const formatErr = validateCheckoutAddressFormat(
         shippingAddress.address,
         shippingAddress.apartment,
@@ -346,39 +302,26 @@ export default function Checkout() {
         setSubmitError(formatErr);
         return;
       }
-      setIsVerifyingAddress(true);
-      let auspostCheck;
-      try {
-        auspostCheck = await validateAusPostAddress({
-          suburb: shippingAddress.suburb,
-          state: shippingAddress.state,
-          postcode: shippingAddress.postcode,
-          address: shippingAddress.address,
-          apartment: shippingAddress.apartment,
-          addressType: inferCheckoutAddressType(
-            `${shippingAddress.address} ${shippingAddress.apartment}`,
-          ),
-          shippingMethod: selectedShipping,
-          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
-          email: contactEmail.trim(),
-        });
-      } finally {
-        setIsVerifyingAddress(false);
-      }
-      setLocalitySuggestions(auspostCheck.suggestions || []);
-      if (!auspostCheck.valid) {
-        setLocalityOk(false);
-        setLocalityError(auspostCheck.error || 'Australia Post could not verify this address.');
-        setSubmitError(auspostCheck.error || 'Australia Post could not verify this delivery address.');
+      const suburb = shippingAddress.suburb.trim();
+      const state = shippingAddress.state.trim();
+      const postcode = shippingAddress.postcode.replace(/\D/g, '').slice(0, 4);
+      if (suburb.length < 2) {
+        setSubmitError('Enter a suburb.');
         return;
       }
-      setLocalityOk(true);
-      setLocalityError(null);
+      if (!state) {
+        setSubmitError('Select a state.');
+        return;
+      }
+      if (!/^\d{4}$/.test(postcode)) {
+        setSubmitError('Enter a valid 4-digit postcode.');
+        return;
+      }
       const shippingForOrder = {
         ...shippingAddress,
-        suburb: auspostCheck.suburb || shippingAddress.suburb,
-        state: auspostCheck.state || shippingAddress.state,
-        postcode: auspostCheck.postcode || shippingAddress.postcode,
+        suburb,
+        state,
+        postcode,
       };
       setShippingAddress(shippingForOrder);
 
@@ -1078,41 +1021,22 @@ export default function Checkout() {
                   value={shippingAddress.suburb}
                   onChange={(suburb) => updateShipping({ suburb })}
                   onPick={(loc) => {
-                    const next = {
-                      ...shippingAddress,
-                      suburb: loc.suburb,
-                      state: loc.state,
-                      postcode: loc.postcode,
-                    };
                     updateShipping({ suburb: loc.suburb, state: loc.state, postcode: loc.postcode });
-                    void verifyLocality(next);
                   }}
-                  onBlurVerify={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
                 />
                 <AusPostLocalityField
                   kind="postcode"
                   value={shippingAddress.postcode}
                   onChange={(postcode) => updateShipping({ postcode })}
                   onPick={(loc) => {
-                    const next = {
-                      ...shippingAddress,
-                      suburb: loc.suburb,
-                      state: loc.state,
-                      postcode: loc.postcode,
-                    };
                     updateShipping({ suburb: loc.suburb, state: loc.state, postcode: loc.postcode });
-                    void verifyLocality(next);
                   }}
-                  onBlurVerify={() => void verifyLocality(shippingAddress, { quietIfIncomplete: true })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <select 
                   value={shippingAddress.state} 
-                  onChange={(e) => {
-                    updateShipping({ state: e.target.value });
-                    void verifyLocality({ ...shippingAddress, state: e.target.value }, { quietIfIncomplete: true });
-                  }} 
+                  onChange={(e) => updateShipping({ state: e.target.value })} 
                   required
                   autoComplete="address-level1"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
@@ -1137,39 +1061,9 @@ export default function Checkout() {
                   placeholder="Phone"
                 />
               </div>
-              {isVerifyingAddress && (
-                <p className="text-[11px] text-[#A9B3C7] flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Checking address with Australia Post…
-                </p>
-              )}
-              {localityOk && !localityError && (
-                <p className="text-[11px] text-[#22C55E] flex items-center gap-1.5">
-                  <Check className="w-3 h-3" />
-                  Address looks good for Australia Post
-                </p>
-              )}
-              {localityError && (
-                <p className="text-[11px] text-red-400 leading-snug">{localityError}</p>
-              )}
-              {localitySuggestions.length > 0 && !localityOk && (
-                <div className="flex flex-wrap gap-1">
-                  {localitySuggestions.map((suburb) => (
-                    <button
-                      key={suburb}
-                      type="button"
-                      onClick={() => {
-                        const next = { ...shippingAddress, suburb };
-                        updateShipping({ suburb });
-                        void verifyLocality(next);
-                      }}
-                      className="px-2 py-0.5 rounded-md border border-white/15 text-[10px] text-[#F4F6FA] hover:border-[#2ED1B4]"
-                    >
-                      {suburb}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <p className="text-[10px] text-[#6B7280] leading-snug">
+                Tip: pick a suburb/postcode from the suggestions when they appear — it helps with delivery.
+              </p>
             </div>
           </div>
 
