@@ -69,7 +69,7 @@ export default function AusPostLocalityField({
         type="text"
         value={value}
         onChange={(e) => {
-          onChange(kind === 'postcode' ? e.target.value.replace(/\D/g, '').slice(0, 4) : e.target.value);
+          onChange(e.target.value);
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
@@ -94,12 +94,10 @@ export default function AusPostLocalityField({
             setOpen(false);
           }
         }}
-        required
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
         inputMode={kind === 'postcode' ? 'numeric' : 'text'}
-        maxLength={kind === 'postcode' ? 4 : undefined}
         className={inputClass}
         placeholder={kind === 'postcode' ? 'Postcode' : 'Suburb'}
         aria-autocomplete="list"

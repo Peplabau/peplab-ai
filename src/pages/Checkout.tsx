@@ -50,7 +50,6 @@ import {
   saveCheckoutProfile,
   type CheckoutShippingDetails,
 } from '@/lib/checkout-profile';
-import { validateCheckoutAddressFormat } from '@/lib/auspost-address';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ShippingMethod {
@@ -293,35 +292,14 @@ export default function Checkout() {
     setOrderEmailNotice(null);
 
     try {
-      // Soft validation only — AusPost locality is checked/corrected by admin at label time.
-      const formatErr = validateCheckoutAddressFormat(
-        shippingAddress.address,
-        shippingAddress.apartment,
-      );
-      if (formatErr) {
-        setSubmitError(formatErr);
-        return;
-      }
-      const suburb = shippingAddress.suburb.trim();
-      const state = shippingAddress.state.trim();
-      const postcode = shippingAddress.postcode.replace(/\D/g, '').slice(0, 4);
-      if (suburb.length < 2) {
-        setSubmitError('Enter a suburb.');
-        return;
-      }
-      if (!state) {
-        setSubmitError('Select a state.');
-        return;
-      }
-      if (!/^\d{4}$/.test(postcode)) {
-        setSubmitError('Enter a valid 4-digit postcode.');
-        return;
-      }
+      // No address/postcode validation at checkout — admin can correct delivery details later.
       const shippingForOrder = {
         ...shippingAddress,
-        suburb,
-        state,
-        postcode,
+        suburb: shippingAddress.suburb.trim(),
+        state: shippingAddress.state.trim(),
+        postcode: shippingAddress.postcode.trim(),
+        address: shippingAddress.address.trim(),
+        apartment: shippingAddress.apartment.trim(),
       };
       setShippingAddress(shippingForOrder);
 
@@ -1000,9 +978,7 @@ export default function Checkout() {
                 type="text" 
                 value={shippingAddress.address} 
                 onChange={(e) => updateShipping({ address: e.target.value })} 
-                required
                 autoComplete="address-line1"
-                maxLength={40}
                 className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                 placeholder="Street, PO Box or Parcel Locker"
               />
@@ -1011,7 +987,6 @@ export default function Checkout() {
                 value={shippingAddress.apartment}
                 onChange={(e) => updateShipping({ apartment: e.target.value })}
                 autoComplete="address-line2"
-                maxLength={40}
                 className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                 placeholder="Apartment / unit (optional)"
               />
@@ -1037,7 +1012,6 @@ export default function Checkout() {
                 <select 
                   value={shippingAddress.state} 
                   onChange={(e) => updateShipping({ state: e.target.value })} 
-                  required
                   autoComplete="address-level1"
                   className="w-full px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-white text-xs focus:border-[#2ED1B4] outline-none"
                 >
@@ -1061,9 +1035,6 @@ export default function Checkout() {
                   placeholder="Phone"
                 />
               </div>
-              <p className="text-[10px] text-[#6B7280] leading-snug">
-                Tip: pick a suburb/postcode from the suggestions when they appear — it helps with delivery.
-              </p>
             </div>
           </div>
 

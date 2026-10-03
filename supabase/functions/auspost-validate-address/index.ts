@@ -420,24 +420,13 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // Soft validation only — do not block checkout on AusPost locality/shipment checks.
-  // Autocomplete (body.q) above still helps users pick a real suburb/postcode.
-  const suburbRaw = (body.suburb || "").trim();
-  const state = normalizeState(body.state || "");
-  const postcode = normalizePostcode(body.postcode || "");
-  if (!/^\d{4}$/.test(postcode)) {
-    return jsonOk({ valid: false, error: "Enter a valid 4-digit Australian postcode." });
-  }
-  if (!state) return jsonOk({ valid: false, error: "Select an Australian state." });
-  if (suburbRaw.length < 2) {
-    return jsonOk({ valid: false, error: "Enter a suburb." });
-  }
-
+  // Always soft-pass — no suburb/state/postcode validation at checkout.
+  // Autocomplete (body.q) above still helps users pick a real locality.
   return jsonOk({
     valid: true,
-    suburb: suburbRaw,
-    state,
-    postcode,
+    suburb: (body.suburb || "").trim(),
+    state: normalizeState(body.state || ""),
+    postcode: normalizePostcode(body.postcode || ""),
     suggestions: [] as string[],
   });
 });
