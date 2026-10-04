@@ -711,7 +711,7 @@ export default function Catalog() {
               <Search aria-hidden />
               <input
                 type="text"
-                placeholder="Search peptides, e.g. Tirzepatide, BPC-157, GHK-Cu..."
+                placeholder="Search peptides"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search peptides"
