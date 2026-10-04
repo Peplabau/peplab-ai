@@ -8,7 +8,6 @@
 *.swp
 
 # Ignore IDE specific files
-.vscode/
 .idea/
 
 
@@ -18,4 +17,3 @@ config.bat
 # Local environment variables — never commit real values.
 # `.env.example` (tracked) documents which variables to set.
 .env.*.local
-.env
