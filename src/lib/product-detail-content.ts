@@ -21,9 +21,6 @@ export function buildLabPreparation(product: Pick<Product, 'id' | 'vialType' | '
   const peptidex = getPeptidexProductDetail(product.id);
   if (peptidex?.labPreparation) return peptidex.labPreparation;
 
-  const storage = product.technicalSpecs?.storageConditions
-    ?? 'Store dry at 2–8 °C. Protect from light.';
-
   if (ACCESSORY_SLUGS.has(product.id)) {
     return [
       '## Preparation Summary',
@@ -33,10 +30,6 @@ export function buildLabPreparation(product: Pick<Product, 'id' | 'vialType' | '
       '## Handling Notes',
       '',
       'Inspect packaging on receipt. Use according to standard laboratory safety procedures for research consumables.',
-      '',
-      '## Storage',
-      '',
-      storage,
     ].join('\n');
   }
 
@@ -49,10 +42,6 @@ export function buildLabPreparation(product: Pick<Product, 'id' | 'vialType' | '
       '## Handling Notes',
       '',
       'Use sterile technique when drawing diluent. Do not use if seal is compromised.',
-      '',
-      '## Storage',
-      '',
-      storage,
     ].join('\n');
   }
 
@@ -65,10 +54,6 @@ export function buildLabPreparation(product: Pick<Product, 'id' | 'vialType' | '
       '## Handling Notes',
       '',
       'Copper peptides may require slightly acidic diluent to maintain peptide–copper coordination. Solution may appear blue or teal — this is normal and indicates an intact copper-peptide complex. Avoid alkaline buffers above pH 7.5 to prevent copper precipitation.',
-      '',
-      '## Storage',
-      '',
-      storage,
     ].join('\n');
   }
 
@@ -81,10 +66,6 @@ export function buildLabPreparation(product: Pick<Product, 'id' | 'vialType' | '
       '## Handling Notes',
       '',
       'Mix gently if required for homogeneity before aliquoting. Use sterile technique throughout.',
-      '',
-      '## Storage',
-      '',
-      storage,
     ].join('\n');
   }
 
@@ -96,10 +77,6 @@ export function buildLabPreparation(product: Pick<Product, 'id' | 'vialType' | '
     '## Handling Notes',
     '',
     'Allow vial to reach room temperature before opening. Inject diluent slowly along the vial wall and swirl gently — do not shake vigorously. Use sterile technique throughout.',
-    '',
-    '## Storage',
-    '',
-    storage,
   ].join('\n');
 }
 
@@ -147,7 +124,6 @@ export function getTechnicalPropertyRows(product: Product): Array<{ label: strin
     { label: 'Solubility', value: specs.solubility },
     { label: 'Testing Method', value: specs.testingMethod ?? specs.qualityVerification },
     { label: 'Quality Verification', value: specs.qualityVerification },
-    { label: 'Storage', value: specs.storageConditions },
   ];
 
   if (specs.composition) {
@@ -165,13 +141,16 @@ export function parseLabPreparationSections(text: string): Array<{ title: string
   const chunks = normalized.split(/^##\s+/m).filter(Boolean);
   if (chunks.length === 0) return [{ title: 'Preparation', body: normalized }];
 
-  return chunks.map((chunk) => {
-    const [titleLine, ...rest] = chunk.split('\n');
-    return {
-      title: titleLine.trim(),
-      body: rest.join('\n').trim(),
-    };
-  });
+  return chunks
+    .map((chunk) => {
+      const [titleLine, ...rest] = chunk.split('\n');
+      return {
+        title: titleLine.trim(),
+        body: rest.join('\n').trim(),
+      };
+    })
+    // Storage guidance is not shown on the storefront Preparation tab.
+    .filter((section) => !/^storage(\s+framework)?$/i.test(section.title));
 }
 
 export interface LabPreparationStep {
