@@ -110,8 +110,11 @@ export default function ProductPage() {
 
   const technicalRows = useMemo(() => {
     if (!product) return [];
-    if (peptidexDetail?.technicalProperties?.length) return peptidexDetail.technicalProperties;
-    return getTechnicalPropertyRows(product);
+    const rows = peptidexDetail?.technicalProperties?.length
+      ? peptidexDetail.technicalProperties
+      : getTechnicalPropertyRows(product);
+    // Hide storefront Storage rows (e.g. "Store at -20°C", "Storage (Lyophilised)").
+    return rows.filter((row) => !/\bstorage\b/i.test(row.label));
   }, [product, peptidexDetail]);
 
   const labSections = useMemo(
