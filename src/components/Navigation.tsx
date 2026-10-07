@@ -6,7 +6,7 @@ import { useAffiliate } from '@/context/AffiliateContext';
 import { supabase, getCurrentUser } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
 import SearchBar from './SearchBar';
-import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
+import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, RESEARCH_PATH } from '@/lib/routes';
 // PROTOCOLS_PATH temporarily unused — restore with Protocols nav entry below
 // import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, PROTOCOLS_PATH } from '@/lib/routes';
 
@@ -84,6 +84,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
     { label: 'Shop', href: SHOP_PATH },
     // Temporarily disabled — client asked to remove Protocols (compliance risk).
     // { label: 'Protocols', href: PROTOCOLS_PATH },
+    { label: 'Research', href: RESEARCH_PATH },
     { label: 'COA', href: COA_ARCHIVE_PATH },
     { label: 'Calculator', href: CALCULATOR_PATH },
     { label: 'About', href: '/standards' },

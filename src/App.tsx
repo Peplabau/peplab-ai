@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 // PROTOCOLS_PATH temporarily disabled (client risk) — restore with /protocols routes below.
-import { LANDING_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
+import { LANDING_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, RESEARCH_PATH, RESEARCH_COMPOUNDS_PATH, RESEARCH_COMPOUND_SLUG_PATH } from '@/lib/routes';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -57,6 +57,9 @@ const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
 const Calculator = lazy(() => import('@/pages/Calculator'));
 // const Protocols = lazy(() => import('@/pages/Protocols')); // temporarily disabled — restore with routes
 const CoaArchive = lazy(() => import('@/pages/CoaArchive'));
+const Research = lazy(() => import('@/pages/Research'));
+const ResearchCompounds = lazy(() => import('@/pages/ResearchCompounds'));
+const ResearchCompoundPage = lazy(() => import('@/pages/ResearchCompoundPage'));
 const PeplabLandingRoute = lazy(() => import('@/pages/PeplabLandingRoute'));
 
 gsap.registerPlugin(ScrollTrigger);
@@ -457,6 +460,9 @@ function LoginOnlyApp() {
                 <Route path="/shipping" element={<Shipping />} />
                 <Route path="/contact-info" element={<ContactInfo />} />
                 <Route path="/standards" element={<Standards />} />
+                <Route path={RESEARCH_PATH} element={<Research />} />
+                <Route path={RESEARCH_COMPOUNDS_PATH} element={<ResearchCompounds />} />
+                <Route path={RESEARCH_COMPOUND_SLUG_PATH} element={<ResearchCompoundPage />} />
                 <Route path="/rewards-terms" element={<RewardsTerms />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
@@ -532,6 +538,9 @@ function App() {
               <Route path="/shipping" element={<Shipping />} />
               <Route path="/contact-info" element={<ContactInfo />} />
               <Route path="/standards" element={<Standards />} />
+              <Route path={RESEARCH_PATH} element={<Research />} />
+              <Route path={RESEARCH_COMPOUNDS_PATH} element={<ResearchCompounds />} />
+              <Route path={RESEARCH_COMPOUND_SLUG_PATH} element={<ResearchCompoundPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />

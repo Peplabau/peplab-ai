@@ -5274,3 +5274,69 @@
     gap: 1rem;
   }
 }
+
+/* Research compound cards — Lazarus L-bracket border
+   Rest: short top accent · Hover: full top + full left */
+.research-compound-card {
+  isolation: isolate;
+}
+
+.research-card-edge {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  box-shadow: 0 0 14px rgba(236, 72, 153, 0.4);
+}
+
+.research-card-edge--top {
+  top: 0;
+  left: 0;
+  height: 5px;
+  width: 4.5rem;
+  transition: width 0.4s ease;
+}
+
+.research-card-edge--left {
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 0;
+  transition: height 0.4s ease;
+}
+
+.research-compound-card:hover .research-card-edge--top,
+.research-compound-card:focus-visible .research-card-edge--top {
+  width: 100%;
+  transition-delay: 0s;
+}
+
+.research-compound-card:hover .research-card-edge--left,
+.research-compound-card:focus-visible .research-card-edge--left {
+  height: 100%;
+  transition-delay: 0.12s;
+}
+
+.research-compound-card:not(:hover):not(:focus-visible) .research-card-edge--left {
+  transition-delay: 0s;
+}
+
+.research-compound-card:not(:hover):not(:focus-visible) .research-card-edge--top {
+  transition-delay: 0.12s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .research-card-edge {
+    transition: none !important;
+  }
+
+  .research-compound-card:hover .research-card-edge--top,
+  .research-compound-card:focus-visible .research-card-edge--top {
+    width: 100%;
+  }
+
+  .research-compound-card:hover .research-card-edge--left,
+  .research-compound-card:focus-visible .research-card-edge--left {
+    height: 100%;
+  }
+}

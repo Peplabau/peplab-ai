@@ -32,7 +32,7 @@ function envVar(name, fallback) {
   return fallback;
 }
 
-const SITE_URL = envVar('VITE_SITE_URL', 'https://peplab.com.au').replace(/\/$/, '');
+const SITE_URL = envVar('VITE_SITE_URL', 'https://peplab.ai').replace(/\/$/, '');
 
 const STATIC_ROUTES = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },
@@ -53,7 +53,42 @@ const STATIC_ROUTES = [
   { path: '/refund', priority: '0.38', changefreq: 'yearly' },
   { path: '/legal', priority: '0.38', changefreq: 'yearly' },
   { path: '/rewards-terms', priority: '0.35', changefreq: 'yearly' },
+  { path: '/research', priority: '0.85', changefreq: 'monthly' },
+  { path: '/research/compounds', priority: '0.84', changefreq: 'weekly' },
 ];
+
+/** Known published research compound slugs (seed defaults). Extended from Supabase when credentials exist. */
+const DEFAULT_RESEARCH_SLUGS = [
+  'retatrutide',
+  'ghk-cu',
+  'mots-c',
+  'bpc-157-tb-500',
+  'tirzepatide',
+  'tesamorelin',
+  'cjc-1295-no-dac-ipamorelin',
+];
+
+async function fetchPublishedResearchSlugs() {
+  const url = envVar('VITE_SUPABASE_URL', '');
+  const key = envVar('VITE_SUPABASE_ANON_KEY', '');
+  if (!url || !key) return DEFAULT_RESEARCH_SLUGS;
+  try {
+    const endpoint = `${url.replace(/\/$/, '')}/rest/v1/research_articles?select=slug&status=eq.published`;
+    const res = await fetch(endpoint, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+    });
+    if (!res.ok) return DEFAULT_RESEARCH_SLUGS;
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return DEFAULT_RESEARCH_SLUGS;
+    const slugs = rows.map((r) => String(r.slug || '').trim()).filter(Boolean);
+    return slugs.length ? slugs : DEFAULT_RESEARCH_SLUGS;
+  } catch {
+    return DEFAULT_RESEARCH_SLUGS;
+  }
+}
 
 function urlEntry(path, priority, changefreq) {
   return `  <url>
@@ -71,14 +106,19 @@ const staticEntries = STATIC_ROUTES.map((route) =>
   urlEntry(route.path, route.priority, route.changefreq),
 );
 
+const researchSlugs = await fetchPublishedResearchSlugs();
+const researchEntries = researchSlugs.map((slug) =>
+  urlEntry(`/research/compounds/${slug}`, '0.82', 'monthly'),
+);
+
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticEntries, ...productEntries].join('\n')}
+${[...staticEntries, ...researchEntries, ...productEntries].join('\n')}
 </urlset>
 `;
 
 const outPath = join(root, 'public/sitemap.xml');
 writeFileSync(outPath, xml, 'utf8');
 console.log(
-  `Wrote ${staticEntries.length + productEntries.length} URLs to public/sitemap.xml (${productEntries.length} products)`,
+  `Wrote ${staticEntries.length + researchEntries.length + productEntries.length} URLs to public/sitemap.xml (${researchEntries.length} research, ${productEntries.length} products)`,
 );

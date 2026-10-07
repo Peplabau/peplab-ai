@@ -39,4 +39,49 @@ export const PAGE_SEO = {
     description:
       'How PEPLAB Australia tests every peptide batch: HPLC purity, identity verification, published COAs, and research-grade handling standards.',
   },
+  research: {
+    title: 'Peptide Research Overview | PEPLAB Australia',
+    description:
+      'Understanding peptides, scientific evidence and laboratory testing. Learn how to assess research papers, HPLC purity, mass spectrometry and Certificates of Analysis.',
+  },
+  researchCompounds: {
+    title: 'Find Your Compound | PEPLAB Research',
+    description:
+      'Browse the PEPLAB Research Library. Open compound-specific research overviews covering mechanism, published studies and analytical testing.',
+  },
+  researchRetatrutide: {
+    title: 'Retatrutide Research Overview | PEPLAB Australia',
+    description:
+      'Retatrutide (LY3437943) research overview: GIP, GLP-1 and glucagon triple receptor activity, Phase 2 and Phase 3 findings, safety context and COA guidance.',
+  },
+  researchGhkCu: {
+    title: 'GHK-Cu Research: Copper Peptide, Skin & Collagen | PEPLAB',
+    description:
+      'Explore GHK-Cu copper peptide research on collagen, skin, tissue repair and hair, with original studies, evidence limitations and guidance on COA testing.',
+  },
+  researchMotsC: {
+    title: 'MOTS-C Research: Mitochondria & Metabolism | PEPLAB',
+    description:
+      'Explore MOTS-C research on mitochondrial signalling, AMPK, metabolic regulation and exercise, with original studies and clear human-evidence limits.',
+  },
+  researchBpcTb: {
+    title: 'BPC-157 + TB-500 Blend Research & Evidence | PEPLAB',
+    description:
+      'Explore BPC-157 + TB-500 blend research, component evidence, tissue-repair models, TB-500 identity and the limitations of combination claims.',
+  },
+  researchTirzepatide: {
+    title: 'Tirzepatide Research: GIP, GLP-1 & Metabolism | PEPLAB',
+    description:
+      'Explore tirzepatide research on GIP and GLP-1 receptor activity, body weight and glucose regulation, with clinical studies, FAQs and COA guidance.',
+  },
+  researchTesamorelin: {
+    title: 'Tesamorelin Research: GHRH & Visceral Fat | PEPLAB',
+    description:
+      'Explore tesamorelin research on growth hormone signalling, visceral fat and liver fat, with human studies, evidence limitations and COA guidance.',
+  },
+  researchCjcIpa: {
+    title: 'CJC-1295 No DAC + Ipamorelin Research | PEPLAB',
+    description:
+      'Explore CJC-1295 No DAC + ipamorelin research, growth hormone pathways, DAC differences, component studies and the limits of blend evidence.',
+  },
 } as const;

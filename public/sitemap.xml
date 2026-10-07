@@ -11,6 +11,11 @@
     <priority>0.98</priority>
   </url>
   <url>
+    <loc>https://peplab.ai/landing</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
     <loc>https://peplab.ai/coa</loc>
     <changefreq>weekly</changefreq>
     <priority>0.88</priority>
@@ -20,13 +25,11 @@
     <changefreq>monthly</changefreq>
     <priority>0.78</priority>
   </url>
-  <!-- Temporarily removed — client asked to remove protocols (compliance risk). Restore when needed.
   <url>
     <loc>https://peplab.ai/protocols</loc>
     <changefreq>monthly</changefreq>
     <priority>0.86</priority>
   </url>
-  -->
   <url>
     <loc>https://peplab.ai/leaderboard</loc>
     <changefreq>weekly</changefreq>
@@ -86,6 +89,51 @@
     <loc>https://peplab.ai/rewards-terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.35</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research/compounds</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.84</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research/compounds/retatrutide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research/compounds/ghk-cu</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research/compounds/mots-c</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research/compounds/bpc-157-tb-500</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research/compounds/tirzepatide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research/compounds/tesamorelin</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.82</priority>
+  </url>
+  <url>
+    <loc>https://peplab.ai/research/compounds/cjc-1295-no-dac-ipamorelin</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.82</priority>
   </url>
   <url>
     <loc>https://peplab.ai/product/reta</loc>

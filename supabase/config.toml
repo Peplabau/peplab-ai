@@ -21,6 +21,12 @@ verify_jwt = false
 [functions.auspost-track-public]
 verify_jwt = false
 
+# Admin research CMS — OpenAI document → structured article
+# JWT verified inside the function (admin profile check). Gateway verify_jwt
+# off avoids opaque CORS/preflight failures on long AI POSTs.
+[functions.research-ai-parse]
+verify_jwt = false
+
 # -----------------------------------------------------------------------------
 # Auth — frictionless signup (no email verification)
 # -----------------------------------------------------------------------------

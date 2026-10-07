@@ -16,6 +16,15 @@ export const PROTOCOLS_PATH = '/protocols';
 /** Published COA archive — all products with certificates on file. */
 export const COA_ARCHIVE_PATH = '/coa';
 
+/** Research hub — evidence literacy + compound library entry. */
+export const RESEARCH_PATH = '/research';
+
+/** Find Your Compound — A–Z research overviews. */
+export const RESEARCH_COMPOUNDS_PATH = '/research/compounds';
+
+/** Dynamic research compound detail page. */
+export const RESEARCH_COMPOUND_SLUG_PATH = '/research/compounds/:slug';
+
 import { CONFIG } from '@/lib/config';
 
 /** Full URL for external links (subdomain override via env). */

@@ -8,7 +8,7 @@ import {
   ChevronUp, ChevronDown, Star, MessageSquare, Upload, Image as ImageIcon,
   Printer, ArrowUp, ArrowDown, MinusCircle, PlusCircle, Link2, Copy, Check,
   TrendingUp, BarChart2, FlaskConical, Cake, AlertTriangle, CheckSquare, Square, Clock, CalendarDays,
-  MapPin,
+  MapPin, BookOpen,
 } from 'lucide-react';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,6 +23,7 @@ import OrderTimingSection from '@/components/admin/OrderTimingSection';
 import EmailCampaignPromoToggle from '@/components/admin/EmailCampaignPromoToggle';
 import AdminOverviewSection from '@/components/admin/AdminOverviewSection';
 import StockInventorySection from '@/components/admin/StockInventorySection';
+import ResearchAdminSection from '@/components/admin/ResearchAdminSection';
 import ResearchMarquee from '@/components/ResearchMarquee';
 import { DEFAULT_MORE_INFO_TEXT } from '@/lib/defaultMoreInfo';
 import { BONUS_POINTS } from '@/context/RewardsContext';
@@ -472,6 +473,7 @@ type AdminTabId =
   | 'reviews'
   | 'affiliates'
   | 'promo-codes'
+  | 'research'
   | 'settings';
 
 const ADMIN_TAB_IDS = new Set<AdminTabId>([
@@ -483,6 +485,7 @@ const ADMIN_TAB_IDS = new Set<AdminTabId>([
   'reviews',
   'affiliates',
   'promo-codes',
+  'research',
   'settings',
 ]);
 
@@ -663,6 +666,7 @@ export default function AdminDashboard() {
     // entry and the route below if a commission program is reintroduced.
     // { id: 'affiliates', label: 'Affiliates', icon: Link2 },
     { id: 'promo-codes', label: 'Promo Codes', icon: Tag },
+    { id: 'research', label: 'Research', icon: BookOpen },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -795,6 +799,7 @@ export default function AdminDashboard() {
           {/* Affiliates tab disabled — see navItems comment above. */}
           {/* {activeTab === 'affiliates' && <AffiliatesSection />} */}
           {activeTab === 'promo-codes' && <PromoCodesSection />}
+          {activeTab === 'research' && <ResearchAdminSection />}
           {activeTab === 'settings' && <SettingsSection />}
         </div>
       </main>
