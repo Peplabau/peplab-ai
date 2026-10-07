@@ -32,12 +32,12 @@ function envVar(name, fallback) {
   return fallback;
 }
 
-const SITE_URL = envVar('VITE_SITE_URL', 'https://peplab.ai').replace(/\/$/, '');
+// Always peplab.ai for this storefront repo.
+const SITE_URL = 'https://peplab.ai';
 
 const STATIC_ROUTES = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },
   { path: '/shop', priority: '0.98', changefreq: 'weekly' },
-  { path: '/landing', priority: '0.95', changefreq: 'weekly' },
   { path: '/coa', priority: '0.88', changefreq: 'weekly' },
   { path: '/calculator', priority: '0.78', changefreq: 'monthly' },
   { path: '/protocols', priority: '0.86', changefreq: 'monthly' },
@@ -66,6 +66,17 @@ const DEFAULT_RESEARCH_SLUGS = [
   'tirzepatide',
   'tesamorelin',
   'cjc-1295-no-dac-ipamorelin',
+  'bpc-157',
+  'glow',
+  'hcg',
+  'ipamorelin',
+  'klow',
+  'kpv',
+  'melanotan-2',
+  'nad-plus',
+  'pt-141',
+  'ss-31',
+  'semax',
 ];
 
 async function fetchPublishedResearchSlugs() {
@@ -83,8 +94,8 @@ async function fetchPublishedResearchSlugs() {
     if (!res.ok) return DEFAULT_RESEARCH_SLUGS;
     const rows = await res.json();
     if (!Array.isArray(rows) || rows.length === 0) return DEFAULT_RESEARCH_SLUGS;
-    const slugs = rows.map((r) => String(r.slug || '').trim()).filter(Boolean);
-    return slugs.length ? slugs : DEFAULT_RESEARCH_SLUGS;
+    const fromDb = rows.map((r) => String(r.slug || '').trim()).filter(Boolean);
+    return [...new Set([...DEFAULT_RESEARCH_SLUGS, ...fromDb])];
   } catch {
     return DEFAULT_RESEARCH_SLUGS;
   }

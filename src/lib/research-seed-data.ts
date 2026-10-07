@@ -1,7 +1,8 @@
 import type { ResearchArticleInput } from '@/lib/research-articles';
 import { DEFAULT_COA_BODY } from '@/lib/research-articles';
+import { RESEARCH_HANDOFF_SEED_ARTICLES } from '@/lib/research-handoff-seed-data';
 
-export const RESEARCH_SEED_ARTICLES: ResearchArticleInput[] = [
+const RESEARCH_CORE_SEED_ARTICLES: ResearchArticleInput[] = [
   {
     slug: 'retatrutide',
     name: 'Retatrutide',
@@ -680,7 +681,11 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
         a: 'Start with the original-study links above. Check the molecule, formulation, study population and measured outcomes before applying a finding to another preparation.',
       },
     ],
-    related: [{ label: 'BPC-157' }],
+    related: [
+      { label: 'BPC-157', slug: 'bpc-157', kind: 'research' },
+      { label: 'GLOW Blend', slug: 'glow', kind: 'research' },
+      { label: 'KLOW Blend', slug: 'klow', kind: 'research' },
+    ],
     status: 'published',
     author_name: null,
     published_at: '2026-10-07T00:00:00.000Z',
@@ -1105,11 +1110,17 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
       },
     ],
     related: [
-      { label: 'Ipamorelin' },
-      { label: 'Tesamorelin', slug: 'tesamorelin' },
+      { label: 'Ipamorelin', slug: 'ipamorelin', kind: 'research' },
+      { label: 'Tesamorelin', slug: 'tesamorelin', kind: 'research' },
     ],
     status: 'published',
     author_name: null,
     published_at: '2026-10-07T00:00:00.000Z',
   },
+];
+
+/** Core compound pages + DocumentContent developer handoffs. */
+export const RESEARCH_SEED_ARTICLES: ResearchArticleInput[] = [
+  ...RESEARCH_CORE_SEED_ARTICLES,
+  ...RESEARCH_HANDOFF_SEED_ARTICLES,
 ];
