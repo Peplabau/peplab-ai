@@ -3,6 +3,438 @@ import type { ResearchArticleInput } from '@/lib/research-articles';
 /** Seed articles parsed from DocumentContent developer handoffs (2026-10-08). */
 export const RESEARCH_HANDOFF_SEED_ARTICLES: ResearchArticleInput[] = [
   {
+    slug: "5-amino-1mq",
+    name: "5-Amino-1MQ",
+    category: "Small Molecules / Metabolic Research",
+    product_slug: "5-amino-1mq",
+    card_title: "What Is 5-Amino-1MQ?",
+    card_description: "5-Amino-1MQ is a small-molecule inhibitor of nicotinamide N-methyltransferase, or NNMT.",
+    seo_title: "5-Amino-1MQ Research Overview | PEPLAB",
+    seo_description: "Explore 5-Amino-1MQ research on NNMT inhibition, adipose tissue and metabolic outcomes in mice, with evidence limits, FAQs and testing guidance.",
+    eyebrow: "Small Molecules / Metabolic Research",
+    h1: "5-Amino-1MQ Research Overview",
+    subtitle: "NNMT Inhibition and Metabolic Research",
+    intro: `5-Amino-1MQ is a small-molecule inhibitor of nicotinamide N-methyltransferase, or NNMT. It is studied in cellular and animal models of metabolism and obesity. Despite sometimes appearing in peptide catalogues, it is not a peptide, and the cited mouse findings do not establish human weight-loss efficacy.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is 5-Amino-1MQ?",
+    what_is_body: "The name refers to 5-amino-1-methylquinolinium. Publications also use abbreviations such as 5A1MQ. Because a supplied material can include a counterion, the chemical specification and reporting basis matter when interpreting molecular mass and quantity.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "5-Amino-1MQ",
+      },
+      {
+        feature: "Chemical name",
+        details: "5-amino-1-methylquinolinium",
+      },
+      {
+        feature: "Compound type",
+        details: "Small molecule, not a peptide",
+      },
+      {
+        feature: "Research target",
+        details: "Nicotinamide N-methyltransferase",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Biochemical, cellular and mouse experiments",
+      },
+    ],
+    mechanism_heading: "How Does 5-Amino-1MQ Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "NNMT Activity",
+        body: "NNMT participates in nicotinamide methylation. Inhibiting the enzyme can affect connected metabolic pathways, but a biochemical target effect is not equivalent to a clinical benefit.",
+      },
+      {
+        title: "Adipose Tissue Research",
+        body: "Experiments examine fat-cell metabolism, adiposity and metabolic measurements in diet-induced obesity. Outcomes depend on the animal model, diet and treatment conditions.",
+      },
+      {
+        title: "Nicotinamide and NAD Pathways",
+        body: "NNMT research intersects with nicotinamide metabolism. That relationship does not make 5-Amino-1MQ identical to NAD+, a NAD precursor or a proven way to increase energy in people.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "5-Amino-1MQ Research Findings",
+    findings_sections: [
+      {
+        title: "Early Inhibitor Study",
+        body: "A 2017 publication characterised selective NNMT inhibitors and tested 5-amino-1MQ in diet-induced obese mice. The study reported changes in weight and fat-related measures. These are preclinical findings and do not provide a human weight-loss percentage.",
+        link_label: "Read the inhibitor study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/29155147/",
+      },
+      {
+        title: "Diet and Metabolic Context",
+        body: "A 2021 mouse study investigated NNMT inhibition alongside a reduced-calorie diet. It assessed body composition, liver physiology and adipose-tissue metabolites. Dietary changes and drug effects must be interpreted within the experimental design.",
+        link_label: "Read the diet-combination study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/33707534/",
+      },
+      {
+        title: "Later Preclinical Research",
+        body: "A 2024 study further examined body composition, metabolic variables, liver pathology, pharmacokinetics and tissue distribution in obese mice. It adds preclinical characterisation rather than a clinical test of effectiveness or safety in humans.",
+        link_label: "Read the later study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/39161060/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Enzyme inhibition",
+        investigated: "NNMT activity in assays",
+        distinction: "Target engagement is not clinical efficacy",
+      },
+      {
+        area: "Mouse obesity",
+        investigated: "Body composition and metabolism",
+        distinction: "Species and diet limit translation",
+      },
+      {
+        area: "Drug exposure",
+        investigated: "Pharmacokinetics and distribution",
+        distinction: "Mouse data do not define a human regimen",
+      },
+    ],
+    safety_body: `The cited studies do not establish human clinical effectiveness, long-term safety or a safe personal-use regimen. Mouse experiments cannot reliably predict uncommon human adverse effects, drug interactions or the consequences of sustained NNMT inhibition.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding 5-Amino-1MQ Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Use methods appropriate for a small molecule. Confirm the chemical identity, counterion and quantitative reporting basis. A stated amount may refer to the complete salt or the active molecular component; the report should make this explicit. Peptide-specific assumptions should not replace a validated assay.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is 5-Amino-1MQ a peptide?",
+        a: "No. It is a small molecule.",
+      },
+      {
+        q: "What does NNMT stand for?",
+        a: "Nicotinamide N-methyltransferase, the enzyme targeted in this research.",
+      },
+      {
+        q: "Are the weight findings from human trials?",
+        a: "The studies summarised here concern laboratory systems and mice.",
+      },
+      {
+        q: "Is it the same as NAD+?",
+        a: "No. They are different molecules with different roles.",
+      },
+      {
+        q: "Does this research prove a noticeable energy boost?",
+        a: "No. The cited studies do not establish that subjective outcome in people.",
+      },
+      {
+        q: "Why does the salt form matter?",
+        a: "The counterion affects total molecular mass and how quantitative content should be reported.",
+      },
+      {
+        q: "Where can I find 5-Amino-1MQ research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "aod-9604",
+    name: "AOD-9604",
+    category: "Metabolic Peptides / Lipid Research",
+    product_slug: "aod-9604",
+    card_title: "What Is AOD-9604?",
+    card_description: "AOD-9604 is a synthetic peptide developed from a modified region of human growth hormone and studied for fat metabolism.",
+    seo_title: "AOD-9604 Research Overview | PEPLAB",
+    seo_description: "Explore AOD-9604 research on fat metabolism, animal studies and human trial findings, with evidence limitations, FAQs and compound testing guidance.",
+    eyebrow: "Metabolic Peptides / Lipid Research",
+    h1: "AOD-9604 Research Overview",
+    subtitle: "Growth Hormone Fragment and Fat Metabolism Research",
+    intro: `AOD-9604 is a synthetic peptide developed from a modified region of human growth hormone and studied for fat metabolism. Early animal findings led to human obesity trials. The larger clinical programme did not establish the weight-loss benefit suggested by the preclinical rationale.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is AOD-9604?",
+    what_is_body: "AOD-9604 is a 16-amino-acid peptide based on the C-terminal region of human growth hormone. It is not intact HGH and should not be treated as interchangeable with every product described as an HGH fragment. Exact sequence and structure determine the identity.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "AOD-9604",
+      },
+      {
+        feature: "Compound type",
+        details: "Synthetic growth-hormone-fragment analogue",
+      },
+      {
+        feature: "Peptide length",
+        details: "16 amino acids",
+      },
+      {
+        feature: "Research areas",
+        details: "Lipid metabolism and body weight",
+      },
+      {
+        feature: "Evidence base",
+        details: "Animal studies and historical human clinical trials",
+      },
+    ],
+    mechanism_heading: "How Does AOD-9604 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Lipid Metabolism",
+        body: "Preclinical work examined fat breakdown and related metabolic responses. Increased lipolysis in an experimental system is not itself proof of sustained weight loss in people.",
+      },
+      {
+        title: "Relationship to Growth Hormone",
+        body: "The fragment was developed to explore selected metabolic actions separately from the full hormone. Its identity and evidence should be kept distinct from HGH replacement or growth-promoting claims.",
+      },
+      {
+        title: "Translation to Clinical Benefit",
+        body: "Body weight reflects multiple processes. Researchers need controlled human outcomes to determine whether an experimental metabolic effect produces a useful net change.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "AOD-9604 Research Findings",
+    findings_sections: [
+      {
+        title: "Animal Metabolic Findings",
+        body: "A study in obese Zucker rats examined AOD9604 and reported changes in weight gain and fat-related metabolism. These results provided a preclinical rationale; they were not measurements of human fat loss.",
+        link_label: "Read the rat study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/11146367/",
+      },
+      {
+        title: "Larger Obesity Trial Result",
+        body: "In its February 2007 results announcement, the developer reported that the Phase 2B weight-loss differences versus placebo were too small to reach statistical significance. This sponsor report is a primary record of the programme outcome, rather than a peer-reviewed efficacy paper.",
+        link_label: "Read the developer’s trial announcement",
+        link_url: "https://announcements.asx.com.au/asxpdf/20070221/pdf/3111t0ww55jr72.pdf",
+      },
+      {
+        title: "Human Safety Publication",
+        body: "A 2013 paper summarised safety and tolerability across six clinical studies. The authors reported broadly similar tolerability to placebo under the tested conditions. Sponsor relationships were disclosed, and a safety assessment does not establish successful weight-loss treatment.",
+        link_label: "Read the safety publication",
+        link_url: "https://www.jofem.org/index.php/jofem/article/view/157/194",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Animal metabolism",
+        investigated: "Weight gain and lipid measures",
+        distinction: "Not direct human weight-loss evidence",
+      },
+      {
+        area: "Human efficacy",
+        investigated: "Placebo-controlled obesity programme",
+        distinction: "Larger trial did not establish benefit",
+      },
+      {
+        area: "Human tolerability",
+        investigated: "Study-specific safety assessments",
+        distinction: "Does not validate every route or preparation",
+      },
+    ],
+    safety_body: `The safety publication concerns particular formulations, routes and study durations. It cannot establish that all research preparations or personal-use practices have the same profile. Limited or negative efficacy findings remain relevant even when a study reports favourable tolerability.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding AOD-9604 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the precise sequence, terminal chemistry and disulfide structure where specified. Distinguish AOD-9604 from other growth hormone fragments. Identity, purity, content and biological activity require their own measurements; none proves weight-loss effectiveness.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is AOD-9604 HGH?",
+        a: "No. It is a short modified fragment analogue, not the full growth hormone protein.",
+      },
+      {
+        q: "Has it been studied in people?",
+        a: "Yes. Historical clinical research includes obesity and tolerability studies.",
+      },
+      {
+        q: "Did the larger trial prove weight loss?",
+        a: "The developer reported that differences from placebo did not reach statistical significance.",
+      },
+      {
+        q: "Do animal fat-metabolism results predict human fat loss?",
+        a: "No. Human clinical outcomes must be measured directly.",
+      },
+      {
+        q: "Does a favourable safety report prove efficacy?",
+        a: "No. Safety and efficacy are separate questions.",
+      },
+      {
+        q: "Can findings for oral preparations validate another route?",
+        a: "No. Changing route or formulation requires separate evidence on exposure and safety.",
+      },
+      {
+        q: "Where can I find AOD-9604 research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "ara-290",
+    name: "ARA-290",
+    category: "Tissue Response / Neuropathy Research",
+    product_slug: "ara-290",
+    card_title: "What Is ARA-290?",
+    card_description: "ARA-290, also known as cibinetide, is an erythropoietin-derived peptide investigated in tissue-protection and small fibre neuropathy research.",
+    seo_title: "ARA-290 Research Overview | PEPLAB",
+    seo_description: "Explore ARA-290 research on innate repair signalling and small fibre neuropathy, with pilot clinical findings, limitations, FAQs and COA guidance.",
+    eyebrow: "Tissue Response / Neuropathy Research",
+    h1: "ARA-290 Research Overview",
+    subtitle: "Innate Repair Signalling and Small Fibre Research",
+    intro: `ARA-290, also known as cibinetide, is an erythropoietin-derived peptide investigated in tissue-protection and small fibre neuropathy research. Early human studies have examined symptoms and nerve-fibre measurements in selected conditions. Those findings do not establish a general pain-relief or injury-healing treatment.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is ARA-290?",
+    what_is_body: "ARA-290 is a short synthetic peptide designed around tissue-protective activity associated with erythropoietin, while separating it from stimulation of red blood cell production. Researchers study a proposed innate repair receptor pathway. It is distinct from erythropoietin and from BPC-157 or TB-500.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "ARA-290",
+      },
+      {
+        feature: "Other name",
+        details: "Cibinetide",
+      },
+      {
+        feature: "Compound type",
+        details: "Erythropoietin-derived peptide",
+      },
+      {
+        feature: "Research pathway",
+        details: "Innate repair receptor signalling",
+      },
+      {
+        feature: "Clinical research area",
+        details: "Small fibre neuropathy, including sarcoidosis-associated disease",
+      },
+    ],
+    mechanism_heading: "How Does ARA-290 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Tissue Response Signalling",
+        body: "The proposed pathway involves tissue protection and inflammatory responses. A mechanistic rationale is a starting point for testing, not proof that all injured tissues respond similarly.",
+      },
+      {
+        title: "Small Nerve Fibres",
+        body: "Small sensory and autonomic nerve fibres are involved in pain, sensation and autonomic functions. Research can measure both symptoms and structural markers such as corneal nerve-fibre density.",
+      },
+      {
+        title: "Different Kinds of Evidence",
+        body: "Changes in a symptom score and changes in an imaging measurement describe different outcomes. Neither alone establishes durable restoration of nerve function across diseases.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "ARA-290 Research Findings",
+    findings_sections: [
+      {
+        title: "Randomised Pilot Study",
+        body: "A 2012 double-blind pilot study examined ARA-290 in sarcoidosis patients with small fibre neuropathy symptoms. It reported a signal of symptom improvement and short-term tolerability that supported further study. The small pilot design limits broad conclusions.",
+        link_label: "Read the pilot trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/23168581/",
+      },
+      {
+        title: "Nerve Fibre Measurements",
+        body: "A later placebo-controlled study reported changes in symptoms and corneal nerve-fibre density in sarcoidosis-associated small nerve-fibre loss. Corneal imaging is a particular measurement; it is not proof of regeneration throughout the nervous system.",
+        link_label: "Read the clinical study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/24136731/",
+      },
+      {
+        title: "Interpreting the Research Population",
+        body: `These studies concern a defined sarcoidosis-associated condition. Their results cannot automatically be extended to sports injuries, back pain, fibromyalgia or every cause of neuropathy. Each condition needs evidence matching the population and outcome.
+
+Review the study population.`,
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Symptoms",
+        investigated: "Neuropathy-related questionnaires",
+        distinction: "Small condition-specific studies",
+      },
+      {
+        area: "Nerve structure",
+        investigated: "Corneal nerve-fibre density",
+        distinction: "Not proof of whole-body regeneration",
+      },
+      {
+        area: "Mechanism",
+        investigated: "Tissue-protective signalling",
+        distinction: "Not interchangeable with erythropoietin",
+      },
+    ],
+    safety_body: `Early trials provide limited short-term safety information. They cannot exclude uncommon effects or establish long-term safety across other populations. Absence of a major problem in a small trial should not be presented as evidence that ARA-290 is risk-free or suitable for unsupervised use.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding ARA-290 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the ARA-290 sequence and distinguish it from erythropoietin or other tissue-protective peptides. Mass and purity results alone do not establish activity at the proposed receptor or reproduce the clinical trial preparation.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "What is cibinetide?",
+        a: "Cibinetide is another name for ARA-290.",
+      },
+      {
+        q: "Is ARA-290 the same as erythropoietin?",
+        a: "No. It is a distinct peptide designed around a tissue-protective research rationale.",
+      },
+      {
+        q: "Has it been studied in humans?",
+        a: "Yes. Early studies include patients with sarcoidosis-associated small fibre neuropathy.",
+      },
+      {
+        q: "Does corneal nerve density prove all nerves regenerate?",
+        a: "No. It is a specific structural measurement.",
+      },
+      {
+        q: "Is ARA-290 proven for every type of pain?",
+        a: "No. Condition-specific findings do not establish a general pain treatment.",
+      },
+      {
+        q: "Is it equivalent to BPC-157 or TB-500?",
+        a: "No. These are different molecules with different research programmes.",
+      },
+      {
+        q: "Where can I find ARA-290 research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
     slug: "bpc-157",
     name: "BPC-157",
     category: "Tissue Repair / Experimental Peptides",
@@ -162,6 +594,590 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
         kind: "research",
       },
     ],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "cjc-1295-dac",
+    name: "CJC-1295 DAC",
+    category: "Ghrh Analogues / Endocrine Research",
+    product_slug: "cjc-1295-dac",
+    card_title: "What Is CJC-1295 DAC?",
+    card_description: "CJC-1295 DAC is a long-acting growth hormone-releasing hormone analogue studied for its effects on growth hormone and insulin-like growth factor-1.",
+    seo_title: "CJC-1295 DAC Research Overview | PEPLAB",
+    seo_description: "Explore CJC-1295 DAC research on albumin binding, growth hormone and IGF-1, with human study findings, evidence limits, FAQs and COA guidance.",
+    eyebrow: "Ghrh Analogues / Endocrine Research",
+    h1: "CJC-1295 DAC Research Overview",
+    subtitle: "Albumin Binding and Growth Hormone Research",
+    intro: `CJC-1295 DAC is a long-acting growth hormone-releasing hormone analogue studied for its effects on growth hormone and insulin-like growth factor-1. Its albumin-binding modification distinguishes it from materials described as CJC-1295 No DAC. Published hormone responses are evidence of biological activity, rather than proof of better sleep, recovery or muscle growth.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is CJC-1295 DAC?",
+    what_is_body: "CJC-1295 was developed by modifying a growth hormone-releasing factor peptide and adding a reactive group that enables binding to albumin in the bloodstream. DAC refers to this drug-affinity modification. The long-acting molecule in the cited human trials should be distinguished from the non-DAC analogue.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "CJC-1295 DAC",
+      },
+      {
+        feature: "Compound type",
+        details: "Modified GHRH analogue peptide",
+      },
+      {
+        feature: "Defining feature",
+        details: "Albumin-binding modification",
+      },
+      {
+        feature: "Research targets",
+        details: "GHRH receptor and the GH–IGF-1 axis",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Preclinical development and short human trials",
+      },
+    ],
+    mechanism_heading: "How Does CJC-1295 DAC Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Pituitary Signalling",
+        body: "GHRH receptor activation stimulates growth hormone release from the pituitary. This differs from administering growth hormone itself.",
+      },
+      {
+        title: "Albumin Binding",
+        body: "Binding to albumin extends exposure. Pharmacokinetics depend on the exact structure and preparation, so removing the DAC group changes the interpretation of duration data.",
+      },
+      {
+        title: "Downstream Hormone Responses",
+        body: "Growth hormone can increase circulating IGF-1. Researchers measure these hormones as biomarkers; changes in symptoms, body composition and function require separate outcome studies.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "CJC-1295 DAC Research Findings",
+    findings_sections: [
+      {
+        title: "Preclinical Development",
+        body: "A 2005 study investigated albumin-conjugating GRF analogues in rats and identified CJC-1295 as a long-acting candidate. This work supports the structural rationale, but animal activity alone does not establish a human clinical benefit.",
+        link_label: "Read the development study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/15817669/",
+      },
+      {
+        title: "Human Hormone Study",
+        body: "Two randomised, placebo-controlled trials published in 2006 lasted 28 and 49 days. In healthy adults, the long-acting analogue produced sustained increases in GH and IGF-1. The estimated half-life was 5.8–8.1 days under the study conditions. These findings apply to the tested DAC-containing preparation.",
+        link_label: "Read the human study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/16352683/",
+      },
+      {
+        title: "Hormone Pulsatility",
+        body: "A separate 2006 study used repeated overnight blood sampling in healthy men. GH secretion remained pulsatile during sustained stimulation by CJC-1295. Pulsatility is a physiological observation and does not establish better sleep or recovery.",
+        link_label: "Read the pulsatility study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/17018654/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Drug exposure",
+        investigated: "Duration of the DAC-containing analogue",
+        distinction: "Not transferable to No DAC",
+      },
+      {
+        area: "Hormones",
+        investigated: "GH and IGF-1 concentrations",
+        distinction: "Biomarkers are not functional benefits",
+      },
+      {
+        area: "Secretion patterns",
+        investigated: "GH pulses during sustained exposure",
+        distinction: "Does not establish sleep improvement",
+      },
+    ],
+    safety_body: `The early human trials reported no serious adverse reactions, but their short duration and selected participants limit conclusions about uncommon or long-term risks. Sustained endocrine effects require assessment beyond a single hormone measurement. The studies do not establish a safe personal-use regimen or equivalence with separately supplied research materials.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding CJC-1295 DAC Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the full peptide structure, DAC modification and expected molecular mass. An identity method must distinguish the albumin-binding analogue from modified GRF without DAC. Purity alone does not establish albumin-binding performance, biological activity or the amount present.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "What does DAC mean?",
+        a: "It denotes the drug-affinity modification used to enable albumin binding and extend exposure.",
+      },
+      {
+        q: "Is CJC-1295 DAC growth hormone?",
+        a: "No. It is a GHRH analogue studied for stimulation of the body’s growth hormone release.",
+      },
+      {
+        q: "Is it the same as CJC-1295 No DAC?",
+        a: "No. The DAC modification changes the molecule and its exposure profile.",
+      },
+      {
+        q: "Has it been studied in humans?",
+        a: "Yes. Short controlled studies have measured hormone responses in healthy adults.",
+      },
+      {
+        q: "Does a rise in IGF-1 prove muscle growth?",
+        a: "No. Muscle size, strength and function are separate outcomes.",
+      },
+      {
+        q: "Can the trial half-life be used for No DAC?",
+        a: "No. The reported value concerns the long-acting DAC-containing study preparation.",
+      },
+      {
+        q: "Where can I find CJC-1295 DAC research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "cjc-1295-no-dac",
+    name: "CJC-1295 No DAC",
+    category: "Ghrh Analogues / Endocrine Research",
+    product_slug: "cjc-1295-no-dac",
+    card_title: "What Is CJC-1295 No DAC?",
+    card_description: "CJC-1295 No DAC is a research-market name commonly used for modified GRF (1–29), a growth hormone-releasing hormone analogue without the albumin-binding DAC group.",
+    seo_title: "CJC-1295 No DAC Research Overview | PEPLAB",
+    seo_description: "Explore CJC-1295 No DAC and modified GRF research, how it differs from DAC, GHRH signalling, evidence limitations and peptide identity testing.",
+    eyebrow: "Ghrh Analogues / Endocrine Research",
+    h1: "CJC-1295 No DAC Research Overview",
+    subtitle: "Modified GRF and Growth Hormone Signalling Research",
+    intro: `CJC-1295 No DAC is a research-market name commonly used for modified GRF (1–29), a growth hormone-releasing hormone analogue without the albumin-binding DAC group. Exact chemical identity matters because widely cited long-acting CJC-1295 human trials concern a different preparation.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is CJC-1295 No DAC?",
+    what_is_body: "Modified GRF (1–29) is a 29-residue GHRH-related peptide with amino-acid substitutions intended to alter stability and activity. No DAC indicates the absence of the albumin-binding modification. A supplier name alone should not substitute for a documented sequence and terminal chemistry.",
+    feature_rows: [
+      {
+        feature: "Research name",
+        details: "CJC-1295 No DAC",
+      },
+      {
+        feature: "Common associated name",
+        details: "Modified GRF (1–29)",
+      },
+      {
+        feature: "Compound type",
+        details: "GHRH analogue peptide",
+      },
+      {
+        feature: "Key distinction",
+        details: "No albumin-binding DAC group",
+      },
+      {
+        feature: "Research areas",
+        details: "Receptor signalling and peptide stability",
+      },
+      {
+        feature: "Evidence limitation",
+        details: "DAC human trial results do not establish No DAC outcomes",
+      },
+    ],
+    mechanism_heading: "How Does CJC-1295 No DAC Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "GHRH Receptor Activity",
+        body: "The research rationale is stimulation of pituitary growth hormone release through the GHRH receptor. This is a different receptor pathway from ghrelin-receptor agonists such as ipamorelin.",
+      },
+      {
+        title: "Sequence and Stability",
+        body: "Changes to amino-acid sequence can affect degradation and receptor activity. The degree of change depends on the exact analogue and experimental system.",
+      },
+      {
+        title: "Exposure and Outcome",
+        body: "Removing an exposure-extending group changes the molecule. A shorter exposure profile does not automatically establish better physiological effects or fewer adverse events.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "CJC-1295 No DAC Research Findings",
+    findings_sections: [
+      {
+        title: "Analogue Design Research",
+        body: "A 2002 study examined modified GHRH peptides with increased resistance to enzymatic degradation and tested GH release in rats. It provides related analogue-design evidence, not a human trial validating every product labelled CJC-1295 No DAC.",
+        link_label: "Read the analogue study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/12148777/",
+      },
+      {
+        title: "Why the DAC Distinction Matters",
+        body: "The 2005 CJC-1295 development paper examined albumin bioconjugates and receptor activity in rats. It explains the rationale for adding an exposure-extending modification and why the final molecule must be identified precisely.",
+        link_label: "Read the development paper",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/15817669/",
+      },
+      {
+        title: "Interpreting Human CJC-1295 Papers",
+        body: "The 2006 controlled human publication investigated the long-acting CJC-1295 analogue. Its multi-day exposure and sustained hormone responses should not be presented as direct clinical evidence for modified GRF without DAC.",
+        link_label: "Read the long-acting comparator study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/16352683/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Analogue design",
+        investigated: "Stability and GH release",
+        distinction: "Exact sequence and species matter",
+      },
+      {
+        area: "DAC comparison",
+        investigated: "Albumin-binding modification",
+        distinction: "Different pharmacokinetic identity",
+      },
+      {
+        area: "Human outcomes",
+        investigated: "Often cited long-acting trials",
+        distinction: "Not direct proof for No DAC",
+      },
+    ],
+    safety_body: `The sources cited here do not establish comprehensive human safety or reliable sleep, recovery or body-composition benefits for the exact No DAC material. Related-peptide evidence cannot determine its rate of adverse events. Adding ipamorelin creates a separate combination question, including interactions and formulation stability.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding CJC-1295 No DAC Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Require a documented sequence, terminal chemistry and confirmation that the DAC modification is absent. Distinguish modified GRF from sermorelin, DAC-containing CJC-1295 and any blended preparation. Identity, quantitative content and functional activity are separate measurements.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is No DAC the same as modified GRF?",
+        a: "The names are commonly associated, but the actual sequence and analytical specification should confirm the identity.",
+      },
+      {
+        q: "Does No DAC contain the albumin-binding group?",
+        a: "No. That absence is the distinction conveyed by the name.",
+      },
+      {
+        q: "Is it identical to sermorelin?",
+        a: "No. Modified GRF contains sequence changes relative to the unmodified GHRH fragment.",
+      },
+      {
+        q: "Do CJC-1295 human trials automatically apply?",
+        a: "No. Check whether the publication studied the long-acting DAC-containing analogue.",
+      },
+      {
+        q: "Is a precise human half-life established here?",
+        a: "No. The sources selected here do not establish a validated human half-life for the exact No DAC research material.",
+      },
+      {
+        q: "Does this page validate a blend with ipamorelin?",
+        a: "No. Evidence for the exact combination, ratio and preparation is needed separately.",
+      },
+      {
+        q: "Where can I find CJC-1295 No DAC research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "cagrilintide",
+    name: "Cagrilintide",
+    category: "Amylin Analogues / Metabolic Research",
+    product_slug: "cagrilintide",
+    card_title: "What Is Cagrilintide?",
+    card_description: "Cagrilintide is a long-acting amylin analogue studied for body-weight management.",
+    seo_title: "Cagrilintide Research Overview | PEPLAB",
+    seo_description: "Explore cagrilintide research on amylin signalling and body weight, including clinical findings, CagriSema distinctions, FAQs and testing guidance.",
+    eyebrow: "Amylin Analogues / Metabolic Research",
+    h1: "Cagrilintide Research Overview",
+    subtitle: "Amylin Signalling and Body Weight Research",
+    intro: `Cagrilintide is a long-acting amylin analogue studied for body-weight management. Human research includes cagrilintide alone and coadministration with semaglutide, a combination often called CagriSema. The single-agent and combination findings answer different questions.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is Cagrilintide?",
+    what_is_body: "Amylin is a pancreatic hormone involved in satiety. Cagrilintide is a modified peptide developed to provide prolonged activity at amylin-related receptor systems. It is chemically and pharmacologically distinct from semaglutide, which is a GLP-1 receptor agonist.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "Cagrilintide",
+      },
+      {
+        feature: "Research code",
+        details: "AM833",
+      },
+      {
+        feature: "Compound type",
+        details: "Long-acting amylin analogue peptide",
+      },
+      {
+        feature: "Research areas",
+        details: "Satiety, body weight and metabolic outcomes",
+      },
+      {
+        feature: "Clinical context",
+        details: "Single-agent and semaglutide combination trials",
+      },
+    ],
+    mechanism_heading: "How Does Cagrilintide Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Amylin Pathways",
+        body: "Cagrilintide was developed to engage amylin receptors. The discovery programme also characterised calcitonin-receptor activity; receptor profiles should be described using the exact experimental evidence.",
+      },
+      {
+        title: "Satiety Research",
+        body: "Amylin-related signalling participates in fullness and food-intake regulation. Clinical trials measure whether this rationale translates into changes in body weight and tolerability.",
+      },
+      {
+        title: "Combination Research",
+        body: "Cagrilintide and semaglutide act through different hormone systems. Combination efficacy needs direct testing and cannot be inferred simply by adding the effects of each agent.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "Cagrilintide Research Findings",
+    findings_sections: [
+      {
+        title: "Discovery and Development",
+        body: "A 2021 publication described the design and preclinical characterisation of long-acting cagrilintide. It explains the molecular development programme rather than predicting an individual weight-loss outcome.",
+        link_label: "Read the discovery paper",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/34288673/",
+      },
+      {
+        title: "Phase 2 Single-Agent Findings",
+        body: "A 2021 trial randomised 706 adults with overweight or obesity without diabetes. At 26 weeks, the highest-dose cagrilintide group had a mean weight reduction of 10.8%, versus 3.0% with placebo, using the trial-product analysis that assumed treatment adherence. These are group averages under a defined protocol.",
+        link_label: "Read the Phase 2 study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/34798060/",
+      },
+      {
+        title: "Phase 3 Combination Research",
+        body: "The 2025 REDEFINE 1 publication studied cagrilintide–semaglutide and included single-agent comparison groups. The headline combination-versus-placebo findings concern CagriSema; they must not be relabelled as results for cagrilintide alone. Study population, duration and analysis method matter when comparing trials.",
+        link_label: "Read the REDEFINE 1 publication",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/40544433/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Single agent",
+        investigated: "Weight change over 26 weeks",
+        distinction: "Trial analysis and population matter",
+      },
+      {
+        area: "Combination",
+        investigated: "Cagrilintide with semaglutide",
+        distinction: "Not the same as cagrilintide alone",
+      },
+      {
+        area: "Mechanism",
+        investigated: "Amylin-related receptor activity",
+        distinction: "Not GLP-1 receptor agonism",
+      },
+    ],
+    safety_body: `Common adverse events in the Phase 2 study included nausea, constipation, diarrhoea and administration-site reactions. Some participants stopped treatment because of adverse events. Trial findings relate to the study preparation and selected participants; they do not establish equivalent safety or performance for other materials.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding Cagrilintide Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the modified peptide structure and expected mass rather than treating native amylin as an interchangeable reference. Content testing should measure cagrilintide specifically. For a combination, each ingredient needs separate identification and quantification.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is cagrilintide a GLP-1 agonist?",
+        a: "No. It is an amylin analogue; semaglutide is a GLP-1 receptor agonist.",
+      },
+      {
+        q: "What is CagriSema?",
+        a: "It is the name used for the cagrilintide–semaglutide combination studied in clinical trials.",
+      },
+      {
+        q: "Has cagrilintide been studied alone?",
+        a: "Yes. The cited Phase 2 trial evaluated cagrilintide alone alongside comparator groups.",
+      },
+      {
+        q: "What does the 10.8% result mean?",
+        a: "It is the mean reduction at 26 weeks in the highest-dose Phase 2 group under the trial-product analysis, not a guaranteed outcome.",
+      },
+      {
+        q: "Can combination results be assigned to cagrilintide alone?",
+        a: "No. The combination and individual agents require separate interpretation.",
+      },
+      {
+        q: "Are results directly comparable with retatrutide trials?",
+        a: "Separate trials differ in population, duration and analysis. A direct comparison requires an appropriate head-to-head design.",
+      },
+      {
+        q: "Where can I find Cagrilintide research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "epitalon",
+    name: "Epitalon",
+    category: "Cellular Ageing / Telomere Research",
+    product_slug: "epitalon",
+    card_title: "What Is Epitalon?",
+    card_description: "Epitalon, also written Epithalon, is a synthetic tetrapeptide studied in cellular ageing and telomere research.",
+    seo_title: "Epitalon Research Overview | PEPLAB",
+    seo_description: "Explore Epitalon research on telomerase, telomeres and cellular ageing, with laboratory evidence, key distinctions, FAQs and analytical testing guidance.",
+    eyebrow: "Cellular Ageing / Telomere Research",
+    h1: "Epitalon Research Overview",
+    subtitle: "Tetrapeptide and Telomerase Research",
+    intro: `Epitalon, also written Epithalon, is a synthetic tetrapeptide studied in cellular ageing and telomere research. Published experiments include human cells grown in culture. These laboratory findings are distinct from evidence that a compound extends human lifespan or reverses ageing.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is Epitalon?",
+    what_is_body: "Epitalon has the four-amino-acid sequence Ala–Glu–Asp–Gly. It should be distinguished from Epithalamin, a pineal-derived preparation discussed in related literature. Similar names do not establish identical composition or allow findings to be transferred between the preparations.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "Epitalon",
+      },
+      {
+        feature: "Alternative spelling",
+        details: "Epithalon",
+      },
+      {
+        feature: "Compound type",
+        details: "Synthetic tetrapeptide",
+      },
+      {
+        feature: "Sequence",
+        details: "Ala–Glu–Asp–Gly",
+      },
+      {
+        feature: "Research areas",
+        details: "Telomerase, telomeres and cell proliferation",
+      },
+      {
+        feature: "Key distinction",
+        details: "Cellular findings versus human lifespan outcomes",
+      },
+    ],
+    mechanism_heading: "How Does Epitalon Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Telomerase Research",
+        body: "Telomerase can maintain telomeric DNA at chromosome ends. Experiments investigate whether Epitalon changes components or activity of this system in particular cells.",
+      },
+      {
+        title: "Cellular Proliferation",
+        body: "Researchers also measure how many times a cell population divides. Extended proliferation in culture is not the same outcome as healthier ageing in an organism.",
+      },
+      {
+        title: "Context Matters",
+        body: "Telomere regulation has different implications in normal and abnormal cells. A longer telomere measurement alone does not establish a favourable net effect on human health.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "Epitalon Research Findings",
+    findings_sections: [
+      {
+        title: "Early Human Cell Experiment",
+        body: "A 2003 study reported telomerase activation and telomere elongation in cultured human fetal fibroblasts after Epithalon exposure. The experiment involved cells, not people receiving a longevity treatment.",
+        link_label: "Read the telomerase study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/12937682/",
+      },
+      {
+        title: "Cell Division Research",
+        body: "A 2004 study investigated proliferative capacity in human fetal fibroblasts after Epithalon exposure. It extended the laboratory research question, but did not measure lifespan, disease prevention or functional ageing in humans.",
+        link_label: "Read the cell-division study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/15455129/",
+      },
+      {
+        title: "How to Interpret Longevity Claims",
+        body: `The distinction between a cellular endpoint and a clinical outcome is essential. Demonstrating a change in telomerase or division capacity cannot, by itself, establish longer life, improved sleep or reversal of biological age.
+
+Review the original experimental setting.`,
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Telomeres",
+        investigated: "Length and telomerase activity",
+        distinction: "Cultured human cells are not a human trial",
+      },
+      {
+        area: "Proliferation",
+        investigated: "Cell division capacity",
+        distinction: "Does not establish healthier ageing",
+      },
+      {
+        area: "Longevity claims",
+        investigated: "Translation to clinical outcomes",
+        distinction: "Requires direct human outcome evidence",
+      },
+    ],
+    safety_body: `The cited cell experiments do not establish comprehensive human safety or a validated longevity benefit. Effects on cell proliferation and telomere maintenance require careful interpretation, including possible consequences in different cell types. A high-purity result cannot resolve these biological uncertainties.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding Epitalon Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the four-residue sequence and distinguish Epitalon from an extract or differently modified analogue. Verify terminal chemistry, identity and quantitative peptide content. Biological activity cannot be inferred solely from chromatographic purity.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is Epitalon a peptide?",
+        a: "Yes. It is a tetrapeptide with four amino-acid residues.",
+      },
+      {
+        q: "Are Epitalon and Epithalon different names?",
+        a: "They are alternative spellings used for this peptide in research literature.",
+      },
+      {
+        q: "Is Epithalamin identical to Epitalon?",
+        a: "No. A pineal-derived preparation and a defined synthetic tetrapeptide are different materials.",
+      },
+      {
+        q: "Do human cell studies count as human treatment trials?",
+        a: "No. Experiments on cultured human cells are laboratory studies.",
+      },
+      {
+        q: "Does telomere elongation prove longer life?",
+        a: "No. Human lifespan and health outcomes need direct evidence.",
+      },
+      {
+        q: "Does this evidence establish improved sleep?",
+        a: "The telomerase and cell-division experiments summarised here do not establish a sleep benefit.",
+      },
+      {
+        q: "Where can I find Epitalon research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
     status: "published",
     author_name: null,
     published_at: "2026-10-08T00:00:00.000Z",
@@ -1480,6 +2496,170 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
     published_at: "2026-10-08T00:00:00.000Z",
   },
   {
+    slug: "slu-pp-332",
+    name: "SLU-PP-332",
+    category: "Small Molecules / Metabolic Research",
+    product_slug: "slu-pp-332",
+    card_title: "What Is SLU-PP-332?",
+    card_description: "SLU-PP-332 is a synthetic small molecule investigated as an agonist of estrogen-related receptors, or ERRs.",
+    seo_title: "SLU-PP-332 Research: ERR & Metabolic Activity | PEPLAB",
+    seo_description: "Explore SLU-PP-332 research on estrogen-related receptors, mitochondrial activity and mouse exercise models, with evidence limits and testing guidance.",
+    eyebrow: "Small Molecules / Metabolic Research",
+    h1: "SLU-PP-332 Research Overview",
+    subtitle: "Estrogen-Related Receptor Activity and Exercise Models",
+    intro: `SLU-PP-332 is a synthetic small molecule investigated as an agonist of estrogen-related receptors, or ERRs. It is not a peptide. Published studies examine cellular metabolism, exercise-related gene activity and metabolic outcomes in mice. Those findings do not establish that the compound can safely replace exercise or produce predictable fat loss in humans.
+
+For guidance on study design and analytical evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is SLU-PP-332?",
+    what_is_body: "SLU-PP-332 activates ERRα, ERRβ and ERRγ in experimental systems. These nuclear receptors help regulate gene expression related to metabolism. Despite their name, estrogen-related receptors are distinct from the classical estrogen receptors; the compound should not be described simply as estrogen or a conventional stimulant.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "SLU-PP-332",
+      },
+      {
+        feature: "Compound type",
+        details: "Synthetic small molecule; not a peptide",
+      },
+      {
+        feature: "Primary targets",
+        details: "ERRα, ERRβ and ERRγ",
+      },
+      {
+        feature: "Research areas",
+        details: "Oxidative metabolism, muscle function and metabolic disease models",
+      },
+      {
+        feature: "Evidence base",
+        details: "Cellular and animal studies in the cited literature",
+      },
+      {
+        feature: "Key limitation",
+        details: "Human effectiveness and comprehensive safety are not established by these studies",
+      },
+    ],
+    mechanism_heading: "How Does SLU-PP-332 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Nuclear-Receptor Activity",
+        body: "ERRs act as transcriptional regulators. SLU-PP-332 is used to investigate how activating these receptors changes metabolic gene programmes.",
+      },
+      {
+        title: "Oxidative Metabolism",
+        body: "Experiments assess cellular respiration and mitochondrial-related responses. These measures concern energy processing, not a proven subjective feeling of stimulation.",
+      },
+      {
+        title: "Exercise-Mimetic Research",
+        body: "The term exercise mimetic describes overlap with selected exercise-associated pathways. It does not mean a compound reproduces all muscular, cardiovascular and psychological effects of physical activity.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "SLU-PP-332 Research Findings",
+    findings_sections: [
+      {
+        title: "Cellular and Exercise Research",
+        body: "A 2023 ACS Chemical Biology study identified SLU-PP-332 as an ERR pan-agonist. Experiments reported altered respiration in muscle cells and enhanced endurance in mice. Human gene-expression comparisons in the paper did not constitute a human SLU-PP-332 treatment trial.",
+        link_label: "Read the original ERR study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/36988910/",
+      },
+      {
+        title: "Metabolic Syndrome Models",
+        body: "A subsequent study investigated the compound in diet-induced obese and genetically obese mice. It reported changes in metabolic outcomes, including fat-mass-related effects. Mouse results do not establish human weight loss, a safe exposure level or long-term outcomes.",
+        link_label: "Read the metabolic syndrome study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/37739806/",
+      },
+      {
+        title: "Related Compounds and Delivery",
+        body: "Later work on an orally active ERR agonist, SLU-PP-915, distinguishes that compound from SLU-PP-332. Delivery findings for another molecule should not be copied into SLU-PP-332 specifications. The exact chemical entity and formulation remain central to any comparison.",
+        link_label: "Read the related ERR-agonist study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/41421047/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Cellular metabolism",
+        investigated: "Respiration and metabolic gene expression",
+        distinction: "Not a measured human energy boost",
+      },
+      {
+        area: "Exercise",
+        investigated: "Endurance in mice",
+        distinction: "Not evidence that humans can replace exercise",
+      },
+      {
+        area: "Obesity models",
+        investigated: "Metabolic outcomes in mice",
+        distinction: "Not a clinical weight-loss result",
+      },
+      {
+        area: "Delivery",
+        investigated: "Research on related ERR agonists",
+        distinction: "Different compounds are not interchangeable",
+      },
+    ],
+    safety_body: `The cited studies do not establish human safety, effectiveness or an appropriate personal-use regimen. Animal exposures cannot be converted into validated human guidance. Calling a material an exercise mimetic does not establish that it is equivalent to physical activity, and chemical purity does not resolve toxicology or long-term safety questions.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding SLU-PP-332 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. A Certificate of Analysis should identify the submitted sample and report the actual measurements performed.
+
+• **Purity:** Chromatographic testing measures detected components under specified conditions; a percentage alone does not establish vial content.
+
+• **Identity:** Appropriate methods, such as mass spectrometry with complementary analysis where needed, assess consistency with the stated material.
+
+• **Content:** A validated quantitative assay measures the amount of the specified compound.
+
+Use analytical methods appropriate for a small molecule. Identity may require mass spectrometry and complementary structural methods; an assay should quantify the stated compound and distinguish relevant impurities. A generic peptide test description is not sufficient.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa), checking whether a report covers the material and batch being assessed.`,
+    faqs: [
+      {
+        q: "Is SLU-PP-332 a peptide?",
+        a: "No. It is a synthetic small molecule and should be categorised separately from peptide compounds.",
+      },
+      {
+        q: "Is SLU-PP-332 a stimulant?",
+        a: "Its research target is the ERR family of nuclear receptors. The cited studies do not establish a conventional stimulant-like effect in humans.",
+      },
+      {
+        q: "Is it the same as MOTS-C?",
+        a: "No. MOTS-C is a mitochondrial-derived peptide. SLU-PP-332 is a different type of molecule acting through a different research pathway.",
+      },
+      {
+        q: "Does exercise mimetic mean it replaces exercise?",
+        a: "No. The term concerns selected molecular or physiological features, not the full benefits of exercise.",
+      },
+      {
+        q: "Has it been shown to cause human fat loss?",
+        a: "The cited metabolic studies used mice. They do not establish a predictable fat-loss effect in humans.",
+      },
+      {
+        q: "Are SLU-PP-332 and SLU-PP-915 interchangeable?",
+        a: "No. They are different compounds. Results concerning one molecule’s delivery or pharmacology cannot automatically be assigned to the other.",
+      },
+      {
+        q: "Where can I find SLU-PP-332 research papers?",
+        a: "Start with the original-study links above. Check the molecule, formulation, study population and measured outcomes before applying a finding to another preparation.",
+      },
+    ],
+    related: [
+      {
+        label: "MOTS-C",
+        slug: "mots-c",
+        kind: "research",
+      },
+      {
+        label: "NAD+",
+        slug: "nad-plus",
+        kind: "research",
+      },
+    ],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
     slug: "ss-31",
     name: "SS-31",
     category: "Mitochondrial / Tetrapeptides",
@@ -1788,6 +2968,150 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
         kind: "research",
       },
     ],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "thymosin-alpha-1",
+    name: "Thymosin Alpha-1",
+    category: "Immune Signalling / Clinical Research",
+    product_slug: "thymosin-aplha-1",
+    card_title: "What Is Thymosin Alpha-1?",
+    card_description: "Thymosin alpha-1 is a peptide studied for modulation of immune responses.",
+    seo_title: "Thymosin Alpha-1 Research Overview | PEPLAB",
+    seo_description: "Explore thymosin alpha-1 research on immune modulation, sepsis and clinical outcomes, including trial limitations, FAQs and peptide testing guidance.",
+    eyebrow: "Immune Signalling / Clinical Research",
+    h1: "Thymosin Alpha-1 Research Overview",
+    subtitle: "Immune Modulation and Clinical Outcome Research",
+    intro: `Thymosin alpha-1 is a peptide studied for modulation of immune responses. Human research spans several disease settings, but findings depend on the population and clinical outcome. A change in an immune marker does not necessarily produce fewer infections or improved survival.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is Thymosin Alpha-1?",
+    what_is_body: "Thymosin alpha-1 is a 28-amino-acid peptide associated with thymic biology. The synthetic form is also known as thymalfasin. It is distinct from thymosin beta-4, TB-500 and mixed thymic extracts. The correct spelling is thymosin alpha-1.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "Thymosin alpha-1",
+      },
+      {
+        feature: "Other names",
+        details: "Tα1; thymalfasin for the synthetic form",
+      },
+      {
+        feature: "Compound type",
+        details: "28-amino-acid peptide",
+      },
+      {
+        feature: "Research area",
+        details: "Immune modulation",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Condition-specific randomised clinical trials",
+      },
+    ],
+    mechanism_heading: "How Does Thymosin Alpha-1 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Immune Cell Responses",
+        body: "Research examines effects on immune signalling and cellular responses. Immune systems are regulated networks, so greater activity in one measurement should not be described as universally stronger immunity.",
+      },
+      {
+        title: "Disease Context",
+        body: "The balance between inflammation and impaired immune function differs between conditions and patients. A finding in intensive care cannot be assumed to apply to healthy people.",
+      },
+      {
+        title: "Clinical Outcomes",
+        body: "Trials measure outcomes such as infected complications and mortality. These endpoints provide a different level of evidence from laboratory immune markers.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "Thymosin Alpha-1 Research Findings",
+    findings_sections: [
+      {
+        title: "Earlier Sepsis Research",
+        body: "The 2013 ETASS study was a multicentre, single-blind randomised trial in severe sepsis. It contributed early clinical evidence and the rationale for larger, more rigorously blinded studies. Its design and findings should be read alongside subsequent trials.",
+        link_label: "Read the ETASS trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/23327199/",
+      },
+      {
+        title: "Larger Phase 3 Sepsis Trial",
+        body: "The 2025 TESTS trial enrolled 1,106 adults and found no clear evidence that thymosin alpha-1 reduced 28-day all-cause mortality. A subsequent correction updated some data; the paper should be read with that correction. The overall result does not support a broad survival claim.",
+        link_label: "Read the TESTS trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/39814420/",
+      },
+      {
+        title: "Acute Pancreatitis Trial",
+        body: "A 2022 randomised, double-blind trial involving 508 patients with predicted severe acute necrotising pancreatitis did not find a reduction in infected pancreatic necrosis during the index admission. This illustrates why immune-related mechanisms do not guarantee better clinical outcomes.",
+        link_label: "Read the pancreatitis trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/35713670/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Immune biology",
+        investigated: "Cell responses and signalling",
+        distinction: "Not a universal immunity score",
+      },
+      {
+        area: "Sepsis",
+        investigated: "Mortality in selected patients",
+        distinction: "Larger trial did not establish benefit",
+      },
+      {
+        area: "Pancreatitis",
+        investigated: "Infected pancreatic necrosis",
+        distinction: "No reduction in the cited trial",
+      },
+    ],
+    safety_body: `Safety and effectiveness must be assessed for the exact population, formulation and accompanying care. Clinical studies in serious illness do not establish long-term preventive use in healthy people. An absence of a clear efficacy benefit should be reported alongside tolerability, rather than replaced by a general immune-boosting claim.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding Thymosin Alpha-1 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the 28-residue sequence and specified N-terminal acetylation. Distinguish thymosin alpha-1 from thymosin beta peptides and thymic extracts. A purity chromatogram does not establish clinical immune effects or equivalence with a medicinal study preparation.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is thymalfasin related to thymosin alpha-1?",
+        a: "Thymalfasin is the name used for the synthetic form of thymosin alpha-1.",
+      },
+      {
+        q: "Is it the same as TB-500?",
+        a: "No. Thymosin alpha-1 and thymosin beta-related peptides are different molecules.",
+      },
+      {
+        q: "Has it been studied in humans?",
+        a: "Yes. Research includes randomised trials in specific disease settings.",
+      },
+      {
+        q: "Did the largest sepsis trial establish a mortality benefit?",
+        a: "The cited TESTS trial found no clear evidence of a reduction in 28-day mortality.",
+      },
+      {
+        q: "Does immune modulation mean stronger immunity for everyone?",
+        a: "No. Effects depend on the disease context and the outcome measured.",
+      },
+      {
+        q: "Do intensive-care studies prove everyday infection prevention?",
+        a: "No. That is a different clinical question requiring its own evidence.",
+      },
+      {
+        q: "Where can I find Thymosin Alpha-1 research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
     status: "published",
     author_name: null,
     published_at: "2026-10-08T00:00:00.000Z",

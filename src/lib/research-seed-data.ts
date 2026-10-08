@@ -536,9 +536,9 @@ This page summarises scientific evidence and does not provide instructions for p
       },
     ],
     related: [
-      { label: 'SLU-PP-332' },
-      { label: 'SS-31' },
-      { label: 'NAD+' },
+      { label: 'SLU-PP-332', slug: 'slu-pp-332', kind: 'research' },
+      { label: 'SS-31', slug: 'ss-31', kind: 'research' },
+      { label: 'NAD+', slug: 'nad-plus', kind: 'research' },
     ],
     status: 'published',
     author_name: null,
@@ -962,11 +962,13 @@ This page summarises scientific evidence and does not provide instructions for p
       },
     ],
     related: [
-      { label: 'Ipamorelin' },
+      { label: 'Ipamorelin', slug: 'ipamorelin', kind: 'research' },
       {
         label: 'CJC-1295 No DAC + Ipamorelin Blend',
         slug: 'cjc-1295-no-dac-ipamorelin',
+        kind: 'research',
       },
+      { label: 'CJC-1295 No DAC', slug: 'cjc-1295-no-dac', kind: 'research' },
     ],
     status: 'published',
     author_name: null,
@@ -1111,6 +1113,7 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
     ],
     related: [
       { label: 'Ipamorelin', slug: 'ipamorelin', kind: 'research' },
+      { label: 'CJC-1295 No DAC', slug: 'cjc-1295-no-dac', kind: 'research' },
       { label: 'Tesamorelin', slug: 'tesamorelin', kind: 'research' },
     ],
     status: 'published',

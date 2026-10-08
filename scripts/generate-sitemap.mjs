@@ -77,6 +77,15 @@ const DEFAULT_RESEARCH_SLUGS = [
   'pt-141',
   'ss-31',
   'semax',
+  '5-amino-1mq',
+  'aod-9604',
+  'thymosin-alpha-1',
+  'epitalon',
+  'ara-290',
+  'cagrilintide',
+  'cjc-1295-no-dac',
+  'cjc-1295-dac',
+  'slu-pp-332',
 ];
 
 async function fetchPublishedResearchSlugs() {
@@ -95,6 +104,7 @@ async function fetchPublishedResearchSlugs() {
     const rows = await res.json();
     if (!Array.isArray(rows) || rows.length === 0) return DEFAULT_RESEARCH_SLUGS;
     const fromDb = rows.map((r) => String(r.slug || '').trim()).filter(Boolean);
+    // Keep seed defaults even when the live table only has a subset published yet.
     return [...new Set([...DEFAULT_RESEARCH_SLUGS, ...fromDb])];
   } catch {
     return DEFAULT_RESEARCH_SLUGS;

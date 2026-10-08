@@ -25,6 +25,15 @@ const PRODUCT_SLUG_BY_RESEARCH = {
   ipamorelin: 'ipamorelin',
   'ss-31': 'ss-31',
   glow: 'glow',
+  '5-amino-1mq': '5-amino-1mq',
+  'aod-9604': 'aod-9604',
+  'thymosin-alpha-1': 'thymosin-aplha-1', // storefront slug spelling
+  epitalon: 'epitalon',
+  'ara-290': 'ara-290',
+  cagrilintide: 'cagrilintide',
+  'cjc-1295-no-dac': 'cjc-1295-no-dac',
+  'cjc-1295-dac': 'cjc-1295-dac',
+  'slu-pp-332': 'slu-pp-332',
 };
 
 function decode(text) {
