@@ -32,7 +32,9 @@ function envVar(name, fallback) {
   return fallback;
 }
 
-// Always peplab.ai for this storefront repo.
+// Always peplab.com.au for this repo. `prebuild` regenerates sitemap.xml on every
+// deploy — reading VITE_SITE_URL previously rewrote live URLs to peplab.ai when
+// that env var was mis-set on Vercel (shop handoff uses VITE_MAIN_APP_ORIGIN).
 const SITE_URL = 'https://peplab.ai';
 
 const STATIC_ROUTES = [
@@ -86,6 +88,21 @@ const DEFAULT_RESEARCH_SLUGS = [
   'cjc-1295-no-dac',
   'cjc-1295-dac',
   'slu-pp-332',
+  'adamax',
+  'foxo4-dri',
+  'dihexa',
+  'sermorelin',
+  'ghrp-2',
+  'melatonin',
+  'pnc-27',
+  'ghrp-6',
+  'vip',
+  'adalank',
+  'cartalax',
+  'cerebrolysin',
+  'igf-1-des',
+  'll-37',
+  'p21',
 ];
 
 async function fetchPublishedResearchSlugs() {

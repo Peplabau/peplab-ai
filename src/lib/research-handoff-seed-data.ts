@@ -147,6 +147,302 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
     published_at: "2026-10-08T00:00:00.000Z",
   },
   {
+    slug: "adalank",
+    name: "ADALANK",
+    category: "Peptide Analogues / Neuroscience Research",
+    product_slug: "adalank",
+    card_title: "What Is ADALANK?",
+    card_description: "ADALANK is a name used for a Selank-related research material.",
+    seo_title: "ADALANK Research Overview | PEPLAB",
+    seo_description: "Explore ADALANK research, Selank-related identity questions, direct evidence gaps, related scientific studies, FAQs and analytical testing considerations.",
+    eyebrow: "Peptide Analogues / Neuroscience Research",
+    h1: "ADALANK Research Overview",
+    subtitle: "Selank-Related Identity and Research Evidence",
+    intro: `ADALANK is a name used for a Selank-related research material. Its exact chemical identity must be confirmed before claims about activity, stability or brain exposure can be assessed. This page separates related Selank research from evidence specific to ADALANK.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is ADALANK?",
+    what_is_body: "A research name alone does not identify every amino-acid residue or chemical modification. Descriptions of ADALANK are not consistent enough to treat it automatically as Selank, an acetylated Selank derivative or an adamantane-modified molecule. The supplier specification and analytical findings must establish the actual structure.",
+    feature_rows: [
+      {
+        feature: "Research name",
+        details: "ADALANK",
+      },
+      {
+        feature: "Naming context",
+        details: "Selank-related research material",
+      },
+      {
+        feature: "Identity requirement",
+        details: "Full sequence and all modifications",
+      },
+      {
+        feature: "Related research area",
+        details: "Neurotransmission and anxiety-related biology",
+      },
+      {
+        feature: "Direct evidence",
+        details: "No controlled ADALANK efficacy trial identified in reviewed sources",
+      },
+      {
+        feature: "Key distinction",
+        details: "Selank findings do not validate an unspecified analogue",
+      },
+    ],
+    mechanism_heading: "How Does ADALANK Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Proposed Analogue Rationale",
+        body: "A modification may alter peptide breakdown, distribution or binding. None of these changes can be inferred reliably from a product name.",
+      },
+      {
+        title: "Related Selank Biology",
+        body: "Selank has been investigated in neurotransmission experiments, including GABA-related gene-expression research. These studies concern the tested Selank molecule and do not establish an ADALANK mechanism.",
+      },
+      {
+        title: "Stability and Clinical Effects",
+        body: "A stability measurement in solution, exposure in the body and an improvement in symptoms are different outcomes. Each requires evidence for the specified molecule.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "ADALANK Research Findings",
+    findings_sections: [
+      {
+        title: "Selank Neurotransmission Study",
+        body: "A 2016 study investigated changes in neurotransmission-related gene expression in rat brain after Selank exposure. The work provides a mechanistic research context for Selank. It should not be presented as direct evidence that ADALANK changes GABA signalling or produces calmness.",
+        link_label: "Read the related Selank study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/26924987/",
+      },
+      {
+        title: "Selank Human Research",
+        body: "A 2008 clinical study examined Selank in people described as having generalised anxiety disorder or neurasthenia. It studied Selank, not a chemically verified ADALANK preparation. Its clinical findings cannot establish equivalence between the two names.",
+        link_label: "Read the Selank clinical publication",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/18454096/",
+      },
+      {
+        title: "Direct ADALANK Evidence",
+        body: `No controlled human efficacy study specific to a chemically defined ADALANK preparation was identified in the sources reviewed here. This is a statement about the reviewed evidence, not proof that the compound has never been synthesised or investigated under another name.
+
+Search the ADALANK literature.`,
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Identity",
+        investigated: "Sequence, modifications and structure",
+        distinction: "A name is insufficient chemical evidence",
+      },
+      {
+        area: "Related studies",
+        investigated: "Selank experiments and clinical reports",
+        distinction: "The tested compound must be identified",
+      },
+      {
+        area: "Analogue performance",
+        investigated: "Stability, exposure and outcomes",
+        distinction: "Requires direct comparative measurements",
+      },
+    ],
+    safety_body: `The reviewed sources do not establish ADALANK’s human safety, interaction profile or long-term effects. Claims that it is non-sedating, non-addictive or more effective than Selank require direct evidence. Limited adverse-event reporting should not be interpreted as proof that adverse effects do not occur.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding ADALANK Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Require the complete structure, including N- and C-terminal chemistry and any non-peptide attachment. Confirm the location and identity of modifications using appropriate complementary methods; intact mass alone may not resolve positional isomers. Quantitative content should refer to the identified compound.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is ADALANK the same as Selank?",
+        a: "That should not be assumed. Confirm the exact structure of the material.",
+      },
+      {
+        q: "Is ADALANK necessarily N-acetyl Selank?",
+        a: "The name alone is insufficient to establish that identity.",
+      },
+      {
+        q: "Does the name prove an adamantane modification?",
+        a: "No. Any attachment must be specified and analytically supported.",
+      },
+      {
+        q: "Do Selank trials establish ADALANK efficacy?",
+        a: "No. An analogue requires its own evidence.",
+      },
+      {
+        q: "Is a longer duration of action established here?",
+        a: "No. Direct pharmacokinetic and comparative studies would be needed.",
+      },
+      {
+        q: "Does sparse research mean the material cannot exist?",
+        a: "No. It means the claims cannot be established from the sources reviewed for this page.",
+      },
+      {
+        q: "Where can I find ADALANK research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "adamax",
+    name: "ADAMAX",
+    category: "Peptide Analogues / Neuroscience Research",
+    product_slug: "adamax",
+    card_title: "What Is ADAMAX?",
+    card_description: "ADAMAX is a name used for a Semax-related research peptide.",
+    seo_title: "ADAMAX Research Overview | PEPLAB",
+    seo_description: "Explore ADAMAX research, its relationship to Semax, molecular identity questions, evidence limitations, scientific references and analytical testing.",
+    eyebrow: "Peptide Analogues / Neuroscience Research",
+    h1: "ADAMAX Research Overview",
+    subtitle: "Semax-Related Peptide Identity and Evidence",
+    intro: `ADAMAX is a name used for a Semax-related research peptide. Understanding its exact chemical identity is essential before interpreting claims about cognition or neurological activity. Evidence about Semax does not automatically establish the effects of a modified analogue.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is ADAMAX?",
+    what_is_body: "Public scientific and technical information on ADAMAX is limited. An official Medsafe technical paper lists Adamax among ACTH-related analogues alongside Semax. That classification provides naming context; it does not establish a verified structure, mechanism or clinical benefit for a separately supplied sample.",
+    feature_rows: [
+      {
+        feature: "Research name",
+        details: "ADAMAX",
+      },
+      {
+        feature: "Identity context",
+        details: "ACTH/Semax-related analogue",
+      },
+      {
+        feature: "Compound type",
+        details: "Research peptide analogue; exact specification matters",
+      },
+      {
+        feature: "Research interest",
+        details: "Neurobiological signalling",
+      },
+      {
+        feature: "Evidence distinction",
+        details: "Direct ADAMAX evidence versus related Semax studies",
+      },
+      {
+        feature: "Key identity requirement",
+        details: "Sequence and all chemical modifications",
+      },
+    ],
+    mechanism_heading: "How Does ADAMAX Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Analogue Design",
+        body: "Modifying a peptide may change stability, receptor interactions or distribution. The direction and size of those changes must be measured for the actual molecule.",
+      },
+      {
+        title: "Related Neurobiological Research",
+        body: "Semax has been studied in animal models involving neurotrophic signalling. These findings provide a related research context, not a demonstrated ADAMAX mechanism.",
+      },
+      {
+        title: "Exposure and Outcomes",
+        body: "Claims about brain delivery, duration of action and cognitive performance require different experiments. A structural modification alone does not establish improved brain penetration or memory.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "ADAMAX Research Findings",
+    findings_sections: [
+      {
+        title: "Name and Classification",
+        body: "The Medsafe technical paper identifies Adamax within a discussion of ACTH analogues. It is a public technical reference rather than a clinical trial. It should not be read as evidence of efficacy or as a complete chemical specification.",
+        link_label: "Read the technical reference",
+        link_url: "https://www.medsafe.govt.nz/profs/class/Agendas/Agen74/5.7Peptides.pdf",
+      },
+      {
+        title: "Related Semax Study",
+        body: "A 2006 rat study investigated Semax binding and brain-derived neurotrophic factor, or BDNF, in the basal forebrain. The tested compound was Semax. Its findings cannot establish that ADAMAX produces the same response or improves human cognition.",
+        link_label: "Read the Semax study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/16635254/",
+      },
+      {
+        title: "Direct Evidence Gaps",
+        body: `No controlled human efficacy trial of a chemically verified ADAMAX preparation was identified in the sources reviewed for this page. A literature search should distinguish this peptide name from unrelated uses of Adamax, including the computing algorithm.
+
+Search ADAMAX peptide literature.`,
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Identity",
+        investigated: "Name, sequence and modifications",
+        distinction: "Naming context is not a complete specification",
+      },
+      {
+        area: "Related biology",
+        investigated: "Semax experiments in animals",
+        distinction: "Different analogues require direct evidence",
+      },
+      {
+        area: "Human outcomes",
+        investigated: "Cognition, exposure and tolerability",
+        distinction: "The cited sources do not establish efficacy",
+      },
+    ],
+    safety_body: `The sources discussed here do not define a reliable human safety profile, interaction profile or long-term outcome for ADAMAX. Sparse reporting is not evidence that adverse effects are absent. Safety or pharmacokinetic claims for Semax should not be copied to an analogue without supporting data.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding ADAMAX Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Obtain the complete sequence, terminal chemistry and any non-peptide attachments. Intact mass alone may not distinguish positional isomers or confirm the location of a modification. Use appropriate structural methods and quantify the identified compound against a suitable reference.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is ADAMAX the same as Semax?",
+        a: "It is described as related to Semax, but the names should not be treated as chemically interchangeable.",
+      },
+      {
+        q: "Is its exact structure established by the name?",
+        a: "No. A full product specification and analytical evidence are needed.",
+      },
+      {
+        q: "Does Semax research prove ADAMAX works?",
+        a: "No. A modified molecule requires direct investigation.",
+      },
+      {
+        q: "Is a longer half-life established here?",
+        a: "No. That would require pharmacokinetic measurements of the specified molecule.",
+      },
+      {
+        q: "Does this page establish improved memory?",
+        a: "No. The reviewed sources do not establish a human cognitive benefit.",
+      },
+      {
+        q: "Why can ADAMAX searches be confusing?",
+        a: "The name is also used for an unrelated computing algorithm. Add peptide and check each source.",
+      },
+      {
+        q: "Where can I find ADAMAX research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
     slug: "aod-9604",
     name: "AOD-9604",
     category: "Metabolic Peptides / Lipid Research",
@@ -1035,6 +1331,450 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
     published_at: "2026-10-08T00:00:00.000Z",
   },
   {
+    slug: "cartalax",
+    name: "Cartalax",
+    category: "Short Peptides / Cell and Cartilage Research",
+    product_slug: "cartalax",
+    card_title: "What Is Cartalax?",
+    card_description: "Cartalax is a name associated with the synthetic tripeptide alanine–glutamate–aspartate, abbreviated AED.",
+    seo_title: "Cartalax Research Overview | PEPLAB",
+    seo_description: "Explore Cartalax research on the AED tripeptide, chondrocyte and fibroblast models, with evidence limitations, scientific references and COA guidance.",
+    eyebrow: "Short Peptides / Cell and Cartilage Research",
+    h1: "Cartalax Research Overview",
+    subtitle: "AED Tripeptide and Cellular Ageing Research",
+    intro: `Cartalax is a name associated with the synthetic tripeptide alanine–glutamate–aspartate, abbreviated AED. Research has examined cellular markers in cartilage-related and other laboratory models. Changes in cultured cells do not establish cartilage regeneration or pain relief in people.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is Cartalax?",
+    what_is_body: "The sequence Ala–Glu–Asp identifies a three-residue peptide. Publications may use AED or the full sequence rather than the name Cartalax. This peptide should be distinguished from multi-peptide cartilage extracts and from the related four-residue sequence Ala–Glu–Asp–Gly.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "Cartalax",
+      },
+      {
+        feature: "Sequence",
+        details: "Ala–Glu–Asp; AED",
+      },
+      {
+        feature: "Compound type",
+        details: "Synthetic tripeptide",
+      },
+      {
+        feature: "Research areas",
+        details: "Chondrocyte biology and cellular ageing markers",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Cell-culture studies and a patent disclosure",
+      },
+      {
+        feature: "Important distinction",
+        details: "Defined AED peptide versus tissue-derived peptide mixtures",
+      },
+    ],
+    mechanism_heading: "How Does Cartalax Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Cellular Marker Research",
+        body: "Experiments have measured proteins associated with proliferation, cellular stress and inflammatory signalling. A change in a marker does not itself establish restored tissue function.",
+      },
+      {
+        title: "Chondrocyte Biology",
+        body: "Chondrocytes are cells that maintain cartilage. Studies of their ageing-associated secretory behaviour address a mechanism relevant to cartilage biology, while joint structure and pain are separate outcomes.",
+      },
+      {
+        title: "Mechanistic Uncertainty",
+        body: "The cited work does not establish one clinically validated receptor mechanism for Cartalax. Broad descriptions such as bioregulation should not substitute for a demonstrated molecular interaction.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "Cartalax Research Findings",
+    findings_sections: [
+      {
+        title: "Chondrocyte Ageing Study",
+        body: "A 2023 publication compared AED with a cartilage polypeptide complex in chondrocyte experiments. It reported changes in senescence-associated proteins and inflammatory markers. This was cell-model evidence, not a trial demonstrating joint repair in patients.",
+        link_label: "Read the chondrocyte study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/37356100/",
+      },
+      {
+        title: "Human Skin Fibroblast Study",
+        body: "A 2020 study investigated AED and another peptide in human skin fibroblasts undergoing replicative ageing. It reported changes involving sirtuins and collagen I. Human cells grown in culture are not a clinical skincare or longevity trial.",
+        link_label: "Read the fibroblast study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/33231794/",
+      },
+      {
+        title: "Patent and Research Context",
+        body: "A patent disclosure describes Ala–Glu–Asp, cartilage-explant experiments and clinical-use examples. A patent is a primary technical disclosure, but its examples do not substitute for independently replicated, peer-reviewed controlled clinical evidence.",
+        link_label: "Read the patent disclosure",
+        link_url: "https://patents.google.com/patent/WO2007139433A1/en",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Cartilage-related cells",
+        investigated: "Senescence-associated markers",
+        distinction: "Not demonstrated cartilage regrowth",
+      },
+      {
+        area: "Skin fibroblasts",
+        investigated: "Protein expression during replicative ageing",
+        distinction: "Not visible skin improvement in people",
+      },
+      {
+        area: "Patent examples",
+        investigated: "Proposed uses and experimental descriptions",
+        distinction: "A patent is not clinical validation",
+      },
+    ],
+    safety_body: `The sources discussed here do not establish reliable human joint benefits or comprehensive long-term safety. A cellular ageing model cannot define a human longevity effect. Evidence for a cartilage extract or another short peptide should not be transferred to AED without an appropriate comparison.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding Cartalax Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the Ala–Glu–Asp sequence, amino-acid configuration and terminal chemistry. Distinguish AED from AEDG and from cartilage polypeptide complexes. A total peptide assay on a mixture cannot establish the quantity or identity of one specified tripeptide.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "What is Cartalax?",
+        a: "A name associated with the synthetic tripeptide Ala–Glu–Asp, or AED.",
+      },
+      {
+        q: "How many amino acids does AED contain?",
+        a: "Three: alanine, glutamate and aspartate.",
+      },
+      {
+        q: "Is Cartalax the same as Epitalon?",
+        a: "No. AED and the four-residue AEDG sequence are different molecules.",
+      },
+      {
+        q: "Have cartilage-related cells been studied?",
+        a: "Yes. The cited 2023 paper reports chondrocyte experiments.",
+      },
+      {
+        q: "Does this establish cartilage regrowth in people?",
+        a: "No. Cell markers do not demonstrate regenerated human joint cartilage.",
+      },
+      {
+        q: "Does a patent prove clinical effectiveness?",
+        a: "No. A patent disclosure and a well-controlled clinical trial serve different purposes.",
+      },
+      {
+        q: "Where can I find Cartalax research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "cerebrolysin",
+    name: "Cerebrolysin",
+    category: "Peptide Mixtures / Neurological Research",
+    product_slug: "cerebrolysin",
+    card_title: "What Is Cerebrolysin?",
+    card_description: "Cerebrolysin is a porcine brain-derived preparation containing peptides and amino acids.",
+    seo_title: "Cerebrolysin Research Overview | PEPLAB",
+    seo_description: "Explore Cerebrolysin research on neurological recovery, including stroke trials, mixed findings, formulation identity, FAQs and analytical testing.",
+    eyebrow: "Peptide Mixtures / Neurological Research",
+    h1: "Cerebrolysin Research Overview",
+    subtitle: "Peptide Mixture and Stroke Recovery Research",
+    intro: `Cerebrolysin is a porcine brain-derived preparation containing peptides and amino acids. It is a mixture rather than a single peptide with one sequence or molecular weight. Clinical research has examined neurological recovery, including after stroke, with results that vary across trials and outcomes.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is Cerebrolysin?",
+    what_is_body: "Cerebrolysin is the name of a defined manufactured preparation associated with EVER Neuro Pharma. A separately supplied powder or peptide mixture carrying the same name cannot be assumed to have the same composition, formulation or clinical performance. Manufacturer documentation is relevant to identity, while clinical efficacy requires study evidence.",
+    feature_rows: [
+      {
+        feature: "Research name",
+        details: "Cerebrolysin",
+      },
+      {
+        feature: "Material type",
+        details: "Mixture of peptides and amino acids",
+      },
+      {
+        feature: "Source of studied preparation",
+        details: "Porcine brain-derived material",
+      },
+      {
+        feature: "Research areas",
+        details: "Neurological function and recovery after brain injury",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Human stroke trials",
+      },
+      {
+        feature: "Key identity issue",
+        details: "A mixture has no single defining peptide sequence",
+      },
+    ],
+    mechanism_heading: "How Does Cerebrolysin Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Multiple Biological Pathways",
+        body: "The preparation has been investigated for neurotrophic and neuroprotective effects. These terms describe research hypotheses about cellular support and injury responses, not a complete account of every mixture component.",
+      },
+      {
+        title: "Recovery Outcomes",
+        body: "Researchers measure motor function, disability and other clinical outcomes. An improvement in one test should not be reported as complete neurological recovery.",
+      },
+      {
+        title: "Rehabilitation Context",
+        body: "Concomitant rehabilitation, baseline stroke severity and timing of enrolment influence results. The effect of the study preparation must be interpreted within that care setting.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "Cerebrolysin Research Findings",
+    findings_sections: [
+      {
+        title: "Manufactured Preparation",
+        body: "The manufacturer’s information describes Cerebrolysin as a concentrate supplied in an aqueous formulation. This identifies the referenced preparation; manufacturer descriptions of benefit should remain distinct from independent assessment of trial results.",
+        link_label: "Read the manufacturer’s preparation information",
+        link_url: "https://www.cerebrolysin.com/cerebrolysin/about-cerebrolysin",
+      },
+      {
+        title: "CARS Recovery Trial",
+        body: "The CARS randomised trial, published in 2016, investigated Cerebrolysin alongside rehabilitation after stroke. It reported improvement in the Action Research Arm Test and related outcomes compared with placebo. This supports a finding within that study, not a general claim of brain regeneration.",
+        link_label: "Read the CARS trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/26564102/",
+      },
+      {
+        title: "CASTA Acute Stroke Trial",
+        body: "The 2012 CASTA report included 1,070 participants. Its confirmatory combined outcome showed no significant difference between treatment groups. A favourable trend in a more severely affected subgroup required further confirmation. This result should be considered alongside the positive recovery study.",
+        link_label: "Read the CASTA trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/22282884/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Composition",
+        investigated: "A manufactured peptide and amino-acid mixture",
+        distinction: "Not a single purified peptide",
+      },
+      {
+        area: "Motor recovery",
+        investigated: "Function during structured rehabilitation",
+        distinction: "Specific endpoint and care context",
+      },
+      {
+        area: "Acute stroke outcomes",
+        investigated: "Combined disability and neurological measures",
+        distinction: "A larger trial did not meet its confirmatory endpoint",
+      },
+    ],
+    safety_body: `Trial results do not establish universal effectiveness or absence of adverse effects. The manufacturer’s information identifies hypersensitivity, epilepsy and severe renal impairment as important safety considerations. Study safety data concern the actual clinical preparation and cannot establish safety for a differently sourced mixture.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding Cerebrolysin Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+For a complex mixture, assess provenance, a suitable compositional fingerprint, peptide-size distribution and quantitative composition. One mass peak or a single purity percentage cannot establish that the entire mixture matches the clinical preparation. Do not assign a single molecular formula, sequence or molecular weight to Cerebrolysin as a whole.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is Cerebrolysin one peptide?",
+        a: "No. It is a preparation containing multiple peptides and amino acids.",
+      },
+      {
+        q: "What is the source of the studied preparation?",
+        a: "It is derived from porcine brain material.",
+      },
+      {
+        q: "Can one molecular weight describe the whole mixture?",
+        a: "No. A mixture contains components with different molecular properties.",
+      },
+      {
+        q: "Have human trials been conducted?",
+        a: "Yes. The references here include randomised stroke trials.",
+      },
+      {
+        q: "Have all trials shown benefit?",
+        a: "No. CARS reported positive recovery findings, while CASTA did not meet its confirmatory combined endpoint.",
+      },
+      {
+        q: "Is another material equivalent because it shares the name?",
+        a: "No. Composition, manufacturing and formulation must be established separately.",
+      },
+      {
+        q: "Where can I find Cerebrolysin research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "dihexa",
+    name: "Dihexa",
+    category: "Peptidomimetics / Neuroscience Research",
+    product_slug: "dihexa",
+    card_title: "What Is Dihexa?",
+    card_description: "Dihexa is an angiotensin IV-derived peptidomimetic discussed in neuroscience research.",
+    seo_title: "Dihexa Research Overview | PEPLAB",
+    seo_description: "Explore Dihexa research, its angiotensin-derived identity, proposed HGF–c-Met mechanism, publication notices, evidence limitations and testing.",
+    eyebrow: "Peptidomimetics / Neuroscience Research",
+    h1: "Dihexa Research Overview",
+    subtitle: "Angiotensin-Derived Compound and Research Integrity",
+    intro: `Dihexa is an angiotensin IV-derived peptidomimetic discussed in neuroscience research. Its evidence requires particular care: a foundational paper carries a notice of concern, and a subsequent mechanism paper was retracted. These notices materially limit how the reported findings should be interpreted.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is Dihexa?",
+    what_is_body: "Dihexa is a chemically modified compound developed from an angiotensin-related research programme. It is distinct from native angiotensin IV and from hepatocyte growth factor, or HGF. Historical reports explored learning-related behaviour and synapse-associated measurements in experimental systems.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "Dihexa",
+      },
+      {
+        feature: "Compound type",
+        details: "Angiotensin IV-derived peptidomimetic",
+      },
+      {
+        feature: "Historical research areas",
+        details: "Neuronal signalling and cognition models",
+      },
+      {
+        feature: "Proposed pathway",
+        details: "HGF–c-Met signalling; evidence is contested",
+      },
+      {
+        feature: "Evidence setting",
+        details: "Predominantly preclinical reports",
+      },
+      {
+        feature: "Critical qualification",
+        details: "Notice of concern and retraction affect key papers",
+      },
+    ],
+    mechanism_heading: "How Does Dihexa Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Historical Mechanistic Proposal",
+        body: "Researchers proposed that Dihexa-related effects involved the HGF–c-Met signalling system. The specific 2014 paper used to support this mechanism was later retracted, so it cannot serve as reliable confirmation.",
+      },
+      {
+        title: "Laboratory Endpoints",
+        body: "Synaptic measurements and animal task performance answer limited experimental questions. They do not establish improved human intelligence, memory or dementia outcomes.",
+      },
+      {
+        title: "Independent Validation",
+        body: "A persuasive mechanism requires reproducible experiments using clearly characterised material. Publication-integrity notices make independent confirmation particularly important.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "Dihexa Research Findings",
+    findings_sections: [
+      {
+        title: "2013 Exploratory Report",
+        body: "",
+        link_label: "Read the original report with its publication history",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/23055539/",
+      },
+      {
+        title: "Retracted Mechanism Paper",
+        body: "The 2014 paper linking procognitive and synaptogenic effects to HGF–c-Met activation was retracted in 2025. It should not be used as affirmative evidence that Dihexa reliably activates a beneficial pathway or produces a clinical effect.",
+        link_label: "Read the retraction notice",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/40312093/",
+      },
+      {
+        title: "Clinical Evidence Distinction",
+        body: `The cited publications do not establish human cognitive efficacy or long-term safety. A research hypothesis, a historical animal result and a validated human benefit are different levels of evidence. Readers should inspect publication notices before relying on frequently repeated online claims.
+
+Review the affected mechanism record.`,
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Historical experiments",
+        investigated: "Cell and animal outcomes",
+        distinction: "A foundational report carries a notice of concern",
+      },
+      {
+        area: "Proposed mechanism",
+        investigated: "HGF–c-Met involvement",
+        distinction: "The 2014 supporting paper was retracted",
+      },
+      {
+        area: "Human outcomes",
+        investigated: "Memory, function and safety",
+        distinction: "Not established by the cited reports",
+      },
+    ],
+    safety_body: `The reviewed evidence does not establish a dependable human safety profile or effective cognitive intervention. Uncertain evidence cannot support claims that Dihexa is side-effect-free, prevents dementia or permanently improves cognition. Quantified human risks should not be invented from a proposed pathway alone.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding Dihexa Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the complete chemical structure, stereochemistry, terminal modifications and quantitative content. Because Dihexa is a modified peptidomimetic, analytical identification should match the exact structure rather than a broad angiotensin-related label. Chemical quality does not resolve weaknesses in efficacy evidence.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is Dihexa the same as angiotensin IV?",
+        a: "No. It is a chemically modified angiotensin IV-derived compound.",
+      },
+      {
+        q: "Is the HGF–c-Met mechanism established by the 2014 paper?",
+        a: "No. That paper was retracted in 2025.",
+      },
+      {
+        q: "Was the 2013 paper also retracted?",
+        a: "The record cited here carries a 2021 notice of concern. That is a different publication notice from a retraction.",
+      },
+      {
+        q: "Does this evidence prove better memory in people?",
+        a: "No. The cited research does not establish a human cognitive benefit.",
+      },
+      {
+        q: "Can a COA validate a clinical claim?",
+        a: "No. A COA describes tested sample properties, not clinical efficacy.",
+      },
+      {
+        q: "Why are publication notices included?",
+        a: "They change how much confidence readers can place in the underlying findings.",
+      },
+      {
+        q: "Where can I find Dihexa research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
     slug: "epitalon",
     name: "Epitalon",
     category: "Cellular Ageing / Telomere Research",
@@ -1174,6 +1914,450 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
       },
       {
         q: "Where can I find Epitalon research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "foxo4-dri",
+    name: "FOXO4-DRI",
+    category: "Senescence / Cell Biology",
+    product_slug: "fox04-dri",
+    card_title: "What Is FOXO4-DRI?",
+    card_description: "FOXO4-DRI is an experimental peptide investigated for its effects on senescent cells.",
+    seo_title: "FOXO4-DRI Research Overview | PEPLAB",
+    seo_description: "Explore FOXO4-DRI research on senescent cells and FOXO4–p53 interactions, including mouse studies, evidence limitations, FAQs and analytical testing.",
+    eyebrow: "Senescence / Cell Biology",
+    h1: "FOXO4-DRI Research Overview",
+    subtitle: "Senescent Cell and FOXO4–p53 Research",
+    intro: `FOXO4-DRI is an experimental peptide investigated for its effects on senescent cells. Preclinical studies have examined the interaction between FOXO4 and p53 and whether disrupting that interaction changes cell survival. These studies do not establish age reversal in people.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is FOXO4-DRI?",
+    what_is_body: "The name contains the letter O: FOXO4-DRI. DRI refers to a D-retro-inverso peptide design, involving reversed sequence order and D-amino-acid chemistry. Researchers developed this approach to interfere with a protein interaction associated with the survival of some senescent cells.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "FOXO4-DRI",
+      },
+      {
+        feature: "Name clarification",
+        details: "FOXO4 uses the letter O, not zero",
+      },
+      {
+        feature: "Compound type",
+        details: "D-retro-inverso peptide",
+      },
+      {
+        feature: "Experimental target",
+        details: "FOXO4–p53 interaction",
+      },
+      {
+        feature: "Research areas",
+        details: "Cellular senescence and age-related tissue changes",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Cell experiments and mouse studies",
+      },
+    ],
+    mechanism_heading: "How Does FOXO4-DRI Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Cellular Senescence",
+        body: "Senescent cells have stopped dividing and may release signalling molecules that affect surrounding tissue. Their roles vary with tissue, timing and biological context.",
+      },
+      {
+        title: "FOXO4 and p53",
+        body: "The original research investigated how FOXO4 helps retain p53 in a cellular context associated with senescent-cell survival. Interfering with that interaction promoted apoptosis in the experimental systems.",
+      },
+      {
+        title: "Senolytic Research",
+        body: "Senolytic describes an approach intended to eliminate senescent cells. Selectivity observed in a model does not establish universal selectivity or safety in an intact human organism.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "FOXO4-DRI Research Findings",
+    findings_sections: [
+      {
+        title: "Foundational Cell and Mouse Study",
+        body: "A 2017 Cell paper reported targeted apoptosis of senescent cells and changes in tissue-related outcomes in mouse models of ageing and chemotherapy-associated injury. It was a preclinical study, not a human longevity trial.",
+        link_label: "Read the original Cell study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/28340339/",
+      },
+      {
+        title: "Leydig Cell and Hormone Research",
+        body: "A 2020 study examined senescence-related changes and testosterone secretion in aged mice. The findings concerned an experimental testicular environment and cannot establish testosterone-restoration benefits in people.",
+        link_label: "Read the aged-mouse study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/31959736/",
+      },
+      {
+        title: "Spermatogenesis Research",
+        body: "A 2024 study investigated Leydig-cell secretory signals and spermatogenesis in aged mice. Changes in these models provide a research hypothesis; human fertility, live-birth outcomes and long-term safety require separate evidence.",
+        link_label: "Read the spermatogenesis study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/39025385/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Cell survival",
+        investigated: "Apoptosis in senescent-cell models",
+        distinction: "Selectivity depends on the model",
+      },
+      {
+        area: "Ageing models",
+        investigated: "Tissue and functional measurements in mice",
+        distinction: "Not evidence of human age reversal",
+      },
+      {
+        area: "Reproductive biology",
+        investigated: "Testicular signals and spermatogenesis",
+        distinction: "Not a demonstrated human fertility treatment",
+      },
+    ],
+    safety_body: `The cited work does not establish comprehensive human safety, an effective human regimen or improved human lifespan. Eliminating cells can have consequences that depend on tissue and timing. Short experiments cannot resolve all effects on tissue maintenance, recovery or longer-term function.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding FOXO4-DRI Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the full sequence, D-amino-acid configuration, terminal modifications and any delivery-related peptide segment. Routine mass measurement cannot distinguish D and L stereochemistry by itself. A purity percentage does not demonstrate senolytic activity or selective cell targeting.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is FOX04-DRI the correct spelling?",
+        a: "The scientific spelling is FOXO4-DRI, with the letter O.",
+      },
+      {
+        q: "What does DRI mean?",
+        a: "D-retro-inverso, a peptide design involving reversed sequence order and D-amino acids.",
+      },
+      {
+        q: "What is a senolytic?",
+        a: "An intervention investigated for preferentially eliminating senescent cells.",
+      },
+      {
+        q: "Has this page established human age reversal?",
+        a: "No. The cited findings come from preclinical experiments.",
+      },
+      {
+        q: "Do mouse testosterone findings establish a human benefit?",
+        a: "No. Human endocrine and clinical outcomes need direct investigation.",
+      },
+      {
+        q: "Does chemical purity prove selectivity?",
+        a: "No. Identity, purity and biological selectivity are separate questions.",
+      },
+      {
+        q: "Where can I find FOXO4-DRI research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "ghrp-2",
+    name: "GHRP-2",
+    category: "Growth Hormone Secretagogues / Endocrine Research",
+    product_slug: "ghrp-2",
+    card_title: "What Is GHRP-2?",
+    card_description: "GHRP-2 is a synthetic growth hormone-releasing peptide studied in human endocrine experiments.",
+    seo_title: "GHRP-2 Research Overview | PEPLAB",
+    seo_description: "Explore GHRP-2 research on growth hormone secretion, appetite and endocrine responses, with human study findings, evidence limits and COA guidance.",
+    eyebrow: "Growth Hormone Secretagogues / Endocrine Research",
+    h1: "GHRP-2 Research Overview",
+    subtitle: "Growth Hormone Release and Appetite Research",
+    intro: `GHRP-2 is a synthetic growth hormone-releasing peptide studied in human endocrine experiments. Researchers have investigated growth hormone secretion, food intake and other hormone responses. A measurable hormonal effect does not by itself establish improvements in strength, recovery or body composition.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is GHRP-2?",
+    what_is_body: "GHRP-2 is a hexapeptide, meaning it contains six amino-acid residues. It belongs to the growth hormone secretagogue family and acts through the ghrelin receptor pathway, commonly termed GHS-R1a. It is chemically distinct from GHRP-6 and from GHRH analogues such as sermorelin.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "GHRP-2",
+      },
+      {
+        feature: "Expanded name",
+        details: "Growth hormone-releasing peptide-2",
+      },
+      {
+        feature: "Compound type",
+        details: "Synthetic hexapeptide",
+      },
+      {
+        feature: "Receptor pathway",
+        details: "Ghrelin receptor / GHS-R1a",
+      },
+      {
+        feature: "Research areas",
+        details: "Hormone secretion and food intake",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Small human physiological studies",
+      },
+    ],
+    mechanism_heading: "How Does GHRP-2 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Growth Hormone Secretion",
+        body: "Activation of the secretagogue pathway can increase growth hormone release. The pattern and magnitude of the response depend on participant characteristics and the experimental protocol.",
+      },
+      {
+        title: "Appetite Signalling",
+        body: "Ghrelin-related pathways also participate in appetite regulation. GHRP-2 has been directly investigated for effects on food intake, so claims that it has no appetite effect are not supported by the cited research.",
+      },
+      {
+        title: "Other Endocrine Responses",
+        body: "Investigators have measured prolactin, ACTH and cortisol alongside growth hormone. A compound’s main research target does not mean every other hormone remains unchanged.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "GHRP-2 Research Findings",
+    findings_sections: [
+      {
+        title: "Acute Endocrine Responses",
+        body: "A 1997 human study compared GHRP-2 and hexarelin while measuring several pituitary and adrenal hormones. It reported growth hormone stimulation with additional endocrine responses under the tested conditions. These were short-term physiological measurements.",
+        link_label: "Read the endocrine study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/9285939/",
+      },
+      {
+        title: "Food Intake in Healthy Men",
+        body: "A 2005 placebo-comparison experiment in seven lean men found increased food intake during GHRP-2 exposure. The small study supports an appetite-related effect in that setting, not a prediction of each individual’s hunger or longer-term weight change.",
+        link_label: "Read the food-intake study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/15699539/",
+      },
+      {
+        title: "Repeated Exposure",
+        body: "A 1998 study in nine healthy men examined responses over five days. Growth hormone responses attenuated, and the protocol did not produce an increase in IGF-1. This illustrates why an initial hormone peak should not be presented as a durable anabolic outcome.",
+        link_label: "Read the repeated-exposure study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/9820615/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Hormone release",
+        investigated: "Acute growth hormone response",
+        distinction: "Not a direct muscle-growth outcome",
+      },
+      {
+        area: "Appetite",
+        investigated: "Measured food intake",
+        distinction: "Small short-term study",
+      },
+      {
+        area: "Repeated exposure",
+        investigated: "Changing endocrine responses",
+        distinction: "Initial effects may not persist unchanged",
+      },
+    ],
+    safety_body: `The cited studies were small and short. They do not establish comprehensive long-term safety, predictable body-composition benefits or absence of endocrine effects beyond growth hormone. Appetite changes and other hormonal responses should be considered alongside the intended research outcome.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding GHRP-2 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the complete sequence, D/L amino-acid configuration and terminal chemistry. GHRP-2 and GHRP-6 should be identified separately rather than grouped under a generic secretagogue label. Quantify actual peptide content; a chromatographic percentage alone is not a measure of biological potency.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "What does GHRP-2 stand for?",
+        a: "Growth hormone-releasing peptide-2.",
+      },
+      {
+        q: "Is GHRP-2 a peptide?",
+        a: "Yes. It is a synthetic six-residue peptide.",
+      },
+      {
+        q: "Does GHRP-2 act like sermorelin?",
+        a: "They stimulate growth hormone through different receptor pathways.",
+      },
+      {
+        q: "Can GHRP-2 affect appetite?",
+        a: "Yes. Increased food intake was observed in the cited small human experiment.",
+      },
+      {
+        q: "Does it only affect growth hormone?",
+        a: "The cited endocrine research also examined responses involving other hormones.",
+      },
+      {
+        q: "Do these studies establish muscle gain?",
+        a: "No. Hormone measurements are not direct evidence of increased muscle or strength.",
+      },
+      {
+        q: "Where can I find GHRP-2 research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "ghrp-6",
+    name: "GHRP-6",
+    category: "Growth Hormone Secretagogues / Endocrine Research",
+    product_slug: "ghrp-6",
+    card_title: "What Is GHRP-6?",
+    card_description: "GHRP-6 is a synthetic peptide investigated for its effects on growth hormone secretion.",
+    seo_title: "GHRP-6 Research Overview | PEPLAB",
+    seo_description: "Explore GHRP-6 research on growth hormone release, pulsatility and sleep recordings, with human study findings, evidence limitations and testing guidance.",
+    eyebrow: "Growth Hormone Secretagogues / Endocrine Research",
+    h1: "GHRP-6 Research Overview",
+    subtitle: "Growth Hormone Pulsatility and Sleep Research",
+    intro: `GHRP-6 is a synthetic peptide investigated for its effects on growth hormone secretion. Human experiments have examined acute hormone release, repeated exposure and sleep-stage recordings. These findings describe physiological responses under study conditions rather than guaranteed recovery or muscle-building effects.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is GHRP-6?",
+    what_is_body: "GHRP-6 means growth hormone-releasing peptide-6. It is a six-amino-acid secretagogue associated with the ghrelin receptor pathway, GHS-R1a. It differs chemically from GHRP-2 and from GHRH receptor agonists.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "GHRP-6",
+      },
+      {
+        feature: "Expanded name",
+        details: "Growth hormone-releasing peptide-6",
+      },
+      {
+        feature: "Compound type",
+        details: "Synthetic hexapeptide",
+      },
+      {
+        feature: "Receptor pathway",
+        details: "Ghrelin receptor / GHS-R1a",
+      },
+      {
+        feature: "Research areas",
+        details: "Hormone secretion, pulsatility and sleep",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Small controlled human experiments",
+      },
+    ],
+    mechanism_heading: "How Does GHRP-6 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Secretagogue Signalling",
+        body: "GHRP-6 can stimulate growth hormone release through the secretagogue pathway. This pathway interacts with other controls of secretion, including GHRH signalling.",
+      },
+      {
+        title: "Hormone Pulses",
+        body: "Growth hormone is released in pulses. Sampling patterns and exposure duration influence how an experiment describes peak concentrations and overall secretion.",
+      },
+      {
+        title: "Sleep Measurements",
+        body: "Sleep-stage recordings assess defined aspects of sleep architecture. More time in one stage does not establish an overall improvement in restorative sleep or daily function.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "GHRP-6 Research Findings",
+    findings_sections: [
+      {
+        title: "Acute Human Hormone Study",
+        body: "A 1990 study in healthy men reported growth hormone release and interaction with GHRH. Prolactin and cortisol responses were also observed under some experimental conditions. These findings do not support describing GHRP-6 as affecting only growth hormone.",
+        link_label: "Read the acute hormone study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/2108187/",
+      },
+      {
+        title: "Pulsatility During Extended Exposure",
+        body: "A 1993 study investigated growth hormone pulsatility during a 34-hour infusion in nine healthy men. The design illustrates the importance of examining secretion over time rather than relying on a single peak. It was not a trial of long-term athletic performance.",
+        link_label: "Read the pulsatility study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/7903313/",
+      },
+      {
+        title: "Sleep-Stage Research",
+        body: "A 1995 study in healthy men examined nocturnal hormone secretion and sleep recordings. It reported an increase in stage 2 sleep. This should not be rewritten as proof of increased deep sleep or successful treatment of chronic insomnia.",
+        link_label: "Read the sleep study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/7617137/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Acute secretion",
+        investigated: "Growth hormone and other endocrine responses",
+        distinction: "Not selective to every desired outcome",
+      },
+      {
+        area: "Pulsatility",
+        investigated: "Hormone release over an extended sampling period",
+        distinction: "Not long-term performance evidence",
+      },
+      {
+        area: "Sleep recordings",
+        investigated: "Changes in scored sleep stages",
+        distinction: "Stage 2 is not synonymous with deep sleep",
+      },
+    ],
+    safety_body: `Small physiological studies do not define comprehensive long-term safety or establish benefits for bodybuilding, injury recovery or insomnia. Endocrine responses and study conditions should be reported alongside the primary findings. Results for GHRP-2 or other secretagogues cannot automatically fill gaps in GHRP-6 evidence.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding GHRP-6 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the sequence, stereochemistry and terminal amidation. Distinguish GHRP-6 from modified molecules such as D-Lys3-GHRP-6, which are used for different experimental purposes. Identity and quantitative content should be established for the actual sample.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is GHRP-6 a peptide?",
+        a: "Yes. It contains six amino-acid residues.",
+      },
+      {
+        q: "Is GHRP-6 the same as GHRP-2?",
+        a: "No. They are distinct secretagogue peptides.",
+      },
+      {
+        q: "Does GHRP-6 work through the GHRH receptor?",
+        a: "Its principal secretagogue pathway is associated with the ghrelin receptor, a different receptor system.",
+      },
+      {
+        q: "What does pulsatility mean?",
+        a: "Hormone secretion occurring in intermittent pulses rather than at a constant rate.",
+      },
+      {
+        q: "Does stage 2 sleep mean deep sleep?",
+        a: "No. Sleep stages are distinct, and a stage 2 finding should be described accurately.",
+      },
+      {
+        q: "Do these studies establish better recovery?",
+        a: "No. Recovery and physical performance require direct clinical measurements.",
+      },
+      {
+        q: "Where can I find GHRP-6 research papers?",
         a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
       },
     ],
@@ -1514,6 +2698,154 @@ Purity, sterility, endotoxin status and biological potency require their own evi
       {
         q: "Where can I find HCG research papers?",
         a: "Use the original-study links above. Search human chorionic gonadotropin or hCG on PubMed, and check the preparation, population and outcomes before applying a finding elsewhere.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "igf-1-des",
+    name: "IGF-1 DES",
+    category: "Growth Factors / Cell Signalling",
+    product_slug: "igf-1-des",
+    card_title: "What Is IGF-1 DES?",
+    card_description: "IGF-1 DES refers to des(1–3)IGF-I, a truncated form of insulin-like growth factor-1.",
+    seo_title: "IGF-1 DES Research Overview | PEPLAB",
+    seo_description: "Explore IGF-1 DES research on des(1–3)IGF-I, binding proteins and metabolic responses, with preclinical findings, evidence limits and testing guidance.",
+    eyebrow: "Growth Factors / Cell Signalling",
+    h1: "IGF-1 DES Research Overview",
+    subtitle: "Truncated IGF and Binding Protein Research",
+    intro: `IGF-1 DES refers to des(1–3)IGF-I, a truncated form of insulin-like growth factor-1. It has been investigated in cell and animal experiments for altered interactions with IGF-binding proteins. These findings do not establish predictable muscle growth or localised tissue growth in people.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is IGF-1 DES?",
+    what_is_body: "Des(1–3)IGF-I lacks the first three amino-acid residues of native IGF-I, leaving 67 residues. It is structurally different from IGF-1 LR3, which has a different set of modifications. Research should match the exact variant rather than treating all IGF-related compounds as interchangeable.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "IGF-1 DES",
+      },
+      {
+        feature: "Scientific designation",
+        details: "Des(1–3)IGF-I",
+      },
+      {
+        feature: "Compound type",
+        details: "Truncated growth-factor peptide",
+      },
+      {
+        feature: "Length",
+        details: "67 amino-acid residues",
+      },
+      {
+        feature: "Structural distinction",
+        details: "First three residues of native IGF-I removed",
+      },
+      {
+        feature: "Research areas",
+        details: "Binding proteins, distribution and metabolic activity",
+      },
+    ],
+    mechanism_heading: "How Does IGF-1 DES Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "IGF Receptor Activity",
+        body: "IGF-related signalling affects cell growth and metabolism. Biological activity depends on more than receptor binding alone, including availability to tissues and interaction with binding proteins.",
+      },
+      {
+        title: "Binding Protein Interactions",
+        body: "The truncated variant has reduced interaction with several IGF-binding proteins. This can alter responses in an assay, but does not establish a universal potency multiplier across tissues or species.",
+      },
+      {
+        title: "Distribution and Clearance",
+        body: "Blood concentration, tissue distribution and duration of an effect are different measurements. Faster disappearance from plasma does not imply that a compound acts only near an administration site.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "IGF-1 DES Research Findings",
+    findings_sections: [
+      {
+        title: "Binding Across Species",
+        body: "A 1994 study compared IGF-I and variants, including des(1–3)IGF-I and LR3IGF-I, against plasma-binding proteins from different species. It showed why both molecular variant and biological system matter when interpreting availability.",
+        link_label: "Read the binding-protein study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/7514204/",
+      },
+      {
+        title: "Rat Distribution Study",
+        body: "A 1991 study examined labelled IGFs in rats and found differences in clearance and distribution for des(1–3)IGF-I. These were animal pharmacokinetic measurements, not a validated human duration of action or evidence for site-specific muscle growth.",
+        link_label: "Read the distribution study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/2005410/",
+      },
+      {
+        title: "Glucose Effects in Animal Research",
+        body: "A 1997 study in pigs and marmosets compared native IGF-I with variants that bind less strongly to binding proteins. Des(1–3)IGF-I showed greater glucose-lowering potency than native IGF-I under the tested conditions. This illustrates metabolic activity and potential harm, not simply a desirable growth effect.",
+        link_label: "Read the metabolic study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/9415072/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Binding proteins",
+        investigated: "Association with different IGF variants",
+        distinction: "Assay and species influence findings",
+      },
+      {
+        area: "Pharmacokinetics",
+        investigated: "Clearance and tissue distribution in rats",
+        distinction: "Not a human half-life estimate",
+      },
+      {
+        area: "Metabolism",
+        investigated: "Glucose lowering in animals",
+        distinction: "Greater activity may also increase risk",
+      },
+    ],
+    safety_body: `Glucose lowering in animal studies is a relevant safety signal and should not be omitted from a growth-focused summary. The cited experiments do not establish a safe human regimen, long-term safety or reliable bodybuilding benefit. Findings for native IGF-I or IGF-1 LR3 cannot automatically define the safety of IGF-1 DES.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding IGF-1 DES Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the truncated sequence and distinguish it from native IGF-I and LR3IGF-I. Appropriate assessment should consider disulphide structure, aggregation, impurities and quantitative content. Molecular identity and biological activity require complementary methods; purity alone cannot establish correct folding or potency.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "What does DES mean here?",
+        a: "It refers to removal of residues 1–3 from native IGF-I.",
+      },
+      {
+        q: "How long is IGF-1 DES?",
+        a: "The des(1–3) form contains 67 amino-acid residues.",
+      },
+      {
+        q: "Is it the same as IGF-1 LR3?",
+        a: "No. They have different structural modifications.",
+      },
+      {
+        q: "Does lower binding-protein affinity mean a fixed potency increase?",
+        a: "No. Relative activity depends on the experiment and outcome.",
+      },
+      {
+        q: "Does it act only at one site?",
+        a: "The cited evidence does not establish a local-only effect in people.",
+      },
+      {
+        q: "Can it affect glucose?",
+        a: "Yes. Glucose-lowering effects were demonstrated in the cited animal study.",
+      },
+      {
+        q: "Where can I find IGF-1 DES research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
       },
     ],
     related: [],
@@ -2019,6 +3351,154 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
     published_at: "2026-10-08T00:00:00.000Z",
   },
   {
+    slug: "ll-37",
+    name: "LL-37",
+    category: "Host Defence Peptides / Wound Research",
+    product_slug: "ll-37",
+    card_title: "What Is LL-37?",
+    card_description: "LL-37 is a human cathelicidin peptide involved in host defence and tissue-response signalling.",
+    seo_title: "LL-37 Research Overview | PEPLAB",
+    seo_description: "Explore LL-37 research on cathelicidin biology and topical wound studies, with human trial findings, evidence limitations, FAQs and analytical testing.",
+    eyebrow: "Host Defence Peptides / Wound Research",
+    h1: "LL-37 Research Overview",
+    subtitle: "Cathelicidin Biology and Human Wound Studies",
+    intro: `LL-37 is a human cathelicidin peptide involved in host defence and tissue-response signalling. Research includes laboratory antimicrobial experiments and human trials of topical wound formulations. These are different evidence settings and should not be combined into a blanket claim that LL-37 treats infections or accelerates all healing.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is LL-37?",
+    what_is_body: "LL-37 is the 37-amino-acid peptide released from the precursor protein hCAP18. Its name reflects its two initial leucine residues and its length. The precursor, mature peptide and shorter fragments are distinct materials with potentially different activities.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "LL-37",
+      },
+      {
+        feature: "Peptide family",
+        details: "Human cathelicidin",
+      },
+      {
+        feature: "Precursor",
+        details: "hCAP18",
+      },
+      {
+        feature: "Length",
+        details: "37 amino-acid residues",
+      },
+      {
+        feature: "Research areas",
+        details: "Host defence, cell signalling and wound responses",
+      },
+      {
+        feature: "Human evidence discussed",
+        details: "Topical studies in venous leg ulcers",
+      },
+    ],
+    mechanism_heading: "How Does LL-37 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Precursor Processing",
+        body: "Cleavage of hCAP18 releases LL-37. A 2001 study investigated processing by proteinase 3, helping establish the relationship between precursor and mature peptide. Read the processing study.",
+      },
+      {
+        title: "Membrane and Cell Effects",
+        body: "LL-37 can affect microbial membranes and host-cell responses in experimental systems. Activity depends on concentration and biological conditions; antimicrobial activity in a dish is not evidence of successful systemic infection treatment.",
+      },
+      {
+        title: "Wound Biology",
+        body: "Healing depends on local cells, blood supply, inflammation and underlying disease. A peptide formulation studied alongside compression therapy must be interpreted as part of that specific protocol.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "LL-37 Research Findings",
+    findings_sections: [
+      {
+        title: "Early Venous Ulcer Trial",
+        body: "A 2014 randomised, placebo-controlled trial included 34 participants with hard-to-heal venous leg ulcers. Some tested topical concentrations improved healing-rate measurements. The small study evaluated a local formulation, not systemic administration.",
+        link_label: "Read the early clinical trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/25041740/",
+      },
+      {
+        title: "Larger HEAL LL-37 Trial",
+        body: "The 2021 phase IIb report studied topical LL-37 alongside compression therapy in 148 treated participants. It did not demonstrate a significant benefit in the full study population. A later analysis suggested benefit in a subgroup with larger ulcers, which requires confirmation.",
+        link_label: "Read the phase IIb trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/34687253/",
+      },
+      {
+        title: "Interpreting Subgroup Findings",
+        body: `The larger-ulcer analysis was post hoc and involved small groups. It is useful for generating a research question, but should not replace the overall trial result or be presented as a confirmed treatment effect for every wound.
+
+Review the full trial report.`,
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Host defence",
+        investigated: "Laboratory antimicrobial and cellular activity",
+        distinction: "Not proof of clinical infection treatment",
+      },
+      {
+        area: "Topical wounds",
+        investigated: "Healing with a defined local preparation",
+        distinction: "Route and background care matter",
+      },
+      {
+        area: "Larger trial",
+        investigated: "Overall and subgroup outcomes",
+        distinction: "The overall result was not significantly positive",
+      },
+    ],
+    safety_body: `Local tolerability in a wound trial does not establish the safety of systemic LL-37 exposure. Membrane-active and immune-related effects need assessment in the actual preparation and setting. The clinical evidence here cannot establish treatment for bacterial, viral or fungal infections, nor does it justify replacing indicated antimicrobial care.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding LL-37 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the full 37-residue sequence and distinguish LL-37 from hCAP18 or shorter fragments. Quantify peptide content and relevant impurities. Because immune-response assays can be sensitive to endotoxin contamination, endotoxin results and assay controls should be assessed separately from chemical purity.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "What does LL-37 mean?",
+        a: "A 37-residue peptide whose first two residues are leucine.",
+      },
+      {
+        q: "Is LL-37 the same as hCAP18?",
+        a: "No. LL-37 is released from that larger precursor.",
+      },
+      {
+        q: "Has LL-37 been studied in humans?",
+        a: "Yes. The cited trials tested topical formulations in venous leg ulcers.",
+      },
+      {
+        q: "Was the larger trial positive overall?",
+        a: "No. It did not show a significant benefit across the full study population.",
+      },
+      {
+        q: "Do topical findings validate injections?",
+        a: "No. Different routes require separate safety and efficacy evidence.",
+      },
+      {
+        q: "Does antimicrobial activity prove infection treatment?",
+        a: "No. Laboratory activity and clinical treatment outcomes are distinct.",
+      },
+      {
+        q: "Where can I find LL-37 research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
     slug: "melanotan-2",
     name: "Melanotan II",
     category: "Melanocortin / Pigmentation Research",
@@ -2176,6 +3656,154 @@ Explore PEPLAB’s [Quality & Testing](/standards) information and [COA Results]
       {
         q: "Where can I find Melanotan II research papers",
         a: "Use the original publication links on this page. Search Melanotan II or MT-II on PubMed, checking the exact compound, study population and outcome before drawing conclusions.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "melatonin",
+    name: "Melatonin",
+    category: "Circadian Biology / Sleep Research",
+    product_slug: "melatonin",
+    card_title: "What Is Melatonin?",
+    card_description: "Melatonin is an indoleamine hormone involved in the body’s daily timing signals.",
+    seo_title: "Melatonin Research Overview | PEPLAB",
+    seo_description: "Explore melatonin research on circadian rhythms and sleep, including human trials, formulation differences, evidence limitations and analytical testing.",
+    eyebrow: "Circadian Biology / Sleep Research",
+    h1: "Melatonin Research Overview",
+    subtitle: "Circadian Signalling and Human Sleep Research",
+    intro: `Melatonin is an indoleamine hormone involved in the body’s daily timing signals. It is not a peptide. Human studies have investigated particular sleep and circadian conditions, with outcomes that depend on the population, formulation and study design.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is Melatonin?",
+    what_is_body: "Also called N-acetyl-5-methoxytryptamine, melatonin is produced through a biochemical pathway involving serotonin. Pineal melatonin secretion is linked to the light–dark cycle. A naturally occurring hormone and a supplied research preparation still require separate assessment of identity, content and performance.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "Melatonin",
+      },
+      {
+        feature: "Chemical name",
+        details: "N-acetyl-5-methoxytryptamine",
+      },
+      {
+        feature: "Compound type",
+        details: "Indoleamine hormone; not a peptide",
+      },
+      {
+        feature: "Receptors",
+        details: "MT1 and MT2",
+      },
+      {
+        feature: "Research areas",
+        details: "Circadian timing and sleep",
+      },
+      {
+        feature: "Key distinction",
+        details: "Immediate-release, prolonged-release and other preparations",
+      },
+    ],
+    mechanism_heading: "How Does Melatonin Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Receptor Activity",
+        body: "Melatonin interacts with MT1 and MT2 receptors involved in circadian signalling. Structural research on the human MT1 receptor helps explain ligand recognition. Read the receptor study.",
+      },
+      {
+        title: "Circadian Timing",
+        body: "Circadian rhythms coordinate processes across the day and night. Research must distinguish shifting the timing of sleep from changing sleep duration or perceived quality.",
+      },
+      {
+        title: "Formulation and Exposure",
+        body: "Immediate-release and prolonged-release preparations have different delivery characteristics. Findings from a studied oral formulation cannot automatically establish the performance of a research powder or another administration route.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "Melatonin Research Findings",
+    findings_sections: [
+      {
+        title: "Delayed Sleep–Wake Phase Disorder",
+        body: "A 2018 randomised trial studied melatonin together with behavioural sleep scheduling in people with delayed sleep–wake phase disorder and confirmed delayed circadian timing. Sleep onset improved compared with placebo under that combined protocol. The accompanying scheduling intervention is part of the evidence.",
+        link_label: "Read the circadian sleep trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/29912983/",
+      },
+      {
+        title: "Primary Insomnia in Older Adults",
+        body: "A 2007 trial investigated a prolonged-release preparation in adults aged 55 and over with primary insomnia. Reported changes in sleep quality and morning alertness apply to that population and formulation. They do not establish equal benefits across all sleep problems or preparations.",
+        link_label: "Read the prolonged-release study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/18036082/",
+      },
+      {
+        title: "Analytical Quality Research",
+        body: "A 2017 analysis of commercial supplements found discrepancies between labelled and measured melatonin and detected serotonin in some samples. This was a study of sampled products, not a test of PEPLAB material. It illustrates why identity, content and impurities need direct measurement.",
+        link_label: "Read the analytical study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/27855744/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Circadian disorders",
+        investigated: "Sleep timing within a defined protocol",
+        distinction: "Behavioural scheduling also contributed",
+      },
+      {
+        area: "Insomnia research",
+        investigated: "Sleep quality and alertness",
+        distinction: "Age and formulation matter",
+      },
+      {
+        area: "Product analysis",
+        investigated: "Measured content and contaminants",
+        distinction: "Findings describe the actual tested samples",
+      },
+    ],
+    safety_body: `Tolerability should be assessed for the studied population, preparation and duration. Sleep-related effects and next-day functioning are relevant outcomes. Short trials cannot resolve every question about prolonged exposure or combinations with other substances. “Naturally occurring” does not mean every supplied preparation or pattern of exposure is safe.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding Melatonin Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Use methods appropriate for melatonin as a small molecule, rather than a peptide assay by default. Confirm chemical identity, quantitative content, related impurities and stability. For finished products, the release characteristics and other ingredients also matter; a raw-material COA does not establish equivalence with a trial formulation.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is melatonin a peptide?",
+        a: "No. It is an indoleamine hormone.",
+      },
+      {
+        q: "Which receptors does melatonin interact with?",
+        a: "MT1 and MT2 are the principal melatonin receptors discussed here.",
+      },
+      {
+        q: "Does melatonin treat every sleep problem?",
+        a: "The studies address defined conditions and populations, not every cause of poor sleep.",
+      },
+      {
+        q: "Are immediate-release and prolonged-release forms interchangeable?",
+        a: "Their delivery characteristics differ, so evidence should match the formulation.",
+      },
+      {
+        q: "Can oral trial results validate another route?",
+        a: "No. Other preparations and routes require their own evidence.",
+      },
+      {
+        q: "Does a purity percentage prove the labelled quantity?",
+        a: "No. Purity and quantitative content are separate measurements.",
+      },
+      {
+        q: "Where can I find Melatonin research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
       },
     ],
     related: [],
@@ -2343,6 +3971,302 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
         kind: "research",
       },
     ],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "p21",
+    name: "P21",
+    category: "Neurotrophic Peptides / Preclinical Neuroscience",
+    product_slug: "p21",
+    card_title: "What Is P21?",
+    card_description: "P21 is a research-market name that needs careful identification.",
+    seo_title: "P21 Research Overview | PEPLAB",
+    seo_description: "Explore P21 research in the context of P021, including CNTF-derived peptide design, animal neuroplasticity studies, identity checks and evidence limits.",
+    eyebrow: "Neurotrophic Peptides / Preclinical Neuroscience",
+    h1: "P21 Research Overview",
+    subtitle: "P021 Identity and Neuroplasticity Research",
+    intro: `P21 is a research-market name that needs careful identification. This overview discusses the CNTF-derived compound published as P021, or Peptide 021, where that is the intended material. The specification must confirm that a product labelled P21 actually matches P021 before its findings are applied.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is P21?",
+    what_is_body: "Published P021 is a modified short peptide based on a region of ciliary neurotrophic factor, or CNTF, with an added adamantylated glycine group. It is not full-length CNTF and should not be confused with the cell-cycle protein p21, also called CDKN1A, or with postnatal day 21 in animal studies.",
+    feature_rows: [
+      {
+        feature: "Page name",
+        details: "P21",
+      },
+      {
+        feature: "Literature compound discussed",
+        details: "P021; Peptide 021",
+      },
+      {
+        feature: "Compound type",
+        details: "Modified CNTF-derived peptide mimetic",
+      },
+      {
+        feature: "Identity distinction",
+        details: "Not the p21/CDKN1A protein",
+      },
+      {
+        feature: "Research areas",
+        details: "Neuroplasticity and cognitive behaviour in animal models",
+      },
+      {
+        feature: "Product requirement",
+        details: "Confirm exact structural match to published P021",
+      },
+    ],
+    mechanism_heading: "How Does P21 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Neurotrophic Design",
+        body: "P021 was designed from a biologically active region of CNTF, with chemical modification intended to influence stability and exposure. A design rationale does not establish human brain delivery or clinical benefit.",
+      },
+      {
+        title: "Signalling Research",
+        body: "Animal studies have examined BDNF-associated signalling and markers of neuronal and synaptic plasticity. These are experimental findings rather than proof that the compound repairs a human brain.",
+      },
+      {
+        title: "Behaviour and Biology",
+        body: "Animal memory tasks, tissue markers and clinical cognition are different outcomes. A change in one model does not predict a guaranteed effect in healthy people or people with dementia.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "P21 Research Findings",
+    findings_sections: [
+      {
+        title: "Alzheimer-Like Mouse Model",
+        body: "A 2014 study examined prolonged P021 exposure in a transgenic mouse model and reported changes in tau-related pathology, cognition and plasticity markers. Amyloid findings were more limited. These results concern an experimental model rather than human Alzheimer’s disease treatment.",
+        link_label: "Read the mouse-model study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/25046994/",
+      },
+      {
+        title: "Early Intervention Study",
+        body: "A 2017 study investigated P021 before overt pathology in a transgenic mouse model. It reported effects on dendritic and synaptic measurements and cognitive behaviour. An early-intervention animal design cannot establish reversal of established human dementia.",
+        link_label: "Read the early-intervention study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/28655344/",
+      },
+      {
+        title: "Developmental Timing Research",
+        body: "A 2021 study evaluated P021 during early postnatal development in mice and reported behavioural and synaptic findings. It also describes the modified P021 molecule. Developmental exposure in animals is not evidence supporting paediatric administration or use during pregnancy.",
+        link_label: "Read the developmental study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/34057082/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Identity",
+        investigated: "CNTF-derived P021 structure",
+        distinction: "P21 alone is an ambiguous label",
+      },
+      {
+        area: "Animal cognition",
+        investigated: "Behavioural tasks and tissue markers",
+        distinction: "Not human cognitive enhancement",
+      },
+      {
+        area: "Timing of exposure",
+        investigated: "Early versus later disease-model intervention",
+        distinction: "Prevention and reversal are different questions",
+      },
+    ],
+    safety_body: `The cited experiments do not establish human efficacy, long-term safety or safety during pregnancy or childhood. Findings in selected mouse models cannot demonstrate that P021 is free of the effects associated with other neurotrophic interventions. A high-purity sample does not supply missing clinical evidence.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding P21 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the complete sequence, acetylation and amidation where specified, and the exact adamantylated glycine structure. Do not interpret the structural notation as an ordinary unmodified amino-acid sequence. Match the analytical reference to published P021 rather than to unrelated p21 proteins.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is P21 always the same as P021?",
+        a: "The label alone cannot establish this. Confirm the full product structure.",
+      },
+      {
+        q: "What is P021 derived from?",
+        a: "A biologically active region of ciliary neurotrophic factor, with chemical modification.",
+      },
+      {
+        q: "Is P021 the p21 cell-cycle protein?",
+        a: "No. p21/CDKN1A is a different biological entity.",
+      },
+      {
+        q: "Have the cited studies tested people?",
+        a: "No. The studies summarised here used animal models.",
+      },
+      {
+        q: "Do these findings establish human Alzheimer’s treatment?",
+        a: "No. Clinical efficacy requires direct human evidence.",
+      },
+      {
+        q: "Why does the chemical modification matter?",
+        a: "It is part of the identity of the studied molecule and may influence its properties.",
+      },
+      {
+        q: "Where can I find P21 research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "pnc-27",
+    name: "PNC-27",
+    category: "Experimental Peptides / Cancer Cell Biology",
+    product_slug: "pnc-27",
+    card_title: "What Is PNC-27?",
+    card_description: "PNC-27 is an experimental peptide investigated for its effects on cancer-cell membranes.",
+    seo_title: "PNC-27 Research Overview | PEPLAB",
+    seo_description: "Explore PNC-27 research on HDM2 binding and cancer cell membranes, with preclinical findings, evidence limitations, scientific references and testing.",
+    eyebrow: "Experimental Peptides / Cancer Cell Biology",
+    h1: "PNC-27 Research Overview",
+    subtitle: "HDM2 Binding and Cancer Cell Membrane Research",
+    intro: `PNC-27 is an experimental peptide investigated for its effects on cancer-cell membranes. Studies have examined binding to membrane-associated HDM2 and changes in cell survival. The cited evidence is preclinical and does not establish PNC-27 as an effective cancer treatment in people.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is PNC-27?",
+    what_is_body: "PNC-27 is a chimeric peptide: it combines a segment derived from p53 with a membrane-penetrating peptide segment. HDM2, also written hdm-2, is a protein involved in p53 biology. PNC-27 research focuses on a membrane-associated form of this target, which differs from simply restoring normal p53 signalling.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "PNC-27",
+      },
+      {
+        feature: "Compound type",
+        details: "Chimeric research peptide",
+      },
+      {
+        feature: "Design",
+        details: "p53-derived segment linked to a membrane-penetrating segment",
+      },
+      {
+        feature: "Experimental target",
+        details: "Membrane-associated HDM2",
+      },
+      {
+        feature: "Research areas",
+        details: "Membrane disruption and cancer-cell survival",
+      },
+      {
+        feature: "Evidence discussed",
+        details: "Cell experiments and preclinical disease models",
+      },
+    ],
+    mechanism_heading: "How Does PNC-27 Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Target Binding",
+        body: "Researchers have investigated whether PNC-27 interacts with HDM2 present at the surface of particular cancer cells. Target expression and experimental conditions matter when interpreting an observed response.",
+      },
+      {
+        title: "Membrane Effects",
+        body: "Published experiments describe membrane pore formation and cell lysis. These are laboratory observations of cell damage; they do not establish a safe therapeutic window in humans.",
+      },
+      {
+        title: "Selectivity Questions",
+        body: "Differences between tested cancer cells and selected non-cancerous cells are evidence within those models. They do not demonstrate that every healthy tissue would be unaffected.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "PNC-27 Research Findings",
+    findings_sections: [
+      {
+        title: "Early Binding and Membrane Study",
+        body: "A 2010 PNAS paper investigated PNC-27 conformation, HDM2 binding and cancer-cell membrane effects. It reported findings consistent with the proposed membrane-targeting mechanism. It was not a clinical trial in people with cancer.",
+        link_label: "Read the original binding study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/20080680/",
+      },
+      {
+        title: "Acute Myeloid Leukaemia Models",
+        body: "A 2019 study examined membrane HDM2 in human and mouse acute myeloid leukaemia cells, including populations enriched for leukaemia stem cells. It reported PNC-27-related cell killing in experimental systems. Human cells used in a laboratory are not equivalent to treating patients.",
+        link_label: "Read the leukaemia study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/31337857/",
+      },
+      {
+        title: "Membrane and Mitochondrial Research",
+        body: "A 2024 study investigated interactions involving plasma-membrane HDM2 and mitochondrial disruption in cancer cells. These experiments add mechanistic detail, while clinical outcomes such as survival, symptoms and treatment toxicity remain separate questions.",
+        link_label: "Read the mechanistic study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/38802154/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Target binding",
+        investigated: "HDM2-associated interactions",
+        distinction: "Target expression varies across models",
+      },
+      {
+        area: "Cell damage",
+        investigated: "Membrane disruption and cell death",
+        distinction: "Not proof of clinical tumour control",
+      },
+      {
+        area: "Selectivity",
+        investigated: "Cancer and comparison cell responses",
+        distinction: "Does not establish safety in all healthy tissues",
+      },
+    ],
+    safety_body: `The cited research does not establish human efficacy, a reliable human safety profile or compatibility with cancer therapies. Cell killing alone cannot predict the balance of benefit and harm in a person. This overview should not be interpreted as evidence to replace or delay established cancer care.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding PNC-27 Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm both peptide segments, their linkage, the complete sequence and terminal chemistry. Distinguish PNC-27 from related compounds such as PNC-28. A validated identity result, peptide-content measurement and suitable impurity assessment answer different questions from an HDM2-binding or cell-viability assay.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "What is PNC-27?",
+        a: "An experimental chimeric peptide studied in cancer-cell biology.",
+      },
+      {
+        q: "Is PNC-27 the same as p53?",
+        a: "No. It contains a p53-derived segment joined to another peptide segment.",
+      },
+      {
+        q: "What does HDM2 mean in this research?",
+        a: "It is the protein target investigated at the cell membrane in the cited studies.",
+      },
+      {
+        q: "Do human cancer-cell experiments count as clinical trials?",
+        a: "No. A laboratory study of human cells is not a trial treating people.",
+      },
+      {
+        q: "Does selective cell killing prove no side effects?",
+        a: "No. Selected cell comparisons cannot establish comprehensive human safety.",
+      },
+      {
+        q: "Does this page establish a cancer cure?",
+        a: "No. The cited preclinical findings do not establish effective cancer treatment in people.",
+      },
+      {
+        q: "Where can I find PNC-27 research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
     status: "published",
     author_name: null,
     published_at: "2026-10-08T00:00:00.000Z",
@@ -2973,6 +4897,154 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
     published_at: "2026-10-08T00:00:00.000Z",
   },
   {
+    slug: "sermorelin",
+    name: "Sermorelin",
+    category: "Ghrh Analogues / Endocrine Research",
+    product_slug: "sermotelin",
+    card_title: "What Is Sermorelin?",
+    card_description: "Sermorelin is a synthetic growth hormone-releasing hormone analogue studied for its ability to stimulate growth hormone release.",
+    seo_title: "Sermorelin Research Overview | PEPLAB",
+    seo_description: "Explore sermorelin research on GHRH signalling and growth hormone release, with human studies, population-specific findings, FAQs and testing guidance.",
+    eyebrow: "Ghrh Analogues / Endocrine Research",
+    h1: "Sermorelin Research Overview",
+    subtitle: "Growth Hormone Releasing Hormone and Growth Research",
+    intro: `Sermorelin is a synthetic growth hormone-releasing hormone analogue studied for its ability to stimulate growth hormone release. Human research includes studies in children with growth-related conditions. Findings in those populations should not be converted into general anti-ageing or fitness claims.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is Sermorelin?",
+    what_is_body: "Sermorelin corresponds to the amidated first 29 amino acids of human growth hormone-releasing hormone, often written GHRH(1–29)-NH2. It acts upstream of growth hormone rather than being growth hormone itself. Its structure differs from longer or chemically modified GHRH analogues.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "Sermorelin",
+      },
+      {
+        feature: "Related designation",
+        details: "GHRH(1–29)-NH2",
+      },
+      {
+        feature: "Compound type",
+        details: "Synthetic 29-amino-acid peptide",
+      },
+      {
+        feature: "Target pathway",
+        details: "Pituitary GHRH receptor signalling",
+      },
+      {
+        feature: "Research areas",
+        details: "Growth hormone release and paediatric growth",
+      },
+      {
+        feature: "Evidence distinction",
+        details: "Hormone response versus clinical growth outcomes",
+      },
+    ],
+    mechanism_heading: "How Does Sermorelin Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "Pituitary Signalling",
+        body: "GHRH receptor activation can stimulate growth hormone secretion from responsive pituitary cells. The response depends on the functioning endocrine system and the underlying condition.",
+      },
+      {
+        title: "Downstream Measurements",
+        body: "Researchers may measure growth hormone, IGF-1 and growth velocity. An acute hormone increase and a sustained change in growth are distinct outcomes.",
+      },
+      {
+        title: "Structure and Duration",
+        body: "Sermorelin is not interchangeable with CJC-1295 DAC, modified GRF analogues or tesamorelin. Chemical modifications can change exposure and study results.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "Sermorelin Research Findings",
+    findings_sections: [
+      {
+        title: "Growth Hormone Deficiency Study",
+        body: "A 1996 multicentre study investigated GHRH treatment in children with growth hormone deficiency and reported accelerated growth during the first year. The population and duration define the scope of that finding; it is not evidence of adult rejuvenation.",
+        link_label: "Read the paediatric study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/8772599/",
+      },
+      {
+        title: "Comparison With Growth Hormone",
+        body: "A 1993 study compared growth hormone and GHRH(1–29)-NH2 in children with growth hormone deficiency. Direct comparison in a defined clinical population does not establish that the two compounds are interchangeable in other settings.",
+        link_label: "Read the comparative study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/8329830/",
+      },
+      {
+        title: "Longer-Term Growth Measurements",
+        body: "A 1990 study examined GHRH(1–29)-NH2 over a year in short, slowly growing children. Such research assessed growth over time, rather than relying only on a brief hormone response. It should remain clearly distinguished from adult body-composition research.",
+        link_label: "Read the one-year study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/2140733/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Hormone physiology",
+        investigated: "Growth hormone release",
+        distinction: "Depends on pituitary responsiveness",
+      },
+      {
+        area: "Paediatric growth",
+        investigated: "Growth over months",
+        distinction: "Specific populations limit generalisation",
+      },
+      {
+        area: "Compound comparison",
+        investigated: "GHRH analogue versus growth hormone",
+        distinction: "Different molecules and mechanisms",
+      },
+    ],
+    safety_body: `The comparative paediatric study reported mild local irritation in some participants. Limited trials cannot exclude uncommon reactions or establish long-term safety in unrelated populations. Childhood growth findings do not establish adult fat loss, muscle gain or an anti-ageing effect.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding Sermorelin Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the 29-residue sequence and C-terminal amidation. The specification should distinguish sermorelin from substituted GHRH fragments and DAC-containing analogues. Measure the identified peptide content separately from total material mass and chromatographic purity.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "Is sermorelin growth hormone?",
+        a: "No. It is a GHRH analogue that can stimulate growth hormone release.",
+      },
+      {
+        q: "What does GHRH(1–29)-NH2 mean?",
+        a: "It describes the first 29 residues of GHRH with an amidated terminal group.",
+      },
+      {
+        q: "Is sermorelin the same as CJC-1295?",
+        a: "No. The structures and research preparations differ.",
+      },
+      {
+        q: "Has sermorelin been studied in humans?",
+        a: "Yes. The references here include paediatric growth studies.",
+      },
+      {
+        q: "Do childhood growth studies prove adult anti-ageing benefits?",
+        a: "No. That is a different population and research question.",
+      },
+      {
+        q: "Does a growth hormone rise guarantee a clinical benefit?",
+        a: "No. Clinical outcomes need to be measured directly.",
+      },
+      {
+        q: "Where can I find Sermorelin research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
     slug: "thymosin-alpha-1",
     name: "Thymosin Alpha-1",
     category: "Immune Signalling / Clinical Research",
@@ -3108,6 +5180,154 @@ Purity does not establish sterility, endotoxin status or clinical effectiveness.
       },
       {
         q: "Where can I find Thymosin Alpha-1 research papers?",
+        a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
+      },
+    ],
+    related: [],
+    status: "published",
+    author_name: null,
+    published_at: "2026-10-08T00:00:00.000Z",
+  },
+  {
+    slug: "vip",
+    name: "VIP",
+    category: "Neuropeptides / Vascular and Immune Signalling",
+    product_slug: "vip",
+    card_title: "What Is VIP?",
+    card_description: "VIP stands for vasoactive intestinal peptide, a naturally occurring signalling peptide.",
+    seo_title: "VIP Research Overview | PEPLAB",
+    seo_description: "Explore VIP research on vasoactive intestinal peptide, VPAC receptors and aviptadil trials, with clinical findings, evidence limits and testing guidance.",
+    eyebrow: "Neuropeptides / Vascular and Immune Signalling",
+    h1: "VIP Research Overview",
+    subtitle: "Vasoactive Intestinal Peptide and Clinical Research",
+    intro: `VIP stands for vasoactive intestinal peptide, a naturally occurring signalling peptide. Researchers study its receptor activity and effects in vascular, gastrointestinal, immune and pulmonary systems. Human studies of synthetic VIP, called aviptadil, have produced results that depend on the condition and trial design.
+
+For guidance on evaluating evidence, visit PEPLAB’s Research Overview.`,
+    what_is_heading: "What Is VIP?",
+    what_is_body: "VIP contains 28 amino-acid residues and interacts with the VPAC1 and VPAC2 receptors. The name reflects its discovery and physiological activity, but its functions extend beyond the intestine. Evidence for a specific aviptadil formulation should not be assumed to validate every material labelled VIP.",
+    feature_rows: [
+      {
+        feature: "Compound name",
+        details: "Vasoactive intestinal peptide",
+      },
+      {
+        feature: "Abbreviation",
+        details: "VIP",
+      },
+      {
+        feature: "Synthetic form",
+        details: "Aviptadil",
+      },
+      {
+        feature: "Compound type",
+        details: "28-amino-acid peptide",
+      },
+      {
+        feature: "Receptors",
+        details: "VPAC1 and VPAC2",
+      },
+      {
+        feature: "Research areas",
+        details: "Receptor signalling and systemic physiological responses",
+      },
+    ],
+    mechanism_heading: "How Does VIP Work?",
+    mechanism_intro: "",
+    mechanism_sections: [
+      {
+        title: "VPAC Receptor Signalling",
+        body: "VIP activates receptor pathways that can stimulate adenylyl cyclase and intracellular cyclic AMP. Receptor expression helps determine how a particular tissue responds.",
+      },
+      {
+        title: "Effects Across Tissues",
+        body: "Vascular and gastrointestinal responses are relevant both to biological activity and to tolerability. A peptide with several physiological roles should not be described as acting on only one organ.",
+      },
+      {
+        title: "Mechanism and Clinical Outcomes",
+        body: "Pulmonary and immune hypotheses have motivated clinical trials. A plausible protective mechanism does not ensure that a trial will demonstrate improved recovery or survival.",
+      },
+    ],
+    mechanism_footer: "",
+    findings_heading: "VIP Research Findings",
+    findings_sections: [
+      {
+        title: "Receptor Structure and Function",
+        body: "A 2000 study systematically altered VIP residues and tested binding and signalling at human VPAC1 and VPAC2 receptors. It showed that molecular structure affects receptor activity. This was receptor research, not evidence of a clinical benefit from a supplied vial.",
+        link_label: "Read the receptor study",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/10801840/",
+      },
+      {
+        title: "Earlier Respiratory Failure Trial",
+        body: "A 2022 randomised trial investigated intravenous aviptadil in critical COVID-19 respiratory failure. The primary endpoint of being alive and free of respiratory failure at 60 days did not reach statistical significance. Other reported analyses should be interpreted alongside that result.",
+        link_label: "Read the 60-day trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/36044317/",
+      },
+      {
+        title: "TESICO Trial",
+        body: "The 2023 TESICO report included 461 treated participants in the aviptadil comparison. Aviptadil did not improve the primary clinical outcome or survival at 90 days compared with placebo. This is a finding in severe COVID-19, not a test of every possible VIP research application.",
+        link_label: "Read the TESICO trial",
+        link_url: "https://pubmed.ncbi.nlm.nih.gov/37348524/",
+      },
+    ],
+    glance_rows: [
+      {
+        area: "Receptor biology",
+        investigated: "VPAC1 and VPAC2 activity",
+        distinction: "Molecular activity is not clinical efficacy",
+      },
+      {
+        area: "Respiratory trials",
+        investigated: "Recovery and survival",
+        distinction: "Key primary outcomes were not improved",
+      },
+      {
+        area: "Tolerability",
+        investigated: "Vascular and gastrointestinal effects",
+        distinction: "Preparation and study setting matter",
+      },
+    ],
+    safety_body: `TESICO reported diarrhoea, facial flushing, tachycardia and hypotension more frequently with aviptadil than placebo. These findings make blanket claims of side-effect-free activity inappropriate. Trial findings relate to the studied preparation, administration route and critically ill population; they do not establish safety for other settings or combinations.
+
+This page summarises scientific evidence and does not provide instructions for personal use.`,
+    coa_heading: "Understanding VIP Testing and COAs",
+    coa_body: `Analytical methods answer different questions. Review the compound name, sample or batch identifier, laboratory, testing date, methods and reported results.
+
+• **Purity:** Chromatography measures the relative proportions of detected components under specified conditions.
+
+• **Identity:** Mass spectrometry and complementary methods assess whether a sample is consistent with the stated molecule.
+
+• **Content:** A validated quantitative assay measures the amount of the specified material.
+
+Confirm the human VIP sequence, terminal amidation and actual peptide content. Distinguish native-sequence VIP from receptor-selective analogues. Chemical identity does not establish equivalence with a clinical aviptadil formulation, and a receptor assay cannot replace impurity or quantitative-content testing.
+
+Purity does not establish sterility, endotoxin status or clinical effectiveness. Explore PEPLAB’s [Quality & Testing](/standards) information and available [COA Results](/coa). Only treat a property as tested when the relevant measurement is reported.`,
+    faqs: [
+      {
+        q: "What does VIP stand for?",
+        a: "Vasoactive intestinal peptide.",
+      },
+      {
+        q: "Is VIP a peptide?",
+        a: "Yes. Human VIP contains 28 amino-acid residues.",
+      },
+      {
+        q: "What is aviptadil?",
+        a: "The name used for synthetic VIP in the clinical research discussed here.",
+      },
+      {
+        q: "Which receptors does VIP activate?",
+        a: "VPAC1 and VPAC2 are its principal receptors discussed on this page.",
+      },
+      {
+        q: "Did TESICO establish improved survival?",
+        a: "No. Aviptadil did not improve survival or the primary clinical outcome at 90 days.",
+      },
+      {
+        q: "Can VIP affect blood pressure?",
+        a: "Yes. Hypotension was among the effects reported more often with aviptadil in TESICO.",
+      },
+      {
+        q: "Where can I find VIP research papers?",
         a: "Follow the original-source links above and search the compound name on PubMed. Check the exact molecule, population and outcome in each publication.",
       },
     ],

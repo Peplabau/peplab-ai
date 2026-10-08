@@ -34,6 +34,21 @@ const PRODUCT_SLUG_BY_RESEARCH = {
   'cjc-1295-no-dac': 'cjc-1295-no-dac',
   'cjc-1295-dac': 'cjc-1295-dac',
   'slu-pp-332': 'slu-pp-332',
+  adamax: 'adamax',
+  'foxo4-dri': 'fox04-dri', // storefront slug spelling
+  dihexa: 'dihexa',
+  sermorelin: 'sermotelin', // storefront slug spelling
+  'ghrp-2': 'ghrp-2',
+  melatonin: 'melatonin',
+  'pnc-27': 'pnc-27',
+  'ghrp-6': 'ghrp-6',
+  vip: 'vip',
+  adalank: 'adalank',
+  cartalax: 'cartalax',
+  cerebrolysin: 'cerebrolysin',
+  'igf-1-des': 'igf-1-des',
+  'll-37': 'll-37',
+  p21: 'p21',
 };
 
 function decode(text) {
