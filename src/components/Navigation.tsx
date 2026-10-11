@@ -13,9 +13,13 @@ import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/r
 type NavigationProps = {
   /** Render inside a parent fixed header (e.g. below announce bar on /landing). */
   embedded?: boolean;
+  /** Absolute origin for nav links. /landing uses https://peplab.com.au. */
+  linkOrigin?: string;
+  /** Brand mark target. /landing stays on peplab.ai/landing. */
+  logoHref?: string;
 };
 
-export default function Navigation({ embedded = false }: NavigationProps) {
+export default function Navigation({ embedded = false, linkOrigin, logoHref }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -73,6 +77,12 @@ export default function Navigation({ embedded = false }: NavigationProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const to = (href: string) => {
+    if (!linkOrigin || /^(https?:|mailto:|tel:)/.test(href)) return href;
+    const path = href.startsWith('/') ? href : `/${href}`;
+    return `${linkOrigin.replace(/\/$/, '')}${path}`;
+  };
+
   const navClassDesktop =
     'text-sm font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300';
   const navClassMobile =
@@ -104,7 +114,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
       >
         <div className={embedded ? 'nl-container' : 'w-full px-4 sm:px-6 lg:px-12'}>
           <div className={`nl-nav-bar flex items-center justify-between ${embedded ? '' : 'h-16 sm:h-20 lg:h-24'}`}>
-            <a href={HOME_PATH} className="flex flex-col items-start" aria-label="PEPLAB Australia home" onClick={() => setIsMobileMenuOpen(false)}>
+            <a href={logoHref ?? to(HOME_PATH)} className="flex flex-col items-start" aria-label="PEPLAB Australia home" onClick={() => setIsMobileMenuOpen(false)}>
               <span className={`font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-4xl' : 'text-3xl sm:text-4xl lg:text-5xl'}`}>
                 PEPLAB
               </span>
@@ -116,7 +126,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-10">
               {navEntries.map((entry) => (
-                <a key={entry.label} href={entry.href} className={navClassDesktop}>
+                <a key={entry.label} href={to(entry.href)} className={navClassDesktop}>
                   {entry.label}
                 </a>
               ))}
@@ -135,7 +145,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
 
               {/* Leaderboard Link - Desktop */}
               <a
-                href="/leaderboard"
+                href={to('/leaderboard')}
                 className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
                 title="Promoter Leaderboard"
               >
@@ -143,7 +153,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
               </a>
               {/* Track Order Link - Desktop */}
               <a
-                href="/track-order"
+                href={to('/track-order')}
                 className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
                 title="Track Order"
               >
@@ -162,7 +172,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
                 <div className="hidden sm:flex items-center gap-2">
                   {myPromoter && (
                     <a
-                      href="/promoter"
+                      href={to('/promoter')}
                       className="flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(34,197,94,0.15)] border border-[rgba(34,197,94,0.3)] text-[#22C55E] hover:bg-[rgba(34,197,94,0.25)] transition-colors duration-300"
                     >
                       <TrendingUp className="w-4 h-4" />
@@ -170,14 +180,14 @@ export default function Navigation({ embedded = false }: NavigationProps) {
                     </a>
                   )}
                   <a
-                    href="/dashboard"
+                    href={to('/dashboard')}
                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(46,209,180,0.15)] border border-[rgba(46,209,180,0.3)] text-[#2ED1B4] hover:bg-[rgba(46,209,180,0.25)] transition-colors duration-300"
                   >
                     <LayoutDashboard className="w-4 h-4" />
                     <span className="text-sm font-medium">Dashboard</span>
                   </a>
                   <a
-                    href="/settings"
+                    href={to('/settings')}
                     className="flex items-center justify-center w-10 h-10 rounded-full bg-[rgba(244,246,250,0.08)] border border-[rgba(244,246,250,0.15)] text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.12)] transition-colors duration-300"
                     title="Account Settings"
                   >
@@ -186,7 +196,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
                 </div>
               ) : (
                 <a
-                  href="/login"
+                  href={to('/login')}
                   className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(139,92,246,0.15)] border border-[rgba(139,92,246,0.3)] text-[#8B5CF6] hover:bg-[rgba(139,92,246,0.25)] transition-colors duration-300"
                 >
                   <User className="w-4 h-4" />
@@ -242,7 +252,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
             {navEntries.map((entry) => (
               <a
                 key={entry.label}
-                href={entry.href}
+                href={to(entry.href)}
                 className={navClassMobile}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -252,7 +262,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
             
             {/* Mobile Track Order Link — above Leaderboard */}
             <a
-              href="/track-order"
+              href={to('/track-order')}
               className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -262,7 +272,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
 
             {/* Mobile Leaderboard Link */}
             <a
-              href="/leaderboard"
+              href={to('/leaderboard')}
               className="flex items-center gap-2 text-lg font-medium text-amber-300 hover:text-amber-200 transition-colors duration-300 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -275,7 +285,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
               <>
                 {myPromoter && (
                   <a
-                    href="/promoter"
+                    href={to('/promoter')}
                     className="flex items-center gap-2 text-lg font-medium text-[#22C55E] hover:text-[#4ADE80] transition-colors duration-300 py-2"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -284,14 +294,14 @@ export default function Navigation({ embedded = false }: NavigationProps) {
                   </a>
                 )}
                 <a
-                  href="/dashboard"
+                  href={to('/dashboard')}
                   className="flex items-center gap-2 text-lg font-medium text-[#2ED1B4] hover:text-[#5EEAD4] transition-colors duration-300 py-2"
                 >
                   <LayoutDashboard className="w-5 h-5" />
                   Dashboard
                 </a>
                 <a
-                  href="/settings"
+                  href={to('/settings')}
                   className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2"
                 >
                   <Settings className="w-5 h-5" />
@@ -300,7 +310,7 @@ export default function Navigation({ embedded = false }: NavigationProps) {
               </>
             ) : (
               <a
-                href="/login"
+                href={to('/login')}
                 className="flex items-center gap-2 text-lg font-medium text-[#8B5CF6] hover:text-[#A78BFA] transition-colors duration-300 py-2"
               >
                 <User className="w-5 h-5" />

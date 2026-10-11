@@ -12,8 +12,7 @@ import {
 import { CONFIG } from '@/landing/lib/config';
 import { FREE_SHIPPING_THRESHOLD } from '@/landing/lib/auspost';
 import { DEFAULT_SUPPORT_LINKS } from '@/landing/lib/settings';
-import { siteHostname } from '@/lib/domain';
-import { LANDING_SITE_URL, shopUrl, coaArchiveUrl, shopPageUrl } from '@/landing/lib/site';
+import { LANDING_SHOP_ORIGIN, LANDING_SITE_URL, shopUrl, coaArchiveUrl, shopPageUrl } from '@/landing/lib/site';
 
 const HIGHLIGHTS = [
   {
@@ -270,7 +269,7 @@ export default function LandingFooter({ hideCta = false }: LandingFooterProps) {
           <p className="rg-footer-meta-copy">
             © {new Date().getFullYear()} PEPLAB. All rights reserved. · Research use only ·{' '}
             <a href={shopPageUrl()} className="rg-footer-domain-link">
-              {siteHostname()}
+              {LANDING_SHOP_ORIGIN.replace(/^https?:\/\//, '')}
             </a>
           </p>
         </div>

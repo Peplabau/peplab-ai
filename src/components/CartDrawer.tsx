@@ -10,7 +10,7 @@ import { CONFIG } from '@/lib/config';
 import { useRewards } from '@/context/RewardsContext';
 import { calculatePurchasePoints } from '@/utils/points';
 
-export default function CartDrawer() {
+export default function CartDrawer({ checkoutHref = '/checkout' }: { checkoutHref?: string }) {
   const {
     items,
     addItem,
@@ -472,7 +472,7 @@ export default function CartDrawer() {
               </span>
             </div>
             <a 
-              href="/checkout"
+              href={checkoutHref}
               onClick={() => setIsCartOpen(false)}
               className="w-full py-2 sm:py-2.5 rounded-full bg-[#2ED1B4] text-[#070A12] font-medium text-xs sm:text-sm flex items-center justify-center gap-2 hover:bg-[#25b89d] transition-colors"
             >

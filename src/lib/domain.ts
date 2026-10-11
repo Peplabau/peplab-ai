@@ -28,6 +28,9 @@ const DEFAULT_LOGIN_ONLY_HOSTS = '';
 /** Full origin (protocol + host) of the open storefront. */
 const DEFAULT_MAIN_APP_ORIGIN = 'https://peplab.ai';
 
+/** peplab.com.au — shop and signed-in destination from the peplab.ai home lock. */
+export const AU_SITE_ORIGIN = 'https://peplab.com.au';
+
 /** Marker in the URL hash that identifies a cross-domain login handoff. */
 export const CROSS_DOMAIN_LOGIN_HASH_TYPE = 'cross-domain-login';
 
@@ -113,18 +116,22 @@ export function mainAppUrl(pathAndQuery: string = '/'): string {
  * calls `supabase.auth.setSession(...)`, wipes the hash, and navigates to
  * `next`.
  */
-export function buildCrossDomainLoginUrl(params: {
-  accessToken: string;
-  refreshToken: string;
-  next?: string;
-}): string {
+export function buildCrossDomainLoginUrl(
+  params: {
+    accessToken: string;
+    refreshToken: string;
+    next?: string;
+  },
+  origin: string = MAIN_APP_ORIGIN,
+): string {
   const hash = new URLSearchParams({
     access_token: params.accessToken,
     refresh_token: params.refreshToken,
     type: CROSS_DOMAIN_LOGIN_HASH_TYPE,
     next: params.next ?? '/dashboard',
   }).toString();
-  return `${MAIN_APP_ORIGIN}/#${hash}`;
+  const base = origin.replace(/\/+$/, '');
+  return `${base}/#${hash}`;
 }
 
 /** Paths on the login-only host that should not be indexed (auth entry, not public content). */

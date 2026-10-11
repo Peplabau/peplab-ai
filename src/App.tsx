@@ -40,6 +40,7 @@ const Shipping = lazy(() => import('@/pages/Shipping'));
 const ContactInfo = lazy(() => import('@/pages/ContactInfo'));
 const Standards = lazy(() => import('@/pages/Standards'));
 const Login = lazy(() => import('@/pages/Login'));
+const HomeLock = lazy(() => import('@/pages/HomeLock'));
 const LoginGateway = lazy(() => import('@/pages/LoginGateway'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
@@ -519,7 +520,7 @@ function App() {
           <StaleTabReloader />
           <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
             <Routes>
-              <Route path="/" element={<ShopRoute />} />
+              <Route path="/" element={<HomeLock />} />
               <Route path="/shop" element={<ShopRoute />} />
               <Route path="/landing" element={<PeplabLandingRoute />} />
               <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />

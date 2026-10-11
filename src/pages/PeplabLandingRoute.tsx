@@ -12,8 +12,8 @@ export default function PeplabLandingRoute() {
   return (
     <>
       <BrandSplash />
-      <Navigation />
-      <CartDrawer />
+      <Navigation linkOrigin="https://peplab.com.au" logoHref="/landing" />
+      <CartDrawer checkoutHref="https://peplab.com.au/checkout" />
       <ResearchGateway />
     </>
   );

@@ -1,7 +1,7 @@
 import { SHOP_PATH } from '@/lib/routes';
 import { getAdminAccess } from '@/lib/admin-access';
 import { DEFAULT_LANDING_PAGE_SETTINGS, getSiteSetting } from '@/lib/settings';
-import { buildCrossDomainLoginUrl, MAIN_APP_ORIGIN, mainAppUrl } from '@/lib/domain';
+import { AU_SITE_ORIGIN, buildCrossDomainLoginUrl, MAIN_APP_ORIGIN, mainAppUrl } from '@/lib/domain';
 import { supabase } from '@/lib/supabase';
 
 const DASHBOARD_PATH = '/dashboard';
@@ -70,4 +70,33 @@ export async function handoffToMainApp(nextPath?: string | null): Promise<void> 
   }
 
   window.location.assign(mainAppUrl(next));
+}
+
+/**
+ * Send the current session from the peplab.ai home lock to peplab.com.au.
+ * Tokens travel in the URL hash so the .com.au app can sign the same user in.
+ */
+export async function handoffToAuSite(nextPath: string = '/shop'): Promise<void> {
+  const next = sanitizeRedirectPath(nextPath) ?? '/shop';
+  if (typeof window === 'undefined') return;
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session?.access_token && session.refresh_token) {
+    window.location.assign(
+      buildCrossDomainLoginUrl(
+        {
+          accessToken: session.access_token,
+          refreshToken: session.refresh_token,
+          next,
+        },
+        AU_SITE_ORIGIN,
+      ),
+    );
+    return;
+  }
+
+  window.location.assign(`${AU_SITE_ORIGIN}${next}`);
 }

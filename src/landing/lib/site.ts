@@ -26,10 +26,16 @@ export const COA_ARCHIVE_PATH = '/coa';
 /** Canonical shop / catalogue path on the main site. */
 export const SHOP_PAGE_PATH = '/shop';
 
-/** Build an absolute URL on the main shop site. */
+/**
+ * Storefront the marketing landing sends shoppers to.
+ * /landing can be served on peplab.ai; its shop CTAs still open peplab.com.au.
+ */
+export const LANDING_SHOP_ORIGIN = 'https://peplab.com.au';
+
+/** Build an absolute URL on peplab.com.au. */
 export function shopUrl(path = ''): string {
-  if (!path) return `${MAIN_SITE_URL}/`;
-  return `${MAIN_SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  if (!path) return `${LANDING_SHOP_ORIGIN}/`;
+  return `${LANDING_SHOP_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 /** Shop catalogue page. */
@@ -47,5 +53,7 @@ export function normalizeImageUrl(url: string | null | undefined): string {
   const raw = (url ?? '').trim();
   if (!raw) return '';
   if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-  return shopUrl(raw.startsWith('/') ? raw : `/${raw}`);
+  const path = raw.startsWith('/') ? raw : `/${raw}`;
+  const base = MAIN_SITE_URL || 'https://peplab.ai';
+  return `${base}${path}`;
 }
