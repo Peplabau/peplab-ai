@@ -57,12 +57,9 @@ export default function SignupWelcomeModal() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (cancelled) return;
-        if (session?.user) {
-          dismissSignupWelcome();
-          return;
-        }
+        if (!session?.user) return;
       } catch {
-        /* still show for logged-out visitors */
+        return;
       }
 
       scheduleShow();
@@ -70,8 +67,18 @@ export default function SignupWelcomeModal() {
 
     void evaluate();
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled || !session?.user) return;
+      if (isSignupWelcomeExcludedPath(location.pathname)) return;
+      if (hasDismissedSignupWelcome()) return;
+      scheduleShow();
+    });
+
     return () => {
       cancelled = true;
+      subscription.unsubscribe();
       cancelVisibleWait?.();
       if (timer) window.clearTimeout(timer);
     };

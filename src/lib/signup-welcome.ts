@@ -7,8 +7,9 @@ export function isSignupWelcomeEnabled(): boolean {
   return CONFIG.FEATURES.ENABLE_SIGNUP_WELCOME_MODAL;
 }
 
-/** Routes where the signup welcome modal should not appear. */
+/** Routes where the signup welcome modal should not appear. `/` is the sign-in lock. */
 const EXCLUDED_PATH_PREFIXES = [
+  '/',
   '/admin',
   '/checkout',
   '/login',
@@ -20,8 +21,9 @@ const EXCLUDED_PATH_PREFIXES = [
 
 export function isSignupWelcomeExcludedPath(pathname: string): boolean {
   const path = pathname || '/';
+  if (path === '/') return true;
   return EXCLUDED_PATH_PREFIXES.some(
-    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+    (prefix) => prefix !== '/' && (path === prefix || path.startsWith(`${prefix}/`)),
   );
 }
 
