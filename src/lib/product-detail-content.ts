@@ -1,6 +1,7 @@
 import type { Product, TechnicalSpecs } from '@/products';
 import { products as seedProducts } from '@/products';
 import { getPeptidexProductDetail } from '@/lib/peptidex-product-details';
+import { getShortProductCopy } from '@/lib/peplab-short-product-copy';
 
 const COPPER_SLUGS = new Set(['ghk-cu', 'glow', 'klow']);
 const LIQUID_SLUGS = new Set(['l-carnitine', 'bac-water']);
@@ -87,6 +88,7 @@ export function getSeedProductBySlug(slug: string): Product | undefined {
 export function enrichProductDetails(product: Product): Product {
   const seed = getSeedProductBySlug(product.id);
   const peptidex = getPeptidexProductDetail(product.id);
+  const shortCopy = getShortProductCopy(product.id);
   const technicalSpecs: TechnicalSpecs = {
     ...(seed?.technicalSpecs ?? {}),
     ...(product.technicalSpecs ?? {}),
@@ -96,12 +98,15 @@ export function enrichProductDetails(product: Product): Product {
   return {
     ...product,
     technicalSpecs,
+    // Short product copy (owner handoff) wins over PeptideX import for PDP sections.
     longDescription:
-      peptidex?.longDescription
+      shortCopy?.description
+      || peptidex?.longDescription
       || product.longDescription?.trim()
       || buildLongDescription(product),
     labPreparation:
-      peptidex?.labPreparation
+      shortCopy?.labPreparation
+      || peptidex?.labPreparation
       || product.labPreparation?.trim()
       || buildLabPreparation({ ...product, technicalSpecs }),
   };

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Beaker, FileText, FlaskConical, Shield } from 'lucide-react';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { AlertTriangle, ArrowLeft, ArrowRight, FileText, FlaskConical, Shield } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import StorefrontLayout from '@/components/StorefrontLayout';
 import { SEO } from '@/components/SEO';
@@ -14,17 +14,12 @@ import { resolveProductSlug } from '@/lib/product-slug-aliases';
 import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, type DiscountSettings } from '@/lib/settings';
 import {
   getTechnicalPropertyRows,
-  isStepByStepSection,
   parseLabPreparationSections,
-  parseLabPreparationSteps,
 } from '@/lib/product-detail-content';
-import { getPeptidexProductDetail } from '@/lib/peptidex-product-details';
+import { getShortProductCopy } from '@/lib/peplab-short-product-copy';
 import CoaDialog from '@/components/CoaDialog';
 import { getCoaDisplayData } from '@/lib/coa-utils';
 import { cn } from '@/lib/utils';
-
-type DetailTab = 'description' | 'technical' | 'lab';
-
 import { CONFIG } from '@/lib/config';
 
 const STOREFRONT_COA_ENABLED = CONFIG.FEATURES.ENABLE_STOREFRONT_COA;
@@ -40,7 +35,6 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [discountSettings, setDiscountSettings] = useState<DiscountSettings>(DEFAULT_DISCOUNT_SETTINGS);
-  const [activeTab, setActiveTab] = useState<DetailTab>('description');
   const [coaOpen, setCoaOpen] = useState(false);
 
   useLayoutEffect(() => {
@@ -89,10 +83,6 @@ export default function ProductPage() {
     };
   }, [slug, needsAliasRedirect]);
 
-  if (needsAliasRedirect && slug) {
-    return <Navigate to={`/product/${slug}`} replace />;
-  }
-
   const seo = useMemo(() => {
     if (!product || !slug) return null;
     return buildProductSeo(product, slug);
@@ -103,32 +93,37 @@ export default function ProductPage() {
     return buildProductJsonLd(product, slug);
   }, [product, slug]);
 
-  const peptidexDetail = useMemo(
-    () => (product ? getPeptidexProductDetail(product.id) : undefined),
+  const shortCopy = useMemo(
+    () => (product ? getShortProductCopy(product.id) : undefined),
     [product],
   );
 
-  const technicalRows = useMemo(() => {
-    if (!product) return [];
-    const rows = peptidexDetail?.technicalProperties?.length
-      ? peptidexDetail.technicalProperties
-      : getTechnicalPropertyRows(product);
-    // Hide storefront Storage rows (e.g. "Store at -20°C", "Storage (Lyophilised)").
-    return rows.filter((row) => !/\bstorage\b/i.test(row.label));
-  }, [product, peptidexDetail]);
+  const descriptionText = shortCopy?.description
+    || product?.longDescription
+    || product?.description
+    || '';
 
-  const labSections = useMemo(
-    () => (product?.labPreparation ? parseLabPreparationSections(product.labPreparation) : []),
-    [product?.labPreparation],
-  );
+  const propertyRows = useMemo(() => {
+    if (!product) return [];
+    if (shortCopy?.properties?.length) {
+      const verified = getTechnicalPropertyRows(product).filter((row) =>
+        /^(Purity|Batch|Form|Vial Size|Testing Method|Quality Verification)$/i.test(row.label),
+      );
+      return [...shortCopy.properties, ...verified];
+    }
+    return getTechnicalPropertyRows(product);
+  }, [product, shortCopy]);
+
+  const labSections = useMemo(() => {
+    if (shortCopy?.labPreparation) return parseLabPreparationSections(shortCopy.labPreparation);
+    if (product?.labPreparation) return parseLabPreparationSections(product.labPreparation);
+    return [];
+  }, [product?.labPreparation, shortCopy?.labPreparation]);
+
+  const overviewText = shortCopy?.overview?.trim() || '';
+  const researchHref = shortCopy?.researchHref || null;
 
   const coaData = STOREFRONT_COA_ENABLED && product ? getCoaDisplayData(product) : null;
-
-  const tabs: Array<{ id: DetailTab; label: string }> = [
-    { id: 'description', label: 'Description' },
-    { id: 'technical', label: 'Properties' },
-    { id: 'lab', label: 'Preparation' },
-  ];
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -138,18 +133,22 @@ export default function ProductPage() {
     navigate(SHOP_PATH);
   };
 
+  if (needsAliasRedirect && slug) {
+    return <Navigate to={`/product/${slug}`} replace />;
+  }
+
   if (loading) {
     return (
       <StorefrontLayout surface="clean">
         <main className="pdp-page nl-new-landing page-grid-bg min-h-screen pt-24 pb-16">
           <section className="pdp-section">
             <div className="max-w-6xl mx-auto px-6">
-            <Skeleton className="h-10 w-28 rounded-lg mb-8" />
-            <div className="pdp-hero-grid">
-              <Skeleton className="aspect-[4/3] rounded-[1.25rem]" />
+              <Skeleton className="h-10 w-28 rounded-lg mb-8" />
+              <div className="pdp-hero-grid">
+                <Skeleton className="aspect-[4/3] rounded-[1.25rem]" />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
         </main>
       </StorefrontLayout>
     );
@@ -161,16 +160,16 @@ export default function ProductPage() {
         <main className="pdp-page nl-new-landing page-grid-bg min-h-screen pt-24 pb-16">
           <section className="pdp-section">
             <div className="max-w-6xl mx-auto px-6 flex min-h-[50vh] flex-col items-center justify-center text-center">
-            <p className="text-[#EF4444] text-sm mb-4">{error || 'Product not found.'}</p>
-            <button
-              className="px-4 py-2 rounded-xl bg-[#2ED1B4] text-[#070A12] font-semibold hover:bg-[#25b89d]"
-              type="button"
-              onClick={() => navigate(SHOP_PATH)}
-            >
-              Back to shop
-            </button>
-          </div>
-        </section>
+              <p className="text-[#EF4444] text-sm mb-4">{error || 'Product not found.'}</p>
+              <button
+                className="px-4 py-2 rounded-xl bg-[#2ED1B4] text-[#070A12] font-semibold hover:bg-[#25b89d]"
+                type="button"
+                onClick={() => navigate(SHOP_PATH)}
+              >
+                Back to shop
+              </button>
+            </div>
+          </section>
         </main>
       </StorefrontLayout>
     );
@@ -185,113 +184,36 @@ export default function ProductPage() {
       <main className="pdp-page nl-new-landing page-grid-bg min-h-screen pt-24 pb-16">
         <section className="pdp-section">
           <div className="max-w-6xl mx-auto px-6">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="pdp-back"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
+            <button type="button" onClick={handleBack} className="pdp-back">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
 
-          <div className="pdp-hero-grid">
-            <ProductCard
-              product={product}
-              discountSettings={discountSettings}
-              layout="pdp"
-              linkToDetail={false}
-              imagePriority
-            />
-          </div>
-
-          <section className="pdp-details-panel">
-            <div className="pdp-tabs" role="tablist" aria-label="Product information">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`pdp-tab ${activeTab === tab.id ? 'is-active' : ''}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            <div className="pdp-hero-grid">
+              <ProductCard
+                product={product}
+                discountSettings={discountSettings}
+                layout="pdp"
+                linkToDetail={false}
+                imagePriority
+              />
             </div>
 
-            <div className="pdp-tab-body">
-              {activeTab === 'description' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="nl-eyebrow mb-2">Overview</p>
-                    <h2 className="nl-heading text-xl sm:text-2xl mb-1">
-                      {peptidexDetail?.overviewTitle ?? product.name}
-                    </h2>
-                    {peptidexDetail?.overviewSubtitle && (
-                      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--nl-purple)] mb-3">
-                        {peptidexDetail.overviewSubtitle}
-                      </p>
-                    )}
-                    <p className="nl-lead whitespace-pre-wrap">
-                      {product.longDescription || product.description}
-                    </p>
-                  </div>
+            <section className="pdp-details-stack space-y-3" aria-label="Product information">
+              {/* Description — always visible and concise */}
+              <div className="pdp-short-panel">
+                <h2 className="pdp-short-panel__label">Description</h2>
+                <p className="nl-lead whitespace-pre-wrap">{descriptionText}</p>
+              </div>
 
-                  {peptidexDetail?.keyFeatures && peptidexDetail.keyFeatures.length > 0 && (
-                    <div>
-                      {peptidexDetail.keyFeaturesTitle && (
-                        <h3 className="rg-card-title mb-3">
-                          {peptidexDetail.keyFeaturesTitle}
-                        </h3>
-                      )}
-                      <div className="rg-approach-grid">
-                        {peptidexDetail.keyFeatures.map((feature) => (
-                          <div key={feature.title} className="rg-approach-card">
-                            <h4 className="rg-card-title text-xs uppercase tracking-wider text-[var(--nl-purple)]">
-                              {feature.title}
-                            </h4>
-                            <p className="rg-card-text">{feature.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="nl-featured-disclaimer rounded-[var(--nl-radius-lg,1.25rem)] overflow-hidden">
-                    <div className="py-5 px-5 sm:py-6 sm:px-6">
-                      <div className="flex items-start gap-4 sm:gap-5">
-                        <div className="nl-featured-disclaimer-icon shrink-0">
-                          <FlaskConical className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--nl-bg)]" strokeWidth={1.75} />
-                        </div>
-                        <div className="min-w-0 pt-0.5">
-                          <p className="text-base sm:text-lg font-semibold text-[var(--nl-text)]">
-                            {peptidexDetail?.researchNoticeTitle ?? 'Research use only'}
-                          </p>
-                          <p className="nl-lead mt-2">
-                            {peptidexDetail?.researchNotice
-                              ?? 'This product is intended for laboratory research purposes only and is not for human or animal consumption. Not intended to diagnose, treat, cure, or prevent any disease.'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {product.moreInfo?.trim() && (
-                    <div className="space-y-3">
-                      <h3 className="rg-card-title">Important Information</h3>
-                      <p className="rg-card-text whitespace-pre-wrap">{product.moreInfo}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'technical' && (
-                <div>
-                  <p className="nl-eyebrow mb-2">Specifications</p>
-                  <h2 className="nl-heading text-xl sm:text-2xl mb-4">Properties</h2>
+              {/* Properties / Preparation / Overview — crawlable <details> accordions */}
+              <details className="pdp-short-accordion">
+                <summary className="pdp-short-accordion__summary">
+                  <span>Properties</span>
+                </summary>
+                <div className="pdp-short-accordion__body">
                   <div className="pdp-props-table">
-                    {technicalRows.map((row) => (
+                    {propertyRows.map((row) => (
                       <div key={row.label} className="pdp-props-row">
                         <span className="text-[#A9B3C7] shrink-0">{row.label}</span>
                         <span className="text-[#F4F6FA] sm:text-right break-words">{row.value}</span>
@@ -299,78 +221,112 @@ export default function ProductPage() {
                     ))}
                   </div>
                 </div>
-              )}
+              </details>
 
-              {activeTab === 'lab' && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2">
-                    <Beaker size={18} className="text-[var(--nl-purple)]" />
-                    <h2 className="nl-heading text-xl sm:text-2xl mb-0">
-                      {peptidexDetail?.labPreparationTitle ?? 'Lab Preparation'}
-                    </h2>
-                  </div>
-
+              <details className="pdp-short-accordion">
+                <summary className="pdp-short-accordion__summary">
+                  <span>Preparation</span>
+                </summary>
+                <div className="pdp-short-accordion__body space-y-4">
                   {labSections.length > 0 ? (
-                    labSections.map((section) => {
-                      const steps = isStepByStepSection(section.title)
-                        ? parseLabPreparationSteps(section.body)
-                        : [];
-
-                      return (
-                        <div key={section.title}>
-                          <h3 className="rg-card-title mb-2">{section.title}</h3>
-                          {steps.length > 0 ? (
-                            <ol className="space-y-3">
-                              {steps.map((step) => (
-                                <li
-                                  key={step.number}
-                                  className="flex items-start gap-3 text-sm leading-relaxed text-[#A9B3C7]"
-                                >
-                                  <span className="shrink-0 min-w-[1.75rem] font-mono text-xs font-bold tabular-nums text-[var(--nl-purple)] pt-0.5">
-                                    {step.number}
-                                  </span>
-                                  <span className="min-w-0 flex-1">{step.text}</span>
-                                </li>
-                              ))}
-                            </ol>
-                          ) : (
-                            <p className="nl-lead whitespace-pre-wrap">{section.body}</p>
-                          )}
-                        </div>
-                      );
-                    })
+                    labSections.map((section) => (
+                      <div key={section.title}>
+                        <h3 className="rg-card-title mb-2">{section.title}</h3>
+                        <p className="nl-lead whitespace-pre-wrap">{section.body}</p>
+                      </div>
+                    ))
                   ) : (
-                    <p className="nl-lead">Lab preparation details are not available for this product.</p>
+                    <p className="nl-lead">
+                      Follow the product-specific laboratory preparation instructions. Confirm diluent
+                      compatibility before mixing.
+                    </p>
                   )}
                 </div>
-              )}
-            </div>
-          </section>
+              </details>
 
-          <div className="rg-approach-grid rg-approach-grid--coa pdp-trust-row">
-            <TrustCard icon={<Shield size={14} />} title="Lab Verified" text="Batch-tested research material" />
-            {STOREFRONT_COA_ENABLED && (
-              <button
-                type="button"
-                onClick={() => setCoaOpen(true)}
-                className={cn(
-                  'rg-approach-card pdp-trust-card--coa text-left',
-                  !coaData?.hasCoaPdf && 'pdp-trust-card--pending',
-                )}
-              >
-                <div className="rg-approach-icon">
-                  <FileText size={16} className={coaData?.hasCoaPdf ? 'text-[var(--nl-purple)]' : 'text-[rgba(251,191,36,0.85)]'} />
+              <details className="pdp-short-accordion">
+                <summary className="pdp-short-accordion__summary">
+                  <span>Overview</span>
+                </summary>
+                <div className="pdp-short-accordion__body space-y-4">
+                  {overviewText ? (
+                    <p className="nl-lead whitespace-pre-wrap">{overviewText}</p>
+                  ) : (
+                    <p className="nl-lead">
+                      Research findings depend on the preparation, study design and population. This
+                      material is supplied for laboratory research only.
+                    </p>
+                  )}
+
+                  {researchHref ? (
+                    <Link
+                      to={researchHref}
+                      className="pdp-research-overview-btn"
+                      aria-label={`Research overview for ${product.name}`}
+                    >
+                      RESEARCH OVERVIEW
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  ) : null}
                 </div>
-                <h3 className="rg-card-title">Certificate of Analysis</h3>
-                <p className="rg-card-text">
-                  {coaData?.hasCoaPdf
-                    ? 'View third-party HPLC certificate for this batch'
-                    : 'Certificate pending — check back soon for this batch'}
-                </p>
-              </button>
-            )}
-            <TrustCard icon={<AlertTriangle size={14} />} title="Research Only" text="Not for therapeutic or cosmetic use" />
-          </div>
+              </details>
+
+              <div className="nl-featured-disclaimer rounded-[var(--nl-radius-lg,1.25rem)] overflow-hidden">
+                <div className="py-5 px-5 sm:py-6 sm:px-6">
+                  <div className="flex items-start gap-4 sm:gap-5">
+                    <div className="nl-featured-disclaimer-icon shrink-0">
+                      <FlaskConical className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--nl-bg)]" strokeWidth={1.75} />
+                    </div>
+                    <div className="min-w-0 pt-0.5">
+                      <p className="text-base sm:text-lg font-semibold text-[var(--nl-text)]">
+                        Research use only
+                      </p>
+                      <p className="nl-lead mt-2">
+                        This product is intended for laboratory research purposes only and is not for
+                        human or animal consumption. Not intended to diagnose, treat, cure, or prevent
+                        any disease.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div className="rg-approach-grid rg-approach-grid--coa pdp-trust-row">
+              <TrustCard icon={<Shield size={14} />} title="Lab Verified" text="Batch-tested research material" />
+              {STOREFRONT_COA_ENABLED && (
+                <button
+                  type="button"
+                  onClick={() => setCoaOpen(true)}
+                  className={cn(
+                    'rg-approach-card pdp-trust-card--coa text-left',
+                    !coaData?.hasCoaPdf && 'pdp-trust-card--pending',
+                  )}
+                >
+                  <div className="rg-approach-icon">
+                    <FileText
+                      size={16}
+                      className={
+                        coaData?.hasCoaPdf
+                          ? 'text-[var(--nl-purple)]'
+                          : 'text-[rgba(251,191,36,0.85)]'
+                      }
+                    />
+                  </div>
+                  <h3 className="rg-card-title">Certificate of Analysis</h3>
+                  <p className="rg-card-text">
+                    {coaData?.hasCoaPdf
+                      ? 'View third-party HPLC certificate for this batch'
+                      : 'Certificate pending — check back soon for this batch'}
+                  </p>
+                </button>
+              )}
+              <TrustCard
+                icon={<AlertTriangle size={14} />}
+                title="Research Only"
+                text="Not for therapeutic or cosmetic use"
+              />
+            </div>
           </div>
         </section>
       </main>
