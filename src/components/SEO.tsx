@@ -29,6 +29,8 @@ export function SEO({
 }: SEOProps) {
   const location = useLocation();
   const origin = seoOrigin();
+  const path = location.pathname.replace(/\/+$/, '') || '/';
+  const pageUrl = `${origin}${path === '/' ? '/' : path}`;
   const resolvedOgImage =
     ogImage ?? `${origin}${CONFIG.SHARE_PREVIEW_IMAGE_PATH}`;
 
@@ -61,7 +63,7 @@ export function SEO({
       { property: 'og:image:height', content: '630' },
       { property: 'og:image:alt', content: 'PEPLAB — Peptides Australia' },
       { property: 'og:site_name', content: SITE_SEO_TITLE },
-      { property: 'og:url', content: `${origin}${location.pathname}${location.search}` },
+      { property: 'og:url', content: pageUrl },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: title },
@@ -97,18 +99,15 @@ export function SEO({
       }
     });
 
-    // Canonical URL
+    // Canonical URL — path only; ignore query/tracking params
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.setAttribute('rel', 'canonical');
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute(
-      'href',
-      `${origin}${location.pathname}${location.search}`,
-    );
-  }, [title, description, keywords, resolvedOgImage, noIndex, location.pathname, location.search, origin]);
+    canonical.setAttribute('href', pageUrl);
+  }, [title, description, keywords, resolvedOgImage, noIndex, pageUrl, origin]);
 
   return null;
 }
