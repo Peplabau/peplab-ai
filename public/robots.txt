@@ -1,12 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /dashboard
-Disallow: /checkout
-Disallow: /login
-Disallow: /signup
-Disallow: /settings
-Disallow: /promoter
-Disallow: /forgot-password
-Disallow: /reset-password
+Allow: /landing
+
 Sitemap: https://peplab.ai/sitemap.xml

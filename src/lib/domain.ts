@@ -31,6 +31,20 @@ const DEFAULT_MAIN_APP_ORIGIN = 'https://peplab.ai';
 /** peplab.com.au — shop and signed-in destination from the peplab.ai home lock. */
 export const AU_SITE_ORIGIN = 'https://peplab.com.au';
 
+const AI_HOSTS = new Set(['peplab.ai', 'www.peplab.ai']);
+
+/** True on the peplab.ai deployment. Other hosts keep their own pages. */
+export function isPeplabAiHost(hostname?: string): boolean {
+  const host = (hostname ?? (typeof window !== 'undefined' ? window.location.hostname : '')).toLowerCase();
+  return AI_HOSTS.has(host);
+}
+
+/** Pages that stay on peplab.ai. Everything else is mirrored to peplab.com.au. */
+export function isAiPublicPath(pathname: string): boolean {
+  const path = (pathname || '/').replace(/\/+$/, '') || '/';
+  return path === '/' || path === '/landing';
+}
+
 /** Marker in the URL hash that identifies a cross-domain login handoff. */
 export const CROSS_DOMAIN_LOGIN_HASH_TYPE = 'cross-domain-login';
 

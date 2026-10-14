@@ -2,7 +2,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { supabase } from '@/lib/supabase'
-import { CROSS_DOMAIN_LOGIN_HASH_TYPE, applyLoginGatewayDocumentBranding } from '@/lib/domain'
+import { CROSS_DOMAIN_LOGIN_HASH_TYPE, applyLoginGatewayDocumentBranding, isAiPublicPath, isPeplabAiHost } from '@/lib/domain'
+import { handoffToAuSite } from '@/lib/login-redirect'
 
 /**
  * Consume a cross-domain login handoff *before* the React tree mounts.
@@ -49,6 +50,14 @@ async function consumeCrossDomainLoginHandoff(): Promise<void> {
 async function boot() {
   applyLoginGatewayDocumentBranding();
   await consumeCrossDomainLoginHandoff();
+
+  const path = window.location.pathname;
+  const isFile = /\.[a-z0-9]+$/i.test(path);
+  if (isPeplabAiHost() && !isAiPublicPath(path) && !isFile) {
+    await handoffToAuSite(`${path}${window.location.search}`);
+    return;
+  }
+
   createRoot(document.getElementById('root')!).render(<App />);
 }
 

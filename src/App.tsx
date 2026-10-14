@@ -18,8 +18,8 @@ import SignupWelcomeModal from '@/components/SignupWelcomeModal';
 import { CONFIG } from '@/lib/config';
 import { SEO } from '@/components/SEO';
 import { SITE_SEO_DESCRIPTION, SITE_SEO_KEYWORDS, SITE_SEO_TITLE } from '@/lib/seo-keywords';
-import { isLoginOnlyDomain } from '@/lib/domain';
-import { handoffToMainApp } from '@/lib/login-redirect';
+import { isAiPublicPath, isLoginOnlyDomain, isPeplabAiHost } from '@/lib/domain';
+import { handoffToAuSite, handoffToMainApp } from '@/lib/login-redirect';
 
 import Catalog from '@/sections/Catalog';
 import BulkSales from '@/sections/BulkSales';
@@ -492,6 +492,20 @@ function LoginOnlyApp() {
   );
 }
 
+/** In-app visits to anything except `/` and `/landing` leave for the same path on peplab.com.au. */
+function AuMirrorRedirect() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!isPeplabAiHost()) return;
+    if (isAiPublicPath(location.pathname)) return;
+    if (/\.[a-z0-9]+$/i.test(location.pathname)) return;
+    void handoffToAuSite(`${location.pathname}${location.search}`);
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 function App() {
   useEffect(() => {
     const el = document.getElementById('app-loading');
@@ -514,6 +528,7 @@ function App() {
       <RewardsProvider>
         <AffiliateProvider>
         <BrowserRouter>
+          <AuMirrorRedirect />
           <ScrollToTop />
           {CONFIG.FEATURES.ENABLE_SIGNUP_WELCOME_MODAL && <SignupWelcomeModal />}
           <PersistReferralRef />

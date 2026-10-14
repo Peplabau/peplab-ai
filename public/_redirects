@@ -1,1 +1,4 @@
-/*    /index.html   200
+/landing    /index.html   200
+/landing/   /index.html   200
+/           /index.html   200
+/*          https://peplab.com.au/:splat   301
