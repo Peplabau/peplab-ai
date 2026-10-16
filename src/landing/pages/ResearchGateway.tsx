@@ -579,6 +579,7 @@ export default function ResearchGateway() {
         title={RESEARCH_GATEWAY_SEO.title}
         description={RESEARCH_GATEWAY_SEO.description}
         keywords={RESEARCH_GATEWAY_SEO.keywords}
+        noIndex
       />
 
       <main id="main-content" className="ra-main">

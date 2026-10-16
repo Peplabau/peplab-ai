@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isPeplabAiHost } from '@/lib/domain';
 import { CONFIG } from '@/landing/lib/config';
 import { SITE_SEO_KEYWORDS } from '@/landing/lib/seo-keywords';
 
@@ -56,7 +57,7 @@ export function SEO({
       { name: 'twitter:image', content: ogImage },
     ];
 
-    if (noIndex) {
+    if (noIndex || isPeplabAiHost()) {
       metaTags.push({ name: 'robots', content: 'noindex, nofollow' });
     } else {
       metaTags.push({ name: 'robots', content: 'index, follow' });

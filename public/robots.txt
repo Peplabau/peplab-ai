@@ -1,5 +1,2 @@
 User-agent: *
-Allow: /
-Allow: /landing
-
-Sitemap: https://peplab.ai/sitemap.xml
+Disallow: /

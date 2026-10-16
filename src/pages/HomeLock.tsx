@@ -115,6 +115,7 @@ export default function HomeLock() {
       <SEO
         title="PEPLAB | Sign in"
         description="Sign in to PEPLAB. The research catalogue and checkout are on peplab.com.au."
+        noIndex
       />
       <div className="min-h-screen flex flex-col" style={{ background: '#070A12' }}>
         <div className="absolute inset-0 grid-overlay opacity-60" />

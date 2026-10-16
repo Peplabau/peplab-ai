@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CONFIG } from '@/lib/config';
-import { isLoginOnlyDomain } from '@/lib/domain';
+import { isLoginOnlyDomain, isPeplabAiHost } from '@/lib/domain';
 import { SITE_SEO_DESCRIPTION, SITE_SEO_KEYWORDS, SITE_SEO_TITLE } from '@/lib/seo-keywords';
 
 interface SEOProps {
@@ -69,7 +69,7 @@ export function SEO({
       { name: 'twitter:image', content: resolvedOgImage },
     ];
 
-    if (noIndex) {
+    if (noIndex || isPeplabAiHost()) {
       metaTags.push({ name: 'robots', content: 'noindex, nofollow' });
     } else {
       metaTags.push({ name: 'robots', content: 'index, follow' });

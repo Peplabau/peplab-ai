@@ -25,6 +25,14 @@
     { "source": "/((?!landing/?$)(?!.*\\.).+)", "has": [{ "type": "host", "value": "peplab.ai" }], "destination": "https://peplab.com.au/$1", "permanent": true },
     { "source": "/((?!landing/?$)(?!.*\\.).+)", "has": [{ "type": "host", "value": "www.peplab.ai" }], "destination": "https://peplab.com.au/$1", "permanent": true }
   ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
