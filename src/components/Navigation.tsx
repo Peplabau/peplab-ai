@@ -1,9 +1,22 @@
-import { useState, useEffect } from 'react';
-import { ShoppingCart, Menu, X, User, LayoutDashboard, Award, Settings, Search, Package, TrendingUp, Trophy } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  ShoppingCart,
+  Menu,
+  X,
+  User,
+  LayoutDashboard,
+  Award,
+  Settings,
+  Package,
+  TrendingUp,
+  Trophy,
+  LogOut,
+  ChevronDown,
+} from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useRewards } from '@/context/RewardsContext';
 import { useAffiliate } from '@/context/AffiliateContext';
-import { supabase, getCurrentUser } from '@/lib/supabase';
+import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
 import SearchBar from './SearchBar';
 import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
@@ -22,9 +35,11 @@ type NavigationProps = {
 export default function Navigation({ embedded = false, linkOrigin, logoHref }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
   const { totalItems, setIsCartOpen } = useCart();
   const { balance } = useRewards();
   const { myPromoter } = useAffiliate();
@@ -77,6 +92,33 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!isAccountOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!accountRef.current?.contains(event.target as Node)) {
+        setIsAccountOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsAccountOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isAccountOpen]);
+
+  const handleLogout = async () => {
+    setIsMobileMenuOpen(false);
+    setIsAccountOpen(false);
+    await signOut();
+    localStorage.removeItem('peplab_logged_in');
+    localStorage.removeItem('peplab_is_admin');
+    window.location.href = HOME_PATH;
+  };
+
   const to = (href: string) => {
     if (!linkOrigin || /^(https?:|mailto:|tel:)/.test(href)) return href;
     const path = href.startsWith('/') ? href : `/${href}`;
@@ -87,13 +129,15 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
     'text-sm font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300';
   const navClassMobile =
     'block w-full text-left text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2';
+  const menuItemClass =
+    'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.06)] hover:text-[#F4F6FA] transition-colors';
 
   type NavAnchor = { label: string; href: string };
   /** Crawlable anchors where possible; Google sitelinks are still automated. */
   const navEntries: ReadonlyArray<NavAnchor> = [
     { label: 'Shop', href: SHOP_PATH },
-    // Temporarily disabled — client asked to remove Protocols (compliance risk).
-    // { label: 'Protocols', href: PROTOCOLS_PATH },
+    { label: 'Research', href: 'https://peplab.com.au/research' },
+    { label: 'Blog', href: 'https://peplab.com.au/blog' },
     { label: 'COA', href: COA_ARCHIVE_PATH },
     { label: 'Calculator', href: CALCULATOR_PATH },
     { label: 'About', href: '/standards' },
@@ -112,19 +156,19 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
               : 'bg-[#070A12]'
         }`}
       >
-        <div className={embedded ? 'nl-container' : 'w-full px-4 sm:px-6 lg:px-12'}>
-          <div className={`nl-nav-bar flex items-center justify-between ${embedded ? '' : 'h-16 sm:h-20 lg:h-24'}`}>
-            <a href={logoHref ?? to(HOME_PATH)} className="flex flex-col items-start" aria-label="PEPLAB Australia home" onClick={() => setIsMobileMenuOpen(false)}>
-              <span className={`font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-4xl' : 'text-3xl sm:text-4xl lg:text-5xl'}`}>
+        <div className={embedded ? 'nl-container' : 'w-full px-4 sm:px-6 lg:px-10 xl:px-12'}>
+          <div className={`nl-nav-bar flex items-center justify-between gap-4 ${embedded ? '' : 'h-16 sm:h-20 lg:h-[5.5rem]'}`}>
+            <a href={logoHref ?? to(HOME_PATH)} className="flex shrink-0 flex-col items-start" aria-label="PEPLAB Australia home" onClick={() => setIsMobileMenuOpen(false)}>
+              <span className={`font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-3xl' : 'text-2xl sm:text-3xl lg:text-4xl'}`}>
                 PEPLAB
               </span>
-              <span className={`nl-nav-tagline font-mono uppercase text-[#8B5CF6] mt-0.5 ${embedded ? 'text-[9px] sm:text-[10px] tracking-[0.35em]' : 'text-[10px] sm:text-xs lg:text-sm tracking-[0.45em] sm:tracking-[0.5em]'}`}>
+              <span className={`nl-nav-tagline font-mono uppercase text-[#8B5CF6] mt-0.5 ${embedded ? 'text-[9px] sm:text-[10px] tracking-[0.35em]' : 'text-[9px] sm:text-[10px] lg:text-xs tracking-[0.4em] sm:tracking-[0.45em]'}`}>
                 PEPTIDES AUSTRALIA
               </span>
             </a>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-10">
+            <div className="hidden lg:flex items-center gap-5 xl:gap-7">
               {navEntries.map((entry) => (
                 <a key={entry.label} href={to(entry.href)} className={navClassDesktop}>
                   {entry.label}
@@ -132,86 +176,82 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
               ))}
             </div>
 
-            {/* Right Side */}
-            <div className="flex items-center gap-2 sm:gap-4">
-              {/* Search Button */}
-              {/* <button
-                onClick={() => setIsSearchOpen(true)}
-                className="hidden sm:flex p-2.5 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
-                title="Search products"
-              >
-                <Search className="w-5 h-5 text-[#F4F6FA]" />
-              </button> */}
-
-              {/* Leaderboard Link - Desktop */}
-              <a
-                href={to('/leaderboard')}
-                className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
-                title="Promoter Leaderboard"
-              >
-                <Trophy className="w-5 h-5 text-amber-300" />
-              </a>
-              {/* Track Order Link - Desktop */}
-              <a
-                href={to('/track-order')}
-                className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
-                title="Track Order"
-              >
-                <Package className="w-5 h-5 text-[#F4F6FA]" />
-              </a>
-              {/* Points Display - When Logged In */}
-              {isLoggedIn && (
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(139,92,246,0.1)] border border-[rgba(139,92,246,0.2)]">
-                  <Award className="w-4 h-4 text-[#8B5CF6]" />
-                  <span className="text-sm font-medium text-[#8B5CF6]">{balance.toLocaleString()} pts</span>
-                </div>
-              )}
-
-              {/* Dashboard/Login Button - Desktop */}
-              {isLoggedIn ? (
-                <div className="hidden sm:flex items-center gap-2">
-                  {myPromoter && (
-                    <a
-                      href={to('/promoter')}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(34,197,94,0.15)] border border-[rgba(34,197,94,0.3)] text-[#22C55E] hover:bg-[rgba(34,197,94,0.25)] transition-colors duration-300"
-                    >
-                      <TrendingUp className="w-4 h-4" />
-                      <span className="text-sm font-medium">Promoter</span>
-                    </a>
-                  )}
-                  <a
-                    href={to('/dashboard')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(46,209,180,0.15)] border border-[rgba(46,209,180,0.3)] text-[#2ED1B4] hover:bg-[rgba(46,209,180,0.25)] transition-colors duration-300"
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span className="text-sm font-medium">Dashboard</span>
-                  </a>
-                  <a
-                    href={to('/settings')}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-[rgba(244,246,250,0.08)] border border-[rgba(244,246,250,0.15)] text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.12)] transition-colors duration-300"
-                    title="Account Settings"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </a>
-                </div>
-              ) : (
+            {/* Right Side — cart + compact account dropdown */}
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              {!isLoggedIn && (
                 <a
                   href={to('/login')}
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(139,92,246,0.15)] border border-[rgba(139,92,246,0.3)] text-[#8B5CF6] hover:bg-[rgba(139,92,246,0.25)] transition-colors duration-300"
+                  className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-[rgba(139,92,246,0.15)] border border-[rgba(139,92,246,0.3)] text-[#8B5CF6] hover:bg-[rgba(139,92,246,0.25)] transition-colors duration-300"
                 >
                   <User className="w-4 h-4" />
                   <span className="text-sm font-medium">Login</span>
                 </a>
               )}
 
+              {isLoggedIn && (
+                <div className="relative hidden sm:block" ref={accountRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsAccountOpen((open) => !open)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[rgba(244,246,250,0.12)] bg-[rgba(244,246,250,0.04)] px-3 py-2 text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.08)] transition-colors"
+                    aria-expanded={isAccountOpen}
+                    aria-haspopup="menu"
+                  >
+                    <User className="w-4 h-4 text-[#A78BFA]" />
+                    <span className="text-sm font-medium tabular-nums text-[#A78BFA]">
+                      {balance.toLocaleString()}
+                    </span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-[#A9B3C7] transition-transform ${isAccountOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isAccountOpen && (
+                    <div role="menu" className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-[rgba(244,246,250,0.1)] bg-[#111827] p-1.5 shadow-xl shadow-black/40">
+                      <div className="mb-1 flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-[#6B7280]">
+                        <Award className="w-3.5 h-3.5 text-[#8B5CF6]" />
+                        <span><span className="font-semibold text-[#A78BFA]">{balance.toLocaleString()}</span> reward points</span>
+                      </div>
+                      <div className="my-1 h-px bg-[rgba(244,246,250,0.08)]" />
+                      <a href={to('/dashboard')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
+                        <LayoutDashboard className="w-4 h-4 text-[#2ED1B4]" /> Dashboard
+                      </a>
+                      {myPromoter && (
+                        <a href={to('/promoter')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
+                          <TrendingUp className="w-4 h-4 text-[#22C55E]" /> Promoter
+                        </a>
+                      )}
+                      {isAdminUser && (
+                        <a href={to('/admin/dashboard')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
+                          <Settings className="w-4 h-4 text-[#EF4444]" /> Admin
+                        </a>
+                      )}
+                      <a href={to('/settings')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
+                        <Settings className="w-4 h-4" /> Settings
+                      </a>
+                      <a href={to('/track-order')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
+                        <Package className="w-4 h-4" /> Track order
+                      </a>
+                      <a href={to('/leaderboard')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
+                        <Trophy className="w-4 h-4 text-amber-300" /> Leaderboard
+                      </a>
+                      <div className="my-1 h-px bg-[rgba(244,246,250,0.08)]" />
+                      <button type="button" onClick={handleLogout} className={`${menuItemClass} hover:text-[#EF4444]`} role="menuitem">
+                        <LogOut className="w-4 h-4" /> Log out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Cart Button */}
               <button
+                type="button"
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-2.5 sm:p-3 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
+                className="relative p-2.5 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
+                aria-label="Open cart"
               >
-                <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 text-[#F4F6FA]" />
+                <ShoppingCart className="w-6 h-6 text-[#F4F6FA]" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#2ED1B4] text-[#070A12] text-xs sm:text-sm font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2ED1B4] px-1 text-[11px] font-bold text-[#070A12]">
                     {totalItems}
                   </span>
                 )}
@@ -219,8 +259,10 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
 
               {/* Mobile Menu Button */}
               <button
+                type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="lg:hidden p-2 rounded-full hover:bg-[rgba(244,246,250,0.08)] transition-colors duration-300"
+                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
               >
                 {isMobileMenuOpen ? (
                   <X className="w-6 h-6 text-[#F4F6FA]" />
@@ -296,6 +338,7 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
                 <a
                   href={to('/dashboard')}
                   className="flex items-center gap-2 text-lg font-medium text-[#2ED1B4] hover:text-[#5EEAD4] transition-colors duration-300 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <LayoutDashboard className="w-5 h-5" />
                   Dashboard
@@ -303,10 +346,29 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
                 <a
                   href={to('/settings')}
                   className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Settings className="w-5 h-5" />
                   Account Settings
                 </a>
+                {isAdminUser && (
+                  <a
+                    href={to('/admin/dashboard')}
+                    className="flex items-center gap-2 text-lg font-medium text-[#EF4444] hover:text-[#F87171] transition-colors duration-300 py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Settings className="w-5 h-5" />
+                    Admin
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#EF4444] transition-colors duration-300 py-2"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Log out
+                </button>
               </>
             ) : (
               <a
