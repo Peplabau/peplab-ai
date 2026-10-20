@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node init && vite",
     "prebuild": "node scripts/generate-sitemap.mjs",
-    "build": "vite build",
+    "build": "node init && vite build",
     "lint": "eslint .",
     "seed:vial-images": "node scripts/seed-vial-images.mjs",
     "seed:vial-images:dry": "node scripts/seed-vial-images.mjs --dry-run",
