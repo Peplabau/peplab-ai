@@ -6,54 +6,47 @@ function runtimeOrigin(): string {
   return trim(fromEnv || 'https://peplab.ai');
 }
 
-/** Main storefront origin for this deployment. */
+/** This peplab.ai deployment origin. */
 export const MAIN_SITE_URL = trim(import.meta.env.VITE_MAIN_SITE_URL || runtimeOrigin());
 
-/** Alias: shop lives at the main site root. */
+/** Shop lives on the same host (peplab.ai). */
 export const SHOP_URL = MAIN_SITE_URL;
 
-/**
- * Marketing landing — /landing on the main site when embedded.
- * Override with VITE_LANDING_SITE_URL for standalone subdomain deploys.
- */
+/** Storefront origin shown in landing links/footer. */
+export const LANDING_SHOP_ORIGIN = MAIN_SITE_URL;
+
+/** Landing path on this host. */
 export const LANDING_SITE_URL = trim(
   import.meta.env.VITE_LANDING_SITE_URL || `${runtimeOrigin()}/landing`,
 );
 
-/** Published COA archive on the main shop site. */
+/** Published COA archive on this host. */
 export const COA_ARCHIVE_PATH = '/coa';
 
-/** Canonical shop / catalogue path on the main site. */
+/** Catalogue path on this host. */
 export const SHOP_PAGE_PATH = '/shop';
 
-/**
- * Storefront the marketing landing sends shoppers to.
- * /landing can be served on peplab.ai; its shop CTAs still open peplab.com.au.
- */
-export const LANDING_SHOP_ORIGIN = 'https://peplab.com.au';
-
-/** Build an absolute URL on peplab.com.au. */
+/** Build an absolute URL on peplab.ai (same storefront — no bounce via .com.au). */
 export function shopUrl(path = ''): string {
-  if (!path) return `${LANDING_SHOP_ORIGIN}/`;
-  return `${LANDING_SHOP_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
+  if (!path) return `${MAIN_SITE_URL}/`;
+  return `${MAIN_SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-/** Shop catalogue page. */
+/** Shop catalogue / home CTA — stay on peplab.ai. */
 export function shopPageUrl(): string {
-  return shopUrl(SHOP_PAGE_PATH);
+  return `${MAIN_SITE_URL}/`;
 }
 
-/** COA archive page — batch certificates published for verification. */
+/** COA archive page on peplab.ai. */
 export function coaArchiveUrl(): string {
   return shopUrl(COA_ARCHIVE_PATH);
 }
 
-/** Prefix relative asset paths from the main site. */
+/** Prefix relative asset paths from this site. */
 export function normalizeImageUrl(url: string | null | undefined): string {
   const raw = (url ?? '').trim();
   if (!raw) return '';
   if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
   const path = raw.startsWith('/') ? raw : `/${raw}`;
-  const base = MAIN_SITE_URL || 'https://peplab.ai';
-  return `${base}${path}`;
+  return `${MAIN_SITE_URL}${path}`;
 }
