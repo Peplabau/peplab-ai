@@ -12,6 +12,9 @@ export const MAIN_SITE_URL = trim(import.meta.env.VITE_MAIN_SITE_URL || runtimeO
 /** Shop lives on the same host (peplab.ai). */
 export const SHOP_URL = MAIN_SITE_URL;
 
+/** Storefront origin shown in landing links/footer. */
+export const LANDING_SHOP_ORIGIN = MAIN_SITE_URL;
+
 /** Landing path on this host. */
 export const LANDING_SITE_URL = trim(
   import.meta.env.VITE_LANDING_SITE_URL || `${runtimeOrigin()}/landing`,
