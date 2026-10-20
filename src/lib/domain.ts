@@ -1,23 +1,13 @@
 /**
- * PEPLAB domain routing — split deployments (recommended for SEO):
+ * PEPLAB domain routing:
  *
- *   peplab.com.au  → This repo / Vercel project #1
- *                    Login entry + public SEO pages. After sign-in, members
- *                    are handed off to peplab.ai (the shop is not on this host).
- *                    index.html, sitemap, robots all use peplab.com.au.
+ *   peplab.ai      → Open storefront (shop, landing, checkout). Never login-locked. noindex.
+ *   peplab.com.au  → SEO / login gate (separate peplab-com-ai deploy).
  *
- *   peplab.ai      → Separate repo copy / Vercel project #2
- *                    Full open storefront. Apply files from deploy/peplab-ai/.
- *
- * Env (this .com.au deployment):
- *   VITE_SITE_URL           = https://peplab.com.au
- *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai   (Shop now / open storefront)
- *   VITE_LOGIN_ONLY_HOSTS   = peplab.com.au,www.peplab.com.au
- *
- * Env (peplab.ai deployment — see deploy/peplab-ai/.env.example):
+ * Env (peplab.ai deployment):
  *   VITE_SITE_URL           = https://peplab.ai
  *   VITE_MAIN_APP_ORIGIN    = https://peplab.ai
- *   VITE_LOGIN_ONLY_HOSTS   =   (empty — full shop)
+ *   VITE_LOGIN_ONLY_HOSTS   =   (empty — must stay empty)
  */
 
 import { CONFIG } from './config';
@@ -39,10 +29,9 @@ export function isPeplabAiHost(hostname?: string): boolean {
   return AI_HOSTS.has(host);
 }
 
-/** Pages that stay on peplab.ai. Everything else is mirrored to peplab.com.au. */
-export function isAiPublicPath(pathname: string): boolean {
-  const path = (pathname || '/').replace(/\/+$/, '') || '/';
-  return path === '/' || path === '/landing';
+/** @deprecated All peplab.ai paths stay on this host (unlocked storefront). */
+export function isAiPublicPath(_pathname: string): boolean {
+  return true;
 }
 
 /** Marker in the URL hash that identifies a cross-domain login handoff. */
@@ -107,8 +96,11 @@ export function siteHostname(): string {
  */
 export function isLoginOnlyDomain(): boolean {
   if (typeof window === 'undefined') return false;
+  if (LOGIN_ONLY_HOSTS.length === 0) return false;
   const hostname = window.location.hostname.toLowerCase();
   const host = window.location.host.toLowerCase();
+  // peplab.ai must never be login-locked.
+  if (isPeplabAiHost(hostname)) return false;
   return LOGIN_ONLY_HOSTS.includes(hostname) || LOGIN_ONLY_HOSTS.includes(host);
 }
 
