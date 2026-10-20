@@ -90,8 +90,11 @@ export function siteHostname(): string {
  */
 export function isLoginOnlyDomain(): boolean {
   if (typeof window === 'undefined') return false;
+  if (LOGIN_ONLY_HOSTS.length === 0) return false;
   const hostname = window.location.hostname.toLowerCase();
   const host = window.location.host.toLowerCase();
+  // peplab.ai must never be login-locked (open shop).
+  if (hostname === 'peplab.ai' || hostname === 'www.peplab.ai') return false;
   return LOGIN_ONLY_HOSTS.includes(hostname) || LOGIN_ONLY_HOSTS.includes(host);
 }
 

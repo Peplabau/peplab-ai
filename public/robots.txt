@@ -1,12 +1,3 @@
+# peplab.ai — open storefront, do not index (SEO stays on peplab.com.au)
 User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /dashboard
-Disallow: /checkout
-Disallow: /login
-Disallow: /signup
-Disallow: /settings
-Disallow: /promoter
-Disallow: /forgot-password
-Disallow: /reset-password
-Sitemap: https://peplab.ai/sitemap.xml
+Disallow: /
