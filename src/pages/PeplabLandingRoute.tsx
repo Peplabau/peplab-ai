@@ -1,5 +1,6 @@
 /**
- * Marketing landing at /landing — Research Gateway (atelier).
+ * Marketing landing at peplab.ai/landing — Research Gateway.
+ * Shop CTAs stay on peplab.ai (see landing/lib/site.ts).
  */
 import '@/landing/index.css';
 import '@/landing/research-atelier.css';
@@ -12,8 +13,8 @@ export default function PeplabLandingRoute() {
   return (
     <>
       <BrandSplash />
-      <Navigation linkOrigin="https://peplab.com.au" logoHref="/landing" />
-      <CartDrawer checkoutHref="https://peplab.com.au/checkout" />
+      <Navigation logoHref="/landing" />
+      <CartDrawer />
       <ResearchGateway />
     </>
   );

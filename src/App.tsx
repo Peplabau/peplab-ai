@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 // PROTOCOLS_PATH temporarily disabled (client risk) — restore with /protocols routes below.
-import { SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
+import { LANDING_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -57,6 +57,7 @@ const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
 const Calculator = lazy(() => import('@/pages/Calculator'));
 // const Protocols = lazy(() => import('@/pages/Protocols')); // temporarily disabled — restore with routes
 const CoaArchive = lazy(() => import('@/pages/CoaArchive'));
+const PeplabLandingRoute = lazy(() => import('@/pages/PeplabLandingRoute'));
 gsap.registerPlugin(ScrollTrigger);
 
 /** Inline shell styles — work before Tailwind CSS finishes loading on slow mobile networks. */
@@ -445,8 +446,8 @@ function LoginOnlyApp() {
                 <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Public — keep indexed / crawlable */}
-                <Route path="/landing" element={<Navigate to="/" replace />} />
-                <Route path="/new-landing" element={<Navigate to="/" replace />} />
+                <Route path="/landing" element={<PeplabLandingRoute />} />
+                <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
@@ -519,8 +520,8 @@ function App() {
             <Routes>
               <Route path="/" element={<ShopRoute />} />
               <Route path="/shop" element={<ShopRoute />} />
-              <Route path="/landing" element={<Navigate to="/" replace />} />
-              <Route path="/new-landing" element={<Navigate to="/" replace />} />
+              <Route path="/landing" element={<PeplabLandingRoute />} />
+              <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/privacy" element={<Privacy />} />

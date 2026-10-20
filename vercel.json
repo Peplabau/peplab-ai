@@ -13,8 +13,7 @@
     { "source": "/product/gsh-glutathione", "destination": "/product/glutathione", "permanent": true },
     { "source": "/product/melanotan-ii", "destination": "/product/mt-2", "permanent": true },
     { "source": "/product/syringes-1ml-31g", "destination": "/product/1ml-31g-6mm-syringes", "permanent": true },
-    { "source": "/landing", "destination": "/", "permanent": true },
-    { "source": "/new-landing", "destination": "/", "permanent": true }
+    { "source": "/new-landing", "destination": "/landing", "permanent": true }
   ],
   "headers": [
     {
