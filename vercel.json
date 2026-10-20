@@ -14,6 +14,12 @@
     { "source": "/product/melanotan-ii", "destination": "/product/mt-2", "permanent": true },
     { "source": "/product/syringes-1ml-31g", "destination": "/product/1ml-31g-6mm-syringes", "permanent": true }
   ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

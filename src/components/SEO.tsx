@@ -25,7 +25,7 @@ export function SEO({
   description = SITE_SEO_DESCRIPTION,
   keywords = SITE_SEO_KEYWORDS,
   ogImage,
-  noIndex = false,
+  noIndex: _noIndex = false,
 }: SEOProps) {
   const location = useLocation();
   const origin = seoOrigin();
@@ -33,6 +33,7 @@ export function SEO({
   const pageUrl = `${origin}${path === '/' ? '/' : path}`;
   const resolvedOgImage =
     ogImage ?? `${origin}${CONFIG.SHARE_PREVIEW_IMAGE_PATH}`;
+  void _noIndex;
 
   useEffect(() => {
     // Update document title
@@ -71,11 +72,8 @@ export function SEO({
       { name: 'twitter:image', content: resolvedOgImage },
     ];
 
-    if (noIndex) {
-      metaTags.push({ name: 'robots', content: 'noindex, nofollow' });
-    } else {
-      metaTags.push({ name: 'robots', content: 'index, follow' });
-    }
+    // peplab.ai must not rank — SEO stays on peplab.com.au.
+    metaTags.push({ name: 'robots', content: 'noindex, nofollow' });
 
     metaTags.forEach(({ name, property, content }) => {
       let tag: HTMLMetaElement | null = null;
@@ -107,7 +105,7 @@ export function SEO({
       document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', pageUrl);
-  }, [title, description, keywords, resolvedOgImage, noIndex, pageUrl, origin]);
+  }, [title, description, keywords, resolvedOgImage, pageUrl, origin]);
 
   return null;
 }

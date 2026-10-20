@@ -56,11 +56,9 @@ export function SEO({
       { name: 'twitter:image', content: ogImage },
     ];
 
-    if (noIndex) {
-      metaTags.push({ name: 'robots', content: 'noindex, nofollow' });
-    } else {
-      metaTags.push({ name: 'robots', content: 'index, follow' });
-    }
+    void noIndex;
+    // peplab.ai landing must not rank — SEO stays on peplab.com.au.
+    metaTags.push({ name: 'robots', content: 'noindex, nofollow' });
 
     metaTags.forEach(({ name, property, content }) => {
       let tag: HTMLMetaElement | null = null;
