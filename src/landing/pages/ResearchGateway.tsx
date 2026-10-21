@@ -15,10 +15,10 @@ import {
   Truck,
 } from 'lucide-react';
 import OzcaniumAnalyticsName from '@/components/OzcaniumAnalyticsName';
-import { SEO } from '@/landing/components/SEO';
+import { SEO } from '@/components/SEO';
 import { RESEARCH_GATEWAY_SEO } from '@/landing/lib/seo-keywords';
-import LandingFooter from '@/landing/components/LandingFooter';
 import { coaArchiveUrl, shopPageUrl } from '@/landing/lib/site';
+import Footer from '@/sections/Footer';
 import TrustpilotReviews from '@/sections/TrustpilotReviews';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -543,6 +543,48 @@ function Faq() {
   );
 }
 
+/* ————— Site hierarchy — quick links for crawlers & visitors ————— */
+const SITE_SECTIONS = [
+  { href: '/shop', label: 'Research Peptides', text: 'Browse the research peptide catalogue.' },
+  { href: '/standards', label: 'Quality & Testing', text: 'HPLC verification and lab standards.' },
+  { href: '/coa', label: 'View COA Results', text: 'Published certificates for every batch.' },
+  { href: '/calculator', label: 'Peptide Calculator', text: 'Reconstitution and dose calculations.' },
+  { href: '/track-order', label: 'Track Order', text: 'AusPost tracking for your dispatch.' },
+  { href: '/contact-info', label: 'Contact & Support', text: 'Australian support and business details.' },
+] as const;
+
+function SiteExplore() {
+  return (
+    <section className="ra-section" aria-labelledby="site-explore-heading">
+      <div className="ra-shell">
+        <header className="ra-section-head ra-section-head--left">
+          <p className="ra-eyebrow">Explore PEPLAB</p>
+          <h2 id="site-explore-heading" className="ra-heading">
+            Research peptides, testing &amp; support
+          </h2>
+          <p className="ra-lead">
+            PEPLAB Australia publishes independent COA results and quality documentation for every
+            research batch. Research use only.
+          </p>
+        </header>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {SITE_SECTIONS.map((item) => (
+            <li key={item.href}>
+              <a
+                href={item.href}
+                className="block h-full rounded-xl border border-[rgba(244,246,250,0.08)] bg-[rgba(17,24,39,0.55)] p-4 hover:border-[rgba(46,209,180,0.35)] transition-colors"
+              >
+                <span className="block text-sm font-semibold text-[#F4F6FA]">{item.label}</span>
+                <span className="mt-1 block text-xs text-[#A9B3C7] leading-relaxed">{item.text}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
 /* ————— Closing ————— */
 function Closing() {
   return (
@@ -586,12 +628,13 @@ export default function ResearchGateway() {
         <Hero />
         <ProofBento />
         <Process />
+        <SiteExplore />
         <div className="ra-trustpilot">
           <TrustpilotReviews variant="landing" />
         </div>
         <Faq />
         <Closing />
-        <LandingFooter hideCta />
+        <Footer />
       </main>
     </div>
   );

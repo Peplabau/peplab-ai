@@ -1,6 +1,7 @@
+import Footer from '@/sections/Footer';
+import ContentPageHeader from '@/components/ContentPageHeader';
 import { useState, useEffect } from 'react';
 import {
-  ArrowLeft,
   User,
   Lock,
   Mail,
@@ -148,7 +149,7 @@ export default function Settings() {
           shipping,
           notifications: { ...DEFAULT_NOTIFICATIONS, ...notif },
         }));
-      } catch (_) {
+      } catch {
         if (mounted) setIsLoggedIn(false);
       } finally {
         if (mounted) setIsLoadingUser(false);
@@ -279,17 +280,7 @@ export default function Settings() {
     return (
       <div className="min-h-screen" style={{ background: '#070A12' }}>
         <div className="absolute inset-0 grid-overlay opacity-60" />
-        <nav className="relative z-50 flex items-center justify-between px-4 py-4 border-b border-[rgba(244,246,250,0.06)] lg:hidden">
-          <Skeleton className="h-9 w-9 rounded-xl" />
-          <Skeleton className="h-7 w-24 rounded-lg" />
-          <Skeleton className="h-9 w-9 rounded-xl opacity-0" />
-        </nav>
-        <nav className="hidden lg:block relative z-50 px-12 py-6">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <Skeleton className="h-10 w-36 rounded-lg" />
-            <Skeleton className="h-9 w-48 rounded-full" />
-          </div>
-        </nav>
+        <ContentPageHeader backTo="/dashboard" backLabel="Back to Dashboard" />
         <main className="relative z-10 px-4 lg:px-12 py-6 lg:py-12 max-w-6xl mx-auto">
           <div className="hidden lg:block mb-8 space-y-2">
             <Skeleton className="h-9 w-64 rounded-lg" />
@@ -331,51 +322,7 @@ export default function Settings() {
       <div className="absolute inset-0 grid-overlay opacity-60" />
 
       {/* Mobile nav */}
-      <nav className="lg:hidden relative z-50 flex items-center justify-between px-4 py-4 border-b border-[rgba(244,246,250,0.06)] bg-[rgba(7,10,18,0.8)] backdrop-blur-sm sticky top-0">
-        <a
-          href="/dashboard"
-          className="flex items-center justify-center w-9 h-9 rounded-xl bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.1)] transition-colors"
-          aria-label="Back to dashboard"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </a>
-        <a href="/" className="flex flex-col items-center">
-          <span className="text-xl font-bold tracking-[0.12em] gradient-text leading-none">PEPLAB</span>
-          <span className="text-[10px] font-mono uppercase tracking-[0.4em] text-[#8B5CF6] mt-0.5">Settings</span>
-        </a>
-        <div className="w-9" aria-hidden="true" />
-      </nav>
-
-      {/* Desktop nav — matches dashboard */}
-      <nav className="hidden lg:block relative z-50 px-12 py-6 border-b border-[rgba(244,246,250,0.06)]">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <a href="/" className="flex flex-col items-start">
-            <span className="text-4xl font-bold tracking-[0.12em] gradient-text leading-none">PEPLAB</span>
-            <span className="text-sm font-mono uppercase tracking-[0.5em] text-[#8B5CF6] mt-0.5">PEPTIDES AUSTRALIA</span>
-          </a>
-          <div className="flex items-center gap-3">
-            <a
-              href="/dashboard"
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(244,246,250,0.06)] border border-[rgba(244,246,250,0.1)] text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.1)] transition-colors"
-            >
-              ← Dashboard
-            </a>
-            <a
-              href="/"
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(46,209,180,0.12)] border border-[rgba(46,209,180,0.28)] text-[#2ED1B4] hover:bg-[rgba(46,209,180,0.18)] transition-colors"
-            >
-              Shop now
-            </a>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[rgba(244,246,250,0.06)] border border-[rgba(244,246,250,0.1)] text-[#A9B3C7] hover:text-[#EF4444] hover:border-[rgba(239,68,68,0.25)] transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
+      <ContentPageHeader backTo="/dashboard" backLabel="Back to Dashboard" />
 
       <main className="relative z-10 px-4 sm:px-6 lg:px-12 py-6 lg:py-12 max-w-6xl mx-auto">
 
@@ -851,6 +798,8 @@ export default function Settings() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
     </>
   );

@@ -26,20 +26,20 @@ export const COA_ARCHIVE_PATH = '/coa';
 /** Catalogue path on this host. */
 export const SHOP_PAGE_PATH = '/shop';
 
-/** Build an absolute URL on peplab.ai (same storefront — no bounce via .com.au). */
+/** Build a local storefront path — never bounce through another host. */
 export function shopUrl(path = ''): string {
-  if (!path) return `${MAIN_SITE_URL}/`;
-  return `${MAIN_SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  if (!path) return SHOP_PAGE_PATH;
+  return path.startsWith('/') ? path : `/${path}`;
 }
 
 /** Shop catalogue / home CTA — stay on peplab.ai. */
 export function shopPageUrl(): string {
-  return `${MAIN_SITE_URL}/`;
+  return SHOP_PAGE_PATH;
 }
 
 /** COA archive page on peplab.ai. */
 export function coaArchiveUrl(): string {
-  return shopUrl(COA_ARCHIVE_PATH);
+  return COA_ARCHIVE_PATH;
 }
 
 /** Prefix relative asset paths from this site. */

@@ -3,6 +3,8 @@ import { ChevronDown, Search, HelpCircle, MessageCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import SEO from '@/components/SEO';
 import { Skeleton } from '@/components/ui/skeleton';
+import ContentPageHeader from '@/components/ContentPageHeader';
+import Footer from '@/sections/Footer';
 
 interface FAQCategory {
   id: string;
@@ -66,7 +68,8 @@ export default function FAQ() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-24 pb-12" style={{ background: '#070A12' }}>
+      <div className="min-h-screen pb-12" style={{ background: '#070A12' }}>
+        <ContentPageHeader />
         <div className="max-w-4xl mx-auto px-6 space-y-6">
           {/* Header */}
           <div className="text-center space-y-3 mb-10">
@@ -100,8 +103,10 @@ export default function FAQ() {
       />
       
       <div className="absolute inset-0 grid-overlay opacity-40" />
-      
-      <main className="relative z-10 pt-24 pb-12">
+
+      <ContentPageHeader />
+
+      <main className="relative z-10 pb-12">
         <div className="max-w-4xl mx-auto px-6">
           {/* Header */}
           <div className="text-center mb-12">
@@ -203,6 +208,8 @@ export default function FAQ() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
