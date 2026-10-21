@@ -4283,6 +4283,19 @@
   }
 }
 
+/* One solid button — no hover flash / opacity change */
+a.catalog-halloween-promo,
+a.catalog-halloween-promo:hover,
+a.catalog-halloween-promo:focus,
+a.catalog-halloween-promo:active {
+  text-decoration: none;
+  color: inherit;
+  background-color: #0c0a14;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
 .catalog-halloween-treat {
   background: transparent;
 }
@@ -4622,19 +4635,51 @@
 
 .coa-archive-hero-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
-  margin: 0 0 1.25rem;
+  margin: 1rem 0 1.25rem;
   border: 1px solid rgba(244, 246, 250, 0.08);
   border-radius: 0.75rem;
   background: rgba(17, 24, 39, 0.45);
   overflow: hidden;
 }
 
+@media (min-width: 1024px) {
+  .coa-archive-hero-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 0;
+  }
+}
+
 .coa-archive-hero-stat {
-  padding: 0.875rem 1rem;
+  padding: 0.875rem 0.75rem;
   border-right: 1px solid rgba(244, 246, 250, 0.06);
+  border-bottom: 1px solid rgba(244, 246, 250, 0.06);
   min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .coa-archive-hero-stat {
+    padding: 0.875rem 1rem;
+  }
+}
+
+.coa-archive-hero-stat:nth-child(2n) {
+  border-right: none;
+}
+
+.coa-archive-hero-stat:nth-child(n + 3) {
+  border-bottom: none;
+}
+
+@media (min-width: 1024px) {
+  .coa-archive-hero-stat {
+    border-bottom: none;
+  }
+
+  .coa-archive-hero-stat:nth-child(2n) {
+    border-right: 1px solid rgba(244, 246, 250, 0.06);
+  }
 }
 
 .coa-archive-hero-stat:last-child {
@@ -4659,7 +4704,8 @@
   letter-spacing: 0.02em;
   color: #f4f6fa;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
+  line-height: 1.25;
 }
 
 .coa-archive-hero-points {
@@ -4828,10 +4874,6 @@
 .pdp-page .pc-chip.active {
   background: #0d3d34;
   border-color: rgba(46, 209, 180, 0.4);
-}
-
-.pdp-page .pc-dd-btn {
-  background: #151b28;
 }
 
 .pdp-page .nl-featured-disclaimer {
@@ -5273,6 +5315,80 @@
     justify-content: space-between;
     gap: 1rem;
   }
+}
+
+.pdp-details-stack {
+  margin-top: 1.5rem;
+}
+
+.pdp-short-panel,
+.pdp-short-accordion {
+  border: 1px solid rgba(244, 246, 250, 0.08);
+  border-radius: 1.25rem;
+  background: rgba(17, 24, 39, 0.55);
+}
+
+.pdp-short-panel {
+  padding: 1.25rem 1.35rem;
+}
+
+@media (min-width: 640px) {
+  .pdp-short-panel {
+    padding: 1.5rem;
+  }
+}
+
+.pdp-short-panel__label {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a78bfa;
+}
+
+.pdp-short-accordion__summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  padding: 1rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f4f6fa;
+  user-select: none;
+}
+
+.pdp-short-accordion__summary::-webkit-details-marker {
+  display: none;
+}
+
+.pdp-short-accordion__summary::after {
+  content: '+';
+  flex-shrink: 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1;
+  color: #2ed1b4;
+  transition: transform 0.2s ease;
+}
+
+.pdp-short-accordion[open] > .pdp-short-accordion__summary::after {
+  content: '−';
+}
+
+.pdp-short-accordion__summary:hover {
+  color: #2ed1b4;
+}
+
+.pdp-short-accordion__body {
+  padding: 0 1.25rem 1.25rem;
+  border-top: 1px solid rgba(244, 246, 250, 0.06);
+  padding-top: 1rem;
 }
 
 /* Research compound cards — Lazarus L-bracket border (PEPLAB teal)

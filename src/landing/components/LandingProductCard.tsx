@@ -338,30 +338,13 @@ export default function LandingProductCard({
             </span>
           </div>
 
-          {/* Dosage: mobile = dropdown, desktop = chips */}
-          {/* Desktop chips */}
-          <div className="pc-dosage-desktop">
-            <span className="pc-dosage-label">Size</span>
-            <div className="pc-dosage-chips">
-              {dosages.map((d) => {
-                const ac = String(sel.mg) === String(d.mg) && (sel.unit ?? "MG") === (d.unit ?? "MG");
-                return (
-                  <button
-                    key={`${d.mg}-${d.unit ?? "MG"}`}
-                    type="button"
-                    className={`pc-chip ${ac ? "active" : ""} ${!d.inStock ? "oos" : ""}`}
-                    onClick={(e) => { e.preventDefault(); setSel(d); }}
-                  >
-                    {formatDosageLabel(d.mg, d.unit)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Mobile dropdown */}
-          <div className="pc-dosage-mobile" ref={ddRef}>
-            <button type="button" className="pc-dd-btn" onClick={() => setDdOpen(!ddOpen)}>
+          {/* Size dropdown — same compact control on mobile + desktop */}
+          <div className="pc-dosage-mobile" ref={ddRef} data-no-navigate>
+            <button
+              type="button"
+              className="pc-dd-btn"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDdOpen(!ddOpen); }}
+            >
               <span>{formatDosageLabel(sel.mg, sel.unit)}</span>
               <ChevronDown size={11} style={{ color: "rgba(255,255,255,0.3)", transition: "transform .2s", transform: ddOpen ? "rotate(180deg)" : "none", flexShrink: 0 }} />
             </button>
@@ -374,11 +357,16 @@ export default function LandingProductCard({
                       type="button"
                       key={`${d.mg}-${d.unit ?? "MG"}`}
                       className={`pc-dd-opt ${ac ? "ac" : ""} ${!d.inStock ? "oos" : ""}`}
-                      onClick={() => { setSel(d); setDdOpen(false); }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSel(d);
+                        setDdOpen(false);
+                      }}
                     >
                       <span>{formatDosageLabel(d.mg, d.unit)}</span>
                       <span style={{ fontSize: 10, fontWeight: 700, color: d.inStock ? "#22C55E" : "#EF4444" }}>
-                        {d.inStock ? "✓" : "✕"}
+                        {d.inStock ? "✓" : "✗"}
                       </span>
                     </button>
                   );
@@ -632,45 +620,13 @@ const STYLES = `
 .pc-stk-dot.out { background: #EF4444; }
 @keyframes pcP { 0%,100%{box-shadow:0 0 3px rgba(34,197,94,0.2)} 50%{box-shadow:0 0 9px rgba(34,197,94,0.5)} }
 
-/* ── DOSAGE ── */
-/* Desktop chips — hidden mobile */
-.pc-dosage-desktop { display: none; }
+/* ── DOSAGE DROPDOWN (mobile + desktop) ── */
 .pc-dosage-label {
   display: block; margin-bottom: 6px;
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
   color: rgba(255,255,255,0.2);
 }
-.pc-dosage-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.pc-chip {
-  padding: 6px 14px; border-radius: 8px;
-  font-size: 12px; font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.02);
-  color: rgba(255,255,255,0.45);
-  cursor: pointer; transition: all 0.2s;
-  font-family: 'Outfit', sans-serif;
-}
-.pc-chip:hover { border-color: rgba(46,209,180,0.3); color: rgba(255,255,255,0.6); }
-.pc-chip.active {
-  background: rgba(46,209,180,0.1); border-color: rgba(46,209,180,0.35);
-  color: #5EEAD4; box-shadow: 0 0 12px rgba(46,209,180,0.1);
-}
-.pc-chip.oos {
-  border-style: dashed;
-  border-color: rgba(251,191,36,0.22);
-  color: rgba(255,255,255,0.45);
-}
-.pc-chip.oos:hover { border-color: rgba(251,191,36,0.4); color: rgba(253,230,138,0.85); }
-.pc-chip.oos.active {
-  border-style: solid;
-  border-color: rgba(251,191,36,0.55);
-  background: rgba(251,191,36,0.1);
-  color: #FBBF24;
-  box-shadow: 0 0 12px rgba(245,158,11,0.12);
-}
-
-/* Mobile dropdown */
-.pc-dosage-mobile { position: relative; margin-bottom: 8px; }
+.pc-dosage-mobile { position: relative; margin-bottom: 8px; z-index: 2; }
 .pc-dd-btn {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
   padding: 6px 8px; border-radius: 8px;
@@ -689,13 +645,11 @@ const STYLES = `
   box-shadow: 0 14px 40px rgba(0,0,0,0.55); overflow: hidden;
 }
 
-/* ── Mobile-only dropdown fixes ── */
-/* When dropdown is open, let the card overflow so the menu isn't clipped. */
+.pc.pc-dd-open { overflow: visible; z-index: 200; }
+.pc.pc-dd-open .pc-inner { overflow: visible; }
+.pc.pc-dd-open .pc-dosage-mobile { position: relative; z-index: 210; }
+.pc-dd-menu { z-index: 220; }
 @media (max-width: 767px) {
-  .pc.pc-dd-open { overflow: visible; }
-  /* Keep the non-dropdown parts of the card clipped (image, accent line, etc.)
-     by re-hiding the inner content wrapper – only the dropdown escapes. */
-  .pc.pc-dd-open .pc-inner { overflow: visible; }
   .pc-dd-menu {
     z-index: 9999;
     /* Scroll within the menu itself so it never needs to escape the viewport. */
@@ -723,14 +677,26 @@ const STYLES = `
 
 /* ── PRICE ── */
 .pc-price { margin-bottom: 8px; }
-.pc-price-main-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-.pc-price-strike { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.2); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.1); }
-.pc-price-now { font-size: 20px; font-weight: 800; color: white; letter-spacing: -0.025em; line-height: 1; }
+.pc-price-main-row {
+  display: flex; align-items: baseline; gap: 5px;
+  flex-wrap: nowrap; min-width: 0;
+}
+.pc-price-strike {
+  font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.2);
+  text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.1);
+  flex-shrink: 0; white-space: nowrap;
+}
+.pc-price-now {
+  font-size: 18px; font-weight: 800; color: white;
+  letter-spacing: -0.025em; line-height: 1;
+  flex-shrink: 1; min-width: 0; white-space: nowrap;
+}
 .pc-price-now.accent { color: #2ED1B4; }
 .pc-price-save-pill {
-  font-size: 10px; font-weight: 600; color: #34D399;
-  padding: 2px 7px; border-radius: 5px;
+  font-size: 9px; font-weight: 600; color: #34D399;
+  padding: 2px 6px; border-radius: 5px;
   background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.1);
+  flex-shrink: 0; white-space: nowrap;
 }
 .pc-price-per { display: block; font-size: 10px; color: rgba(255,255,255,0.18); margin-top: 2px; }
 
@@ -889,10 +855,18 @@ const STYLES = `
   /* Hide mobile-only elements */
   .pc-ruo-mobile { display: none; }
   .pc-stock-mobile { display: none; }
-  .pc-dosage-mobile { display: none; }
 
-  /* Show desktop elements */
-  .pc-dosage-desktop { display: block; margin-bottom: 14px; }
+  .pc-dosage-mobile { margin-bottom: 14px; }
+  .pc-dd-btn {
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    min-height: 46px;
+  }
+  .pc-dd-opt {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
   .pc-divider {
     display: block; height: 1px; margin-bottom: 12px;
     background: linear-gradient(90deg, rgba(46,209,180,0.1), rgba(255,255,255,0.04), transparent);
@@ -915,7 +889,7 @@ const STYLES = `
   .pc-price { margin-bottom: 14px; }
   .pc-price-strike { font-size: 14px; }
   .pc-price-now { font-size: 24px; }
-  .pc-price-save-pill { font-size: 11px; }
+  .pc-price-save-pill { font-size: 11px; padding: 2px 7px; }
   .pc-price-per { font-size: 11px; }
 
   .pc-cta { padding: 13px; font-size: 13px; font-weight: 680; }

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Beaker, FileText, FlaskConical, Shield } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, FileText, FlaskConical, Shield } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
 import StorefrontLayout from '@/components/StorefrontLayout';
 import { SEO } from '@/components/SEO';
@@ -23,8 +23,6 @@ import CoaDialog from '@/components/CoaDialog';
 import { getCoaDisplayData } from '@/lib/coa-utils';
 import { cn } from '@/lib/utils';
 
-type DetailTab = 'description' | 'technical' | 'lab';
-
 import { CONFIG } from '@/lib/config';
 
 const STOREFRONT_COA_ENABLED = CONFIG.FEATURES.ENABLE_STOREFRONT_COA;
@@ -40,7 +38,6 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [discountSettings, setDiscountSettings] = useState<DiscountSettings>(DEFAULT_DISCOUNT_SETTINGS);
-  const [activeTab, setActiveTab] = useState<DetailTab>('description');
   const [coaOpen, setCoaOpen] = useState(false);
 
   useLayoutEffect(() => {
@@ -124,12 +121,6 @@ export default function ProductPage() {
 
   const coaData = STOREFRONT_COA_ENABLED && product ? getCoaDisplayData(product) : null;
 
-  const tabs: Array<{ id: DetailTab; label: string }> = [
-    { id: 'description', label: 'Description' },
-    { id: 'technical', label: 'Properties' },
-    { id: 'lab', label: 'Preparation' },
-  ];
-
   const handleBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -204,146 +195,135 @@ export default function ProductPage() {
             />
           </div>
 
-          <section className="pdp-details-panel">
-            <div className="pdp-tabs" role="tablist" aria-label="Product information">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`pdp-tab ${activeTab === tab.id ? 'is-active' : ''}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          <section className="pdp-details-stack space-y-3" aria-label="Product information">
+            <div className="pdp-short-panel">
+              <h2 className="pdp-short-panel__label">Description</h2>
+              <p className="nl-lead whitespace-pre-wrap">
+                {product.longDescription || product.description}
+              </p>
             </div>
 
-            <div className="pdp-tab-body">
-              {activeTab === 'description' && (
-                <div className="space-y-6">
+            <details className="pdp-short-accordion">
+              <summary className="pdp-short-accordion__summary">
+                <span>Properties</span>
+              </summary>
+              <div className="pdp-short-accordion__body">
+                <div className="pdp-props-table">
+                  {technicalRows.map((row) => (
+                    <div key={row.label} className="pdp-props-row">
+                      <span className="text-[#A9B3C7] shrink-0">{row.label}</span>
+                      <span className="text-[#F4F6FA] sm:text-right break-words">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </details>
+
+            <details className="pdp-short-accordion">
+              <summary className="pdp-short-accordion__summary">
+                <span>Preparation</span>
+              </summary>
+              <div className="pdp-short-accordion__body space-y-4">
+                {labSections.length > 0 ? (
+                  labSections.map((section) => {
+                    const steps = isStepByStepSection(section.title)
+                      ? parseLabPreparationSteps(section.body)
+                      : [];
+
+                    return (
+                      <div key={section.title}>
+                        <h3 className="rg-card-title mb-2">{section.title}</h3>
+                        {steps.length > 0 ? (
+                          <ol className="space-y-3">
+                            {steps.map((step) => (
+                              <li
+                                key={step.number}
+                                className="flex items-start gap-3 text-sm leading-relaxed text-[#A9B3C7]"
+                              >
+                                <span className="shrink-0 min-w-[1.75rem] font-mono text-xs font-bold tabular-nums text-[var(--nl-purple)] pt-0.5">
+                                  {step.number}
+                                </span>
+                                <span className="min-w-0 flex-1">{step.text}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className="nl-lead whitespace-pre-wrap">{section.body}</p>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="nl-lead">
+                    Follow the product-specific laboratory preparation instructions. Confirm diluent
+                    compatibility before mixing.
+                  </p>
+                )}
+              </div>
+            </details>
+
+            <details className="pdp-short-accordion">
+              <summary className="pdp-short-accordion__summary">
+                <span>Overview</span>
+              </summary>
+              <div className="pdp-short-accordion__body space-y-4">
+                <div>
+                  <h2 className="nl-heading text-xl sm:text-2xl mb-1">
+                    {peptidexDetail?.overviewTitle ?? product.name}
+                  </h2>
+                  {peptidexDetail?.overviewSubtitle && (
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--nl-purple)] mb-3">
+                      {peptidexDetail.overviewSubtitle}
+                    </p>
+                  )}
+                </div>
+
+                {peptidexDetail?.keyFeatures && peptidexDetail.keyFeatures.length > 0 && (
                   <div>
-                    <p className="nl-eyebrow mb-2">Overview</p>
-                    <h2 className="nl-heading text-xl sm:text-2xl mb-1">
-                      {peptidexDetail?.overviewTitle ?? product.name}
-                    </h2>
-                    {peptidexDetail?.overviewSubtitle && (
-                      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--nl-purple)] mb-3">
-                        {peptidexDetail.overviewSubtitle}
-                      </p>
+                    {peptidexDetail.keyFeaturesTitle && (
+                      <h3 className="rg-card-title mb-3">
+                        {peptidexDetail.keyFeaturesTitle}
+                      </h3>
                     )}
-                    <p className="nl-lead whitespace-pre-wrap">
-                      {product.longDescription || product.description}
+                    <div className="rg-approach-grid">
+                      {peptidexDetail.keyFeatures.map((feature) => (
+                        <div key={feature.title} className="rg-approach-card">
+                          <h4 className="rg-card-title text-xs uppercase tracking-wider text-[var(--nl-purple)]">
+                            {feature.title}
+                          </h4>
+                          <p className="rg-card-text">{feature.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {product.moreInfo?.trim() && (
+                  <div className="space-y-3">
+                    <h3 className="rg-card-title">Important Information</h3>
+                    <p className="rg-card-text whitespace-pre-wrap">{product.moreInfo}</p>
+                  </div>
+                )}
+              </div>
+            </details>
+
+            <div className="nl-featured-disclaimer rounded-[var(--nl-radius-lg,1.25rem)] overflow-hidden">
+              <div className="py-5 px-5 sm:py-6 sm:px-6">
+                <div className="flex items-start gap-4 sm:gap-5">
+                  <div className="nl-featured-disclaimer-icon shrink-0">
+                    <FlaskConical className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--nl-bg)]" strokeWidth={1.75} />
+                  </div>
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-base sm:text-lg font-semibold text-[var(--nl-text)]">
+                      {peptidexDetail?.researchNoticeTitle ?? 'Research use only'}
+                    </p>
+                    <p className="nl-lead mt-2">
+                      {peptidexDetail?.researchNotice
+                        ?? 'This product is intended for laboratory research purposes only and is not for human or animal consumption. Not intended to diagnose, treat, cure, or prevent any disease.'}
                     </p>
                   </div>
-
-                  {peptidexDetail?.keyFeatures && peptidexDetail.keyFeatures.length > 0 && (
-                    <div>
-                      {peptidexDetail.keyFeaturesTitle && (
-                        <h3 className="rg-card-title mb-3">
-                          {peptidexDetail.keyFeaturesTitle}
-                        </h3>
-                      )}
-                      <div className="rg-approach-grid">
-                        {peptidexDetail.keyFeatures.map((feature) => (
-                          <div key={feature.title} className="rg-approach-card">
-                            <h4 className="rg-card-title text-xs uppercase tracking-wider text-[var(--nl-purple)]">
-                              {feature.title}
-                            </h4>
-                            <p className="rg-card-text">{feature.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="nl-featured-disclaimer rounded-[var(--nl-radius-lg,1.25rem)] overflow-hidden">
-                    <div className="py-5 px-5 sm:py-6 sm:px-6">
-                      <div className="flex items-start gap-4 sm:gap-5">
-                        <div className="nl-featured-disclaimer-icon shrink-0">
-                          <FlaskConical className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--nl-bg)]" strokeWidth={1.75} />
-                        </div>
-                        <div className="min-w-0 pt-0.5">
-                          <p className="text-base sm:text-lg font-semibold text-[var(--nl-text)]">
-                            {peptidexDetail?.researchNoticeTitle ?? 'Research use only'}
-                          </p>
-                          <p className="nl-lead mt-2">
-                            {peptidexDetail?.researchNotice
-                              ?? 'This product is intended for laboratory research purposes only and is not for human or animal consumption. Not intended to diagnose, treat, cure, or prevent any disease.'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {product.moreInfo?.trim() && (
-                    <div className="space-y-3">
-                      <h3 className="rg-card-title">Important Information</h3>
-                      <p className="rg-card-text whitespace-pre-wrap">{product.moreInfo}</p>
-                    </div>
-                  )}
                 </div>
-              )}
-
-              {activeTab === 'technical' && (
-                <div>
-                  <p className="nl-eyebrow mb-2">Specifications</p>
-                  <h2 className="nl-heading text-xl sm:text-2xl mb-4">Properties</h2>
-                  <div className="pdp-props-table">
-                    {technicalRows.map((row) => (
-                      <div key={row.label} className="pdp-props-row">
-                        <span className="text-[#A9B3C7] shrink-0">{row.label}</span>
-                        <span className="text-[#F4F6FA] sm:text-right break-words">{row.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'lab' && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2">
-                    <Beaker size={18} className="text-[var(--nl-purple)]" />
-                    <h2 className="nl-heading text-xl sm:text-2xl mb-0">
-                      {peptidexDetail?.labPreparationTitle ?? 'Lab Preparation'}
-                    </h2>
-                  </div>
-
-                  {labSections.length > 0 ? (
-                    labSections.map((section) => {
-                      const steps = isStepByStepSection(section.title)
-                        ? parseLabPreparationSteps(section.body)
-                        : [];
-
-                      return (
-                        <div key={section.title}>
-                          <h3 className="rg-card-title mb-2">{section.title}</h3>
-                          {steps.length > 0 ? (
-                            <ol className="space-y-3">
-                              {steps.map((step) => (
-                                <li
-                                  key={step.number}
-                                  className="flex items-start gap-3 text-sm leading-relaxed text-[#A9B3C7]"
-                                >
-                                  <span className="shrink-0 min-w-[1.75rem] font-mono text-xs font-bold tabular-nums text-[var(--nl-purple)] pt-0.5">
-                                    {step.number}
-                                  </span>
-                                  <span className="min-w-0 flex-1">{step.text}</span>
-                                </li>
-                              ))}
-                            </ol>
-                          ) : (
-                            <p className="nl-lead whitespace-pre-wrap">{section.body}</p>
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="nl-lead">Lab preparation details are not available for this product.</p>
-                  )}
-                </div>
-              )}
+              </div>
             </div>
           </section>
 

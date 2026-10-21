@@ -136,7 +136,7 @@ export default function CoaArchiveHero({
             release.
           </p>
 
-          <dl className="coa-archive-hero-stats hidden lg:grid">
+          <dl className="coa-archive-hero-stats">
             <HeroStat
               label="Certificates"
               value={String(certificateCount)}

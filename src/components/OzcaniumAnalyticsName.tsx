@@ -18,8 +18,8 @@ export default function OzcaniumAnalyticsName({
   if (compact) {
     return (
       <span className={cn('inline-flex min-w-0 flex-col leading-tight', className)}>
-        <span className={cn('truncate text-white', ozcaniumClassName)}>Ozcanium</span>
-        <span className={cn('truncate text-[#00C4CC] font-[inherit]', analyticsClassName)}>Analytics</span>
+        <span className={cn('text-white', ozcaniumClassName)}>Ozcanium</span>
+        <span className={cn('text-[#00C4CC] font-[inherit]', analyticsClassName)}>Analytics</span>
       </span>
     );
   }

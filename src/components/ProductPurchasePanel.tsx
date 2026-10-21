@@ -169,25 +169,6 @@ export default function ProductPurchasePanel({
 
           <div className="pc-divider" />
 
-          <div className="pc-dosage-desktop">
-            <span className="pc-dosage-label">Size</span>
-            <div className="pc-dosage-chips">
-              {dosages.map((d) => {
-                const active = String(sel.mg) === String(d.mg) && (sel.unit ?? 'MG') === (d.unit ?? 'MG');
-                return (
-                  <button
-                    key={`${d.mg}-${d.unit ?? 'MG'}`}
-                    type="button"
-                    className={`pc-chip ${active ? 'active' : ''} ${!d.inStock ? 'oos' : ''}`}
-                    onClick={() => selectDosage(d)}
-                  >
-                    {formatDosageLabel(d.mg, d.unit)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           <div className="pc-dosage-mobile" ref={ddRef}>
             <button type="button" className="pc-dd-btn" onClick={() => setDdOpen(!ddOpen)}>
               <span>{formatDosageLabel(sel.mg, sel.unit)}</span>
@@ -356,27 +337,7 @@ export default function ProductPurchasePanel({
 
       <div className="mb-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#A9B3C7] mb-2">Size</p>
-        <div className="hidden md:flex flex-wrap gap-2">
-          {dosages.map((d) => {
-            const active = String(sel.mg) === String(d.mg) && (sel.unit ?? 'MG') === (d.unit ?? 'MG');
-            return (
-              <button
-                key={`${d.mg}-${d.unit ?? 'MG'}`}
-                type="button"
-                className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
-                  active
-                    ? 'border-[rgba(46,209,180,0.45)] bg-[rgba(46,209,180,0.12)] text-[#5EEAD4]'
-                    : 'border-[rgba(244,246,250,0.08)] bg-[rgba(255,255,255,0.02)] text-[#A9B3C7] hover:border-[rgba(46,209,180,0.25)]'
-                } ${!d.inStock ? 'opacity-70' : ''}`}
-                onClick={() => selectDosage(d)}
-              >
-                {formatDosageLabel(d.mg, d.unit)}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="md:hidden relative" ref={ddRef}>
+        <div className="relative" ref={ddRef}>
           <button
             type="button"
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-[rgba(244,246,250,0.08)] bg-[rgba(255,255,255,0.03)] text-[#F4F6FA]"
@@ -391,7 +352,7 @@ export default function ProductPurchasePanel({
                 const active = String(sel.mg) === String(d.mg) && (sel.unit ?? 'MG') === (d.unit ?? 'MG');
                 return (
                   <button
-                    key={`${d.mg}-${d.unit ?? 'MG'}-mobile`}
+                    key={`${d.mg}-${d.unit ?? 'MG'}`}
                     type="button"
                     className={`w-full flex items-center justify-between px-4 py-3 text-sm ${active ? 'bg-[rgba(46,209,180,0.08)] text-[#2ED1B4]' : 'text-[#F4F6FA]'}`}
                     onClick={() => {
