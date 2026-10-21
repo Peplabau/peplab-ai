@@ -1,5 +1,6 @@
+import ContentPageHeader from '@/components/ContentPageHeader';
 import { useState } from 'react';
-import { ArrowLeft, Mail, CheckCircle, Loader2 } from 'lucide-react';
+import { Mail, CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { SEO } from '@/components/SEO';
 
@@ -24,7 +25,7 @@ export default function ForgotPassword() {
       } else {
         setIsSent(true);
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
@@ -39,22 +40,7 @@ export default function ForgotPassword() {
       <div className="absolute inset-0 grid-overlay opacity-60" />
 
       {/* Navigation */}
-      <nav className="relative z-50 px-6 lg:px-12 py-6">
-        <div className="flex items-center justify-between">
-          <a href="/" className="flex items-start">
-            <span className="text-3xl lg:text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
-              PEPLAB
-            </span>
-          </a>
-          <a
-            href="/login"
-            className="flex items-center gap-2 text-sm text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Login
-          </a>
-        </div>
-      </nav>
+      <ContentPageHeader backTo="/login" backLabel="Back to Login" />
 
       {/* Main Content */}
       <main className="relative z-10 px-6 lg:px-12 py-12 lg:py-20">

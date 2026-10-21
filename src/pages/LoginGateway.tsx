@@ -19,10 +19,6 @@ import {
   Ticket,
   ArrowLeft,
   MessageCircle,
-  Beaker,
-  FileText,
-  Shield,
-  Scale,
   ShoppingBag,
 } from 'lucide-react';
 import { supabase, signIn, signUp, getCurrentUser } from '@/lib/supabase';
@@ -30,10 +26,11 @@ import { checkIsAdmin } from '@/lib/supabase-db';
 import { sendSignUpWelcome } from '@/lib/email';
 import { handoffToMainApp, resolvePostLoginPath } from '@/lib/login-redirect';
 import { SEO } from '@/components/SEO';
+import ContentPageHeader from '@/components/ContentPageHeader';
+import Footer from '@/sections/Footer';
 import { LOGIN_GATEWAY_PAGE_TITLE, MAIN_APP_ORIGIN } from '@/lib/domain';
 import { getSiteSetting, DEFAULT_SUPPORT_LINKS } from '@/lib/settings';
 import { validateSignupReferralCode } from '@/lib/signup-referral';
-import { CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
 
 const VERIFICATION_PENDING_COPY =
   "Your account is created. We've also sent a quick confirmation email — open it to finish setting up your dashboard access.";
@@ -123,6 +120,7 @@ export default function LoginGateway() {
     await handoffToMainApp(destination);
   }, [searchParams]);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- initialise fields from URL parameters */
   useEffect(() => {
     let cancelled = false;
     getSiteSetting('whatsapp_link', { url: DEFAULT_SUPPORT_LINKS.whatsapp_link })
@@ -156,6 +154,7 @@ export default function LoginGateway() {
       setReferralFromLink(true);
     }
   }, [searchParams]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     let cancelled = false;
@@ -318,6 +317,8 @@ export default function LoginGateway() {
       <SEO title={pageTitle} description={pageDescription} noIndex />
       <div className="min-h-screen flex flex-col" style={{ background: '#070A12' }}>
         <div className="absolute inset-0 grid-overlay opacity-60" />
+
+        <ContentPageHeader backTo={null} />
 
         <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-10 sm:px-6">
           <div className="w-full max-w-[420px]">
@@ -648,62 +649,7 @@ export default function LoginGateway() {
           </div>
         </main>
 
-        <footer className="relative z-10 px-4 sm:px-6 py-6 text-center">
-          <nav
-            aria-label="Site links"
-            className="mx-auto mb-4 flex max-w-md flex-wrap items-center justify-center gap-x-1 gap-y-2"
-          >
-            <Link
-              to="/privacy"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
-            >
-              <Shield className="w-3.5 h-3.5 opacity-70" />
-              Privacy
-            </Link>
-            <span className="text-[#6B7280]"> · </span>
-            <Link
-              to="/terms"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
-            >
-              <Scale className="w-3.5 h-3.5 opacity-70" />
-              Terms
-            </Link>
-            <span className="text-[#6B7280]"> · </span>
-            <Link
-              to={COA_ARCHIVE_PATH}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
-            >
-              <FileText className="w-3.5 h-3.5 opacity-70" />
-              COA
-            </Link>
-            <span className="text-[#6B7280]"> · </span>
-            <Link
-              to={CALCULATOR_PATH}
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#A9B3C7] hover:text-[#F4F6FA] hover:bg-[rgba(244,246,250,0.05)] transition-colors"
-            >
-              <Beaker className="w-3.5 h-3.5 opacity-70" />
-              Calculator
-            </Link>
-          </nav>
-          <div className="mx-auto mb-3 flex max-w-md flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-[#6B7280]">
-            <Link to="/shipping" className="hover:text-[#A9B3C7] transition-colors">
-              Shipping
-            </Link>
-            <Link to="/faq" className="hover:text-[#A9B3C7] transition-colors">
-              FAQ
-            </Link>
-            <Link to="/contact-info" className="hover:text-[#A9B3C7] transition-colors">
-              Contact
-            </Link>
-            <Link to="/standards" className="hover:text-[#A9B3C7] transition-colors">
-              Standards
-            </Link>
-            <Link to="/legal" className="hover:text-[#A9B3C7] transition-colors">
-              Legal
-            </Link>
-          </div>
-          <p className="text-xs text-[#6B7280]">© 2026 PEPLAB. All rights reserved.</p>
-        </footer>
+        <Footer />
       </div>
     </>
   );

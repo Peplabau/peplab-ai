@@ -19,20 +19,16 @@ import { useAffiliate } from '@/context/AffiliateContext';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { checkIsAdmin } from '@/lib/supabase-db';
 import SearchBar from './SearchBar';
-import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
-// PROTOCOLS_PATH temporarily unused — restore with Protocols nav entry below
-// import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, PROTOCOLS_PATH } from '@/lib/routes';
+import { HOME_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH, RESEARCH_PATH, BLOG_PATH } from '@/lib/routes';
 
 type NavigationProps = {
   /** Render inside a parent fixed header (e.g. below announce bar on /landing). */
   embedded?: boolean;
-  /** Absolute origin for nav links. /landing uses https://peplab.com.au. */
-  linkOrigin?: string;
-  /** Brand mark target. /landing stays on peplab.ai/landing. */
+  /** Optional local destination for the brand mark. */
   logoHref?: string;
 };
 
-export default function Navigation({ embedded = false, linkOrigin, logoHref }: NavigationProps) {
+export default function Navigation({ embedded = false, logoHref }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
@@ -44,7 +40,6 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
   const { balance } = useRewards();
   const { myPromoter } = useAffiliate();
 
-  // Check login + admin state — read from Supabase session directly
   useEffect(() => {
     const syncAuthState = async () => {
       const user = await getCurrentUser();
@@ -64,8 +59,9 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
 
     syncAuthState();
 
-    // Re-sync whenever auth changes (login / logout in another tab etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setIsLoggedIn(true);
         localStorage.setItem('peplab_logged_in', 'true');
@@ -87,7 +83,7 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 100);
     };
-    
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -119,12 +115,6 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
     window.location.href = HOME_PATH;
   };
 
-  const to = (href: string) => {
-    if (!linkOrigin || /^(https?:|mailto:|tel:)/.test(href)) return href;
-    const path = href.startsWith('/') ? href : `/${href}`;
-    return `${linkOrigin.replace(/\/$/, '')}${path}`;
-  };
-
   const navClassDesktop =
     'text-sm font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300';
   const navClassMobile =
@@ -133,11 +123,10 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
     'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-[#A9B3C7] hover:bg-[rgba(244,246,250,0.06)] hover:text-[#F4F6FA] transition-colors';
 
   type NavAnchor = { label: string; href: string };
-  /** Crawlable anchors where possible; Google sitelinks are still automated. */
   const navEntries: ReadonlyArray<NavAnchor> = [
     { label: 'Shop', href: SHOP_PATH },
-    { label: 'Research', href: 'https://peplab.com.au/research' },
-    { label: 'Blog', href: 'https://peplab.com.au/blog' },
+    { label: 'Research', href: RESEARCH_PATH },
+    { label: 'Blog', href: BLOG_PATH },
     { label: 'COA', href: COA_ARCHIVE_PATH },
     { label: 'Calculator', href: CALCULATOR_PATH },
     { label: 'About', href: '/standards' },
@@ -157,12 +146,31 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
         }`}
       >
         <div className={embedded ? 'nl-container' : 'w-full px-4 sm:px-6 lg:px-10 xl:px-12'}>
-          <div className={`nl-nav-bar flex items-center justify-between gap-4 ${embedded ? '' : 'h-16 sm:h-20 lg:h-[5.5rem]'}`}>
-            <a href={logoHref ?? to(HOME_PATH)} className="flex shrink-0 flex-col items-start" aria-label="PEPLAB Australia home" onClick={() => setIsMobileMenuOpen(false)}>
-              <span className={`font-bold tracking-[0.12em] gradient-text leading-none ${embedded ? 'text-xl sm:text-2xl lg:text-3xl' : 'text-2xl sm:text-3xl lg:text-4xl'}`}>
+          <div
+            className={`nl-nav-bar flex items-center justify-between gap-4 ${
+              embedded ? '' : 'h-16 sm:h-20 lg:h-[5.5rem]'
+            }`}
+          >
+            <a
+              href={logoHref ?? HOME_PATH}
+              className="flex shrink-0 flex-col items-start"
+              aria-label="PEPLAB Australia home"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span
+                className={`font-bold tracking-[0.12em] gradient-text leading-none ${
+                  embedded ? 'text-xl sm:text-2xl lg:text-3xl' : 'text-2xl sm:text-3xl lg:text-4xl'
+                }`}
+              >
                 PEPLAB
               </span>
-              <span className={`nl-nav-tagline font-mono uppercase text-[#8B5CF6] mt-0.5 ${embedded ? 'text-[9px] sm:text-[10px] tracking-[0.35em]' : 'text-[9px] sm:text-[10px] lg:text-xs tracking-[0.4em] sm:tracking-[0.45em]'}`}>
+              <span
+                className={`nl-nav-tagline font-mono uppercase text-[#8B5CF6] mt-0.5 ${
+                  embedded
+                    ? 'text-[9px] sm:text-[10px] tracking-[0.35em]'
+                    : 'text-[9px] sm:text-[10px] lg:text-xs tracking-[0.4em] sm:tracking-[0.45em]'
+                }`}
+              >
                 PEPTIDES AUSTRALIA
               </span>
             </a>
@@ -170,17 +178,17 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-5 xl:gap-7">
               {navEntries.map((entry) => (
-                <a key={entry.label} href={to(entry.href)} className={navClassDesktop}>
+                <a key={entry.label} href={entry.href} className={navClassDesktop}>
                   {entry.label}
                 </a>
               ))}
             </div>
 
-            {/* Right Side — cart + compact account dropdown */}
+            {/* Right Side — cart + account only */}
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               {!isLoggedIn && (
                 <a
-                  href={to('/login')}
+                  href="/login"
                   className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-[rgba(139,92,246,0.15)] border border-[rgba(139,92,246,0.3)] text-[#8B5CF6] hover:bg-[rgba(139,92,246,0.25)] transition-colors duration-300"
                 >
                   <User className="w-4 h-4" />
@@ -201,48 +209,101 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
                     <span className="text-sm font-medium tabular-nums text-[#A78BFA]">
                       {balance.toLocaleString()}
                     </span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-[#A9B3C7] transition-transform ${isAccountOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-[#A9B3C7] transition-transform ${
+                        isAccountOpen ? 'rotate-180' : ''
+                      }`}
+                    />
                   </button>
 
                   {isAccountOpen && (
-                    <div role="menu" className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-[rgba(244,246,250,0.1)] bg-[#111827] p-1.5 shadow-xl shadow-black/40">
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-[rgba(244,246,250,0.1)] bg-[#111827] p-1.5 shadow-xl shadow-black/40"
+                    >
                       <div className="mb-1 flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-[#6B7280]">
                         <Award className="w-3.5 h-3.5 text-[#8B5CF6]" />
-                        <span><span className="font-semibold text-[#A78BFA]">{balance.toLocaleString()}</span> reward points</span>
+                        <span>
+                          <span className="font-semibold text-[#A78BFA]">
+                            {balance.toLocaleString()}
+                          </span>{' '}
+                          reward points
+                        </span>
                       </div>
                       <div className="my-1 h-px bg-[rgba(244,246,250,0.08)]" />
-                      <a href={to('/dashboard')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
-                        <LayoutDashboard className="w-4 h-4 text-[#2ED1B4]" /> Dashboard
+                      <a
+                        href="/dashboard"
+                        className={menuItemClass}
+                        role="menuitem"
+                        onClick={() => setIsAccountOpen(false)}
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-[#2ED1B4]" />
+                        Dashboard
                       </a>
                       {myPromoter && (
-                        <a href={to('/promoter')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
-                          <TrendingUp className="w-4 h-4 text-[#22C55E]" /> Promoter
+                        <a
+                          href="/promoter"
+                          className={menuItemClass}
+                          role="menuitem"
+                          onClick={() => setIsAccountOpen(false)}
+                        >
+                          <TrendingUp className="w-4 h-4 text-[#22C55E]" />
+                          Promoter
                         </a>
                       )}
                       {isAdminUser && (
-                        <a href={to('/admin/dashboard')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
-                          <Settings className="w-4 h-4 text-[#EF4444]" /> Admin
+                        <a
+                          href="/admin/dashboard"
+                          className={menuItemClass}
+                          role="menuitem"
+                          onClick={() => setIsAccountOpen(false)}
+                        >
+                          <Settings className="w-4 h-4 text-[#EF4444]" />
+                          Admin
                         </a>
                       )}
-                      <a href={to('/settings')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
-                        <Settings className="w-4 h-4" /> Settings
+                      <a
+                        href="/settings"
+                        className={menuItemClass}
+                        role="menuitem"
+                        onClick={() => setIsAccountOpen(false)}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Settings
                       </a>
-                      <a href={to('/track-order')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
-                        <Package className="w-4 h-4" /> Track order
+                      <a
+                        href="/track-order"
+                        className={menuItemClass}
+                        role="menuitem"
+                        onClick={() => setIsAccountOpen(false)}
+                      >
+                        <Package className="w-4 h-4" />
+                        Track order
                       </a>
-                      <a href={to('/leaderboard')} className={menuItemClass} role="menuitem" onClick={() => setIsAccountOpen(false)}>
-                        <Trophy className="w-4 h-4 text-amber-300" /> Leaderboard
+                      <a
+                        href="/leaderboard"
+                        className={menuItemClass}
+                        role="menuitem"
+                        onClick={() => setIsAccountOpen(false)}
+                      >
+                        <Trophy className="w-4 h-4 text-amber-300" />
+                        Leaderboard
                       </a>
                       <div className="my-1 h-px bg-[rgba(244,246,250,0.08)]" />
-                      <button type="button" onClick={handleLogout} className={`${menuItemClass} hover:text-[#EF4444]`} role="menuitem">
-                        <LogOut className="w-4 h-4" /> Log out
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className={`${menuItemClass} hover:text-[#EF4444]`}
+                        role="menuitem"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Log out
                       </button>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Cart Button */}
               <button
                 type="button"
                 onClick={() => setIsCartOpen(true)}
@@ -257,7 +318,6 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
                 )}
               </button>
 
-              {/* Mobile Menu Button */}
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -282,89 +342,88 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
               : 'opacity-0 -translate-y-4 pointer-events-none'
           }`}
         >
-          <div className="px-6 py-6 space-y-4">
-            {/* Points Display - Mobile */}
+          <div className="px-6 py-6 space-y-1">
             {isLoggedIn && (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(139,92,246,0.1)] border border-[rgba(139,92,246,0.2)] w-fit">
+              <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-[rgba(139,92,246,0.1)] border border-[rgba(139,92,246,0.2)] w-fit">
                 <Award className="w-4 h-4 text-[#8B5CF6]" />
-                <span className="text-sm font-medium text-[#8B5CF6]">{balance.toLocaleString()} pts</span>
+                <span className="text-sm font-medium text-[#8B5CF6]">
+                  {balance.toLocaleString()} pts
+                </span>
               </div>
             )}
-            
+
             {navEntries.map((entry) => (
               <a
                 key={entry.label}
-                href={to(entry.href)}
+                href={entry.href}
                 className={navClassMobile}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {entry.label}
               </a>
             ))}
-            
-            {/* Mobile Track Order Link — above Leaderboard */}
+
+            <div className="my-3 h-px bg-[rgba(244,246,250,0.08)]" />
+
             <a
-              href={to('/track-order')}
-              className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2"
+              href="/track-order"
+              className="flex items-center gap-2 text-base font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <Package className="w-5 h-5" />
               Track Order
             </a>
-
-            {/* Mobile Leaderboard Link */}
             <a
-              href={to('/leaderboard')}
-              className="flex items-center gap-2 text-lg font-medium text-amber-300 hover:text-amber-200 transition-colors duration-300 py-2"
+              href="/leaderboard"
+              className="flex items-center gap-2 text-base font-medium text-amber-300 hover:text-amber-200 transition-colors py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <Trophy className="w-5 h-5" />
               Leaderboard
             </a>
 
-            {/* Mobile Login/Dashboard Button */}
             {isLoggedIn ? (
               <>
                 {myPromoter && (
                   <a
-                    href={to('/promoter')}
-                    className="flex items-center gap-2 text-lg font-medium text-[#22C55E] hover:text-[#4ADE80] transition-colors duration-300 py-2"
+                    href="/promoter"
+                    className="flex items-center gap-2 text-base font-medium text-[#22C55E] hover:text-[#4ADE80] transition-colors py-2"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <TrendingUp className="w-5 h-5" />
-                    Promoter Dashboard
+                    Promoter
                   </a>
                 )}
                 <a
-                  href={to('/dashboard')}
-                  className="flex items-center gap-2 text-lg font-medium text-[#2ED1B4] hover:text-[#5EEAD4] transition-colors duration-300 py-2"
+                  href="/dashboard"
+                  className="flex items-center gap-2 text-base font-medium text-[#2ED1B4] hover:text-[#5EEAD4] transition-colors py-2"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <LayoutDashboard className="w-5 h-5" />
                   Dashboard
                 </a>
-                <a
-                  href={to('/settings')}
-                  className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors duration-300 py-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Settings className="w-5 h-5" />
-                  Account Settings
-                </a>
                 {isAdminUser && (
                   <a
-                    href={to('/admin/dashboard')}
-                    className="flex items-center gap-2 text-lg font-medium text-[#EF4444] hover:text-[#F87171] transition-colors duration-300 py-2"
+                    href="/admin/dashboard"
+                    className="flex items-center gap-2 text-base font-medium text-[#EF4444] hover:text-[#F87171] transition-colors py-2"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Settings className="w-5 h-5" />
                     Admin
                   </a>
                 )}
+                <a
+                  href="/settings"
+                  className="flex items-center gap-2 text-base font-medium text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Settings className="w-5 h-5" />
+                  Settings
+                </a>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex items-center gap-2 text-lg font-medium text-[#A9B3C7] hover:text-[#EF4444] transition-colors duration-300 py-2"
+                  className="flex items-center gap-2 text-base font-medium text-[#A9B3C7] hover:text-[#EF4444] transition-colors py-2"
                 >
                   <LogOut className="w-5 h-5" />
                   Log out
@@ -372,8 +431,9 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
               </>
             ) : (
               <a
-                href={to('/login')}
-                className="flex items-center gap-2 text-lg font-medium text-[#8B5CF6] hover:text-[#A78BFA] transition-colors duration-300 py-2"
+                href="/login"
+                className="flex items-center gap-2 text-base font-medium text-[#8B5CF6] hover:text-[#A78BFA] transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <User className="w-5 h-5" />
                 Login
@@ -383,7 +443,6 @@ export default function Navigation({ embedded = false, linkOrigin, logoHref }: N
         </div>
       </nav>
 
-      {/* Search Bar Modal */}
       <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );

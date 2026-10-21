@@ -33,6 +33,8 @@ import {
 import { redeemPromoCode } from '@/lib/promo-codes';
 import { sendOrderConfirmation } from '@/lib/email';
 import { SEO } from '@/components/SEO';
+import ContentPageHeader from '@/components/ContentPageHeader';
+import Footer from '@/sections/Footer';
 import AusPostLocalityField from '@/components/AusPostLocalityField';
 import { generateOrderNumberForCheckout, generatePreorderOrderNumberForCheckout } from '@/lib/orderNumber';
 import { copyTextToClipboard } from '@/lib/clipboard';
@@ -202,7 +204,11 @@ export default function Checkout() {
           applyCode(parsed.code);
         }
       }
-    } catch (_) {}
+    } catch {
+      /* Ignore malformed saved affiliate data. */
+    }
+    // The stored code should only be read once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const affiliateDiscountPercent = appliedPromotion?.valid ? (appliedPromotion.discount_percent ?? 10) : 0;
@@ -524,9 +530,7 @@ export default function Checkout() {
   if (orderComplete) {
     return (
       <div className="min-h-screen bg-[#070A12]">
-        <nav className="px-4 py-4 border-b border-white/10">
-          <a href="/" className="text-2xl font-bold tracking-wider gradient-text">PEPLAB</a>
-        </nav>
+        <ContentPageHeader />
 
         <main className="px-4 py-6 max-w-md mx-auto">
           {/* Success */}
@@ -733,6 +737,8 @@ export default function Checkout() {
             For research use only. Not for human consumption.
           </p>
         </main>
+
+        <Footer />
       </div>
     );
   }
@@ -743,11 +749,9 @@ export default function Checkout() {
       <>
         <SEO title="Checkout | PEPLAB" noIndex />
         <div className="min-h-screen bg-[#070A12]">
-          <nav className="px-4 py-4 border-b border-white/10 flex items-center justify-between">
-            <span className="text-xl font-bold tracking-wider gradient-text">PEPLAB</span>
-            <span className="text-sm text-gray-500">Loading checkout…</span>
-          </nav>
+          <ContentPageHeader />
           <main className="px-4 py-6 max-w-lg mx-auto space-y-3">
+            <p className="text-sm text-gray-500">Loading checkout…</p>
             <Skeleton className="h-7 w-48 rounded-lg" />
             <Skeleton className="h-28 w-full rounded-xl" />
             <Skeleton className="h-24 w-full rounded-xl" />
@@ -763,14 +767,17 @@ export default function Checkout() {
   // Empty cart (only after cart has finished loading)
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-[#070A12] flex items-center justify-center">
-        <div className="text-center px-4">
-          <ShoppingBag className="w-16 h-16 mx-auto text-white/20 mb-4" />
-          <h1 className="text-xl font-bold text-white mb-2">Your cart is empty</h1>
-          <a href={SHOP_PATH} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#2ED1B4] to-[#8B5CF6] text-white font-semibold">
-            <ArrowLeft className="w-4 h-4" />
-            Continue Shopping
-          </a>
+      <div className="min-h-screen bg-[#070A12] flex flex-col">
+        <ContentPageHeader />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center px-4">
+            <ShoppingBag className="w-16 h-16 mx-auto text-white/20 mb-4" />
+            <h1 className="text-xl font-bold text-white mb-2">Your cart is empty</h1>
+            <a href={SHOP_PATH} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#2ED1B4] to-[#8B5CF6] text-white font-semibold">
+              <ArrowLeft className="w-4 h-4" />
+              Continue Shopping
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -781,14 +788,7 @@ export default function Checkout() {
     <>
       <SEO title="Checkout | PEPLAB" noIndex />
     <div className="min-h-screen bg-[#070A12]">
-      {/* Header */}
-      <nav className="px-4 py-4 border-b border-white/10 flex items-center justify-between">
-        <a href="/" className="text-xl font-bold tracking-wider gradient-text">PEPLAB</a>
-        <a href="/" className="text-sm text-gray-400 flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </a>
-      </nav>
+      <ContentPageHeader backTo={SHOP_PATH} backLabel="Back to Shop" />
 
       <main className="px-4 py-3 max-w-lg mx-auto">
         {/* Title */}
@@ -1327,6 +1327,8 @@ export default function Checkout() {
           </p>
         </form>
       </main>
+
+      <Footer />
     </div>
     </>
   );

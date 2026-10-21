@@ -1,14 +1,19 @@
 import { ArrowLeft, Search, Home, Package } from 'lucide-react';
 import { SEO } from '@/components/SEO';
+import ContentPageHeader from '@/components/ContentPageHeader';
+import Footer from '@/sections/Footer';
 
 export default function NotFound() {
   return (
     <>
       <SEO title="Page not found | PEPLAB" noIndex />
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#070A12' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#070A12' }}>
       <div className="absolute inset-0 grid-overlay opacity-40" />
-      
-      <div className="relative z-10 text-center px-6 max-w-2xl mx-auto">
+
+      <ContentPageHeader />
+
+      <div className="relative z-10 flex-1 flex items-center justify-center text-center px-6 max-w-2xl mx-auto w-full">
+        <div>
         {/* 404 Number */}
         <div className="mb-8">
           <span className="text-8xl sm:text-9xl font-bold gradient-text">404</span>
@@ -57,6 +62,11 @@ export default function NotFound() {
           <ArrowLeft className="w-4 h-4" />
           <span>Go Back</span>
         </button>
+        </div>
+      </div>
+
+      <div className="relative z-10">
+        <Footer />
       </div>
     </div>
     </>

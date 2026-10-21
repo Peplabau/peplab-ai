@@ -1,7 +1,17 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 // PROTOCOLS_PATH temporarily disabled (client risk) — restore with /protocols routes below.
-import { LANDING_PATH, SHOP_PATH, CALCULATOR_PATH, COA_ARCHIVE_PATH } from '@/lib/routes';
+import {
+  LANDING_PATH,
+  SHOP_PATH,
+  CALCULATOR_PATH,
+  COA_ARCHIVE_PATH,
+  RESEARCH_PATH,
+  RESEARCH_COMPOUNDS_PATH,
+  RESEARCH_COMPOUND_SLUG_PATH,
+  BLOG_PATH,
+  BLOG_SLUG_PATH,
+} from '@/lib/routes';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -22,7 +32,6 @@ import { isLoginOnlyDomain } from '@/lib/domain';
 import { handoffToMainApp } from '@/lib/login-redirect';
 
 import Catalog from '@/sections/Catalog';
-import BulkSales from '@/sections/BulkSales';
 import Quality from '@/sections/Quality';
 import HomeSeoContent from '@/sections/HomeSeoContent';
 import TrustpilotReviews from '@/sections/TrustpilotReviews';
@@ -39,6 +48,11 @@ const Legal = lazy(() => import('@/pages/Legal'));
 const Shipping = lazy(() => import('@/pages/Shipping'));
 const ContactInfo = lazy(() => import('@/pages/ContactInfo'));
 const Standards = lazy(() => import('@/pages/Standards'));
+const Research = lazy(() => import('@/pages/Research'));
+const ResearchCompounds = lazy(() => import('@/pages/ResearchCompounds'));
+const ResearchCompoundPage = lazy(() => import('@/pages/ResearchCompoundPage'));
+const Blog = lazy(() => import('@/pages/Blog'));
+const BlogPost = lazy(() => import('@/pages/BlogPost'));
 const Login = lazy(() => import('@/pages/Login'));
 const LoginGateway = lazy(() => import('@/pages/LoginGateway'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -144,9 +158,6 @@ function HomePage() {
         {/* Promoter Leaderboard — Top 3 podium with CTA to full /leaderboard */}
         <LeaderboardTop3 />
 
-        {/* Bulk sales / wholesale */}
-        <BulkSales />
-
         {/* Quality Section (merged purity/standards/quality/trust) */}
         <Quality />
 
@@ -237,7 +248,9 @@ function PersistReferralRef() {
       if (ref && /^[0-9a-f-]{36}$/i.test(ref)) {
         try {
           sessionStorage.setItem('peplab_ref', ref);
-        } catch (_) {}
+        } catch {
+          // Storage can be unavailable in privacy-restricted browsers.
+        }
       }
       // Affiliate code auto-apply: ?aff=MIKE10 or ?code=MIKE10 (only when program is enabled)
       const affCode = params.get('aff') || params.get('code');
@@ -249,7 +262,9 @@ function PersistReferralRef() {
           'peplab_affiliate_code',
           JSON.stringify({ code: affCode.toUpperCase(), promotion: null, autoApply: true }),
         );
-      } catch (_) {}
+      } catch {
+        // Storage can be unavailable in privacy-restricted browsers.
+      }
     };
     run();
     return () => {
@@ -456,21 +471,26 @@ function LoginOnlyApp() {
                 <Route path="/shipping" element={<Shipping />} />
                 <Route path="/contact-info" element={<ContactInfo />} />
                 <Route path="/standards" element={<Standards />} />
+                <Route path={RESEARCH_PATH} element={<Research />} />
+                <Route path={RESEARCH_COMPOUNDS_PATH} element={<ResearchCompounds />} />
+                <Route path={RESEARCH_COMPOUND_SLUG_PATH} element={<ResearchCompoundPage />} />
+                <Route path={BLOG_PATH} element={<Blog />} />
+                <Route path={BLOG_SLUG_PATH} element={<BlogPost />} />
                 <Route path="/rewards-terms" element={<RewardsTerms />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/calculator" element={<Calculator />} />
+                <Route path={CALCULATOR_PATH} element={<Calculator />} />
                 {/* Temporarily disabled — client asked to remove protocols (compliance risk). Restore when needed.
                 <Route path="/protocols" element={<Protocols />} />
                 <Route path="/peptide-dosage-chart" element={<Navigate to={PROTOCOLS_PATH} replace />} />
                 */}
-                <Route path="/coa" element={<CoaArchive />} />
+                <Route path={COA_ARCHIVE_PATH} element={<CoaArchive />} />
                 <Route path="/track-order" element={<TrackOrder />} />
 
                 {/* `/` is indexable: lock page for guests, shop for members. `/login` + `/signup` stay unchanged. */}
                 <Route path="/" element={<HomeGate />} />
                 {/* Shop lives on peplab.ai — hand off session and leave this host */}
-                <Route path="/shop" element={<RedirectToMainShop />} />
+                <Route path={SHOP_PATH} element={<RedirectToMainShop />} />
                 <Route path="/product/:slug" element={<RedirectToMainShop />} />
                 <Route path="/checkout" element={<RedirectToMainShop />} />
                 <Route path="/dashboard" element={<RedirectToMainShop />} />
@@ -519,7 +539,7 @@ function App() {
           <Suspense fallback={<div style={PAGE_SHELL_STYLE} />}>
             <Routes>
               <Route path="/" element={<ShopRoute />} />
-              <Route path="/shop" element={<ShopRoute />} />
+              <Route path={SHOP_PATH} element={<ShopRoute />} />
               <Route path="/landing" element={<PeplabLandingRoute />} />
               <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
               <Route path="/contact" element={<Contact />} />
@@ -531,6 +551,11 @@ function App() {
               <Route path="/shipping" element={<Shipping />} />
               <Route path="/contact-info" element={<ContactInfo />} />
               <Route path="/standards" element={<Standards />} />
+              <Route path={RESEARCH_PATH} element={<Research />} />
+              <Route path={RESEARCH_COMPOUNDS_PATH} element={<ResearchCompounds />} />
+              <Route path={RESEARCH_COMPOUND_SLUG_PATH} element={<ResearchCompoundPage />} />
+              <Route path={BLOG_PATH} element={<Blog />} />
+              <Route path={BLOG_SLUG_PATH} element={<BlogPost />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -543,12 +568,12 @@ function App() {
               <Route path="/product/:slug" element={<ProductPage />} />
               <Route path="/promoter" element={<PromoterDashboard />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/calculator" element={<Calculator />} />
+              <Route path={CALCULATOR_PATH} element={<Calculator />} />
               {/* Temporarily disabled — client asked to remove protocols (compliance risk). Restore when needed.
               <Route path="/protocols" element={<Protocols />} />
               <Route path="/peptide-dosage-chart" element={<Navigate to="/protocols" replace />} />
               */}
-              <Route path="/coa" element={<CoaArchive />} />
+              <Route path={COA_ARCHIVE_PATH} element={<CoaArchive />} />
               <Route path="/track-order" element={<TrackOrder />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -1,11 +1,13 @@
+import Footer from '@/sections/Footer';
+import ContentPageHeader from '@/components/ContentPageHeader';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Copy, Check, ShoppingBag,
-  Users, Link2, LogOut, Award, Gift, Trophy,
+  Copy, Check, ShoppingBag,
+  Users, Link2, Award, Gift, Trophy,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
+import { supabase, getCurrentUser } from '@/lib/supabase';
 import { useAffiliate } from '@/context/AffiliateContext';
 import { BONUS_POINTS } from '@/context/RewardsContext';
 import PromoCodeEditor from '@/components/PromoCodeEditor';
@@ -49,11 +51,6 @@ export default function PromoterDashboard() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleLogout = async () => {
-    try { await signOut(); } catch { /* always navigate, even on failure */ }
-    navigate('/login', { replace: true });
-  };
-
   const referralLink = myPromoter
     ? mainAppUrl(`/?aff=${myPromoter.referral_code}`)
     : '';
@@ -81,13 +78,7 @@ export default function PromoterDashboard() {
     return (
       <div className="min-h-screen" style={{ background: '#070A12' }}>
         <div className="absolute inset-0 grid-overlay opacity-60" />
-        <nav className="relative z-50 px-4 py-3 border-b border-[rgba(244,246,250,0.06)]">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-9 w-9 rounded-xl" />
-            <Skeleton className="h-7 w-32 rounded" />
-            <Skeleton className="h-9 w-9 rounded-xl" />
-          </div>
-        </nav>
+        <ContentPageHeader backTo="/dashboard" backLabel="Back to Dashboard" />
         <main className="relative z-10 px-4 py-5">
           <div className="max-w-4xl mx-auto space-y-4">
             <Skeleton className="h-32 w-full rounded-2xl" />
@@ -149,37 +140,7 @@ export default function PromoterDashboard() {
       <div className="absolute inset-0 grid-overlay opacity-60" />
 
       {/* Header */}
-      <nav className="lg:hidden relative z-50 sticky top-0 bg-[rgba(7,10,18,0.95)] backdrop-blur-sm border-b border-[rgba(244,246,250,0.06)]">
-        <div className="flex items-center justify-between px-4 py-3">
-          <a href="/" className="flex items-center justify-center w-9 h-9 rounded-xl bg-[rgba(244,246,250,0.06)] text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </a>
-          <div className="flex flex-col items-center">
-            <span className="text-xl font-bold tracking-[0.12em] gradient-text leading-none">PEPLAB</span>
-            <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#22C55E] mt-0.5">PROMOTER</span>
-          </div>
-          <button onClick={handleLogout} className="w-9 h-9 rounded-xl bg-[rgba(244,246,250,0.06)] flex items-center justify-center text-[#A9B3C7] hover:text-[#EF4444] transition-colors">
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-      </nav>
-
-      <nav className="hidden lg:block relative z-50 px-12 py-6">
-        <div className="flex items-center justify-between">
-          <a href="/" className="flex flex-col items-start">
-            <span className="text-4xl font-bold tracking-[0.12em] gradient-text leading-none">PEPLAB</span>
-            <span className="text-sm font-mono uppercase tracking-[0.5em] text-[#22C55E] mt-0.5">PROMOTER PANEL</span>
-          </a>
-          <div className="flex items-center gap-4">
-            <a href="/dashboard" className="text-sm text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors">
-              My Account
-            </a>
-            <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-[#A9B3C7] hover:text-[#EF4444] transition-colors">
-              <LogOut className="w-4 h-4" /> Logout
-            </button>
-          </div>
-        </div>
-      </nav>
+      <ContentPageHeader backTo="/dashboard" backLabel="Back to Dashboard" />
 
       <main className="relative z-10 px-4 lg:px-12 py-5 lg:py-12">
         <div className="max-w-5xl mx-auto">
@@ -352,11 +313,7 @@ export default function PromoterDashboard() {
         </div>
       </main>
 
-      <footer className="relative z-0 px-4 lg:px-12 py-6 border-t border-[rgba(244,246,250,0.08)]">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-[10px] text-[#A9B3C7]">© 2026 PEPLAB. Promoter Dashboard.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
     </>
   );
