@@ -39,4 +39,19 @@ export const PAGE_SEO = {
     description:
       'How PEPLAB Australia tests every peptide batch: HPLC purity, identity verification, published COAs, and research-grade handling standards.',
   },
+  research: {
+    title: 'Peptide Research Overview | PEPLAB Australia',
+    description:
+      'Understanding peptides, scientific evidence and laboratory testing. Learn how to assess research papers, HPLC purity, mass spectrometry and Certificates of Analysis.',
+  },
+  blog: {
+    title: 'Blog | PEPLAB Australia',
+    description:
+      'PEPLAB Australia blog: research peptide literacy, COA guidance, HPLC testing notes, and practical tips for Australian laboratory buyers.',
+  },
+  researchCompounds: {
+    title: 'Find Your Compound | PEPLAB Research',
+    description:
+      'Browse the PEPLAB Research Library. Open compound-specific research overviews covering mechanism, published studies and analytical testing.',
+  },
 } as const;

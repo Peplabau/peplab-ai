@@ -1,5 +1,5 @@
+import ContentPageHeader from '@/components/ContentPageHeader';
 import {
-  ArrowLeft,
   Scale,
   FileCheck,
   AlertTriangle,
@@ -28,15 +28,7 @@ export default function Terms() {
       />
 
       {/* Navigation */}
-      <nav className="px-4 py-4 border-b border-white/10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-2xl font-bold tracking-wider gradient-text">PEPLAB</a>
-          <a href="/" className="text-sm text-gray-400 flex items-center gap-2 hover:text-white transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </a>
-        </div>
-      </nav>
+      <ContentPageHeader />
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-12">

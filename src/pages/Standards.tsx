@@ -1,4 +1,6 @@
-import { ArrowLeft, Beaker, Shield, FileText, MessageCircle, Heart } from 'lucide-react';
+import Footer from '@/sections/Footer';
+import ContentPageHeader from '@/components/ContentPageHeader';
+import { Beaker, Shield, FileText, MessageCircle, Heart } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 
 export default function Standards() {
@@ -13,25 +15,7 @@ export default function Standards() {
       <div className="absolute inset-0 grid-overlay opacity-60" />
 
       {/* Navigation */}
-      <nav className="relative z-50 px-6 lg:px-12 py-6">
-        <div className="flex items-center justify-between">
-          <a href="/" className="flex flex-col items-start">
-            <span className="text-3xl lg:text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
-              PEPLAB
-            </span>
-            <span className="text-xs lg:text-sm font-mono uppercase tracking-[0.5em] text-[#8B5CF6] mt-0.5">
-              PEPTIDES AUSTRALIA
-            </span>
-          </a>
-          <a
-            href="/"
-            className="flex items-center gap-2 text-sm text-[#A9B3C7] hover:text-[#F4F6FA] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Shop
-          </a>
-        </div>
-      </nav>
+      <ContentPageHeader />
 
       {/* Main Content */}
       <main className="relative z-10 px-6 lg:px-12 py-12 lg:py-20">
@@ -195,19 +179,7 @@ export default function Standards() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 lg:px-12 py-8 border-t border-[rgba(244,246,250,0.08)]">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-[#A9B3C7]">
-            © 2026 PEPLAB. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-[#A9B3C7]">
-            <a href="/privacy" className="hover:text-[#F4F6FA] transition-colors">Privacy</a>
-            <a href="/terms" className="hover:text-[#F4F6FA] transition-colors">Terms</a>
-            <a href="/refund" className="hover:text-[#F4F6FA] transition-colors">Refunds</a>
-            <a href="/shipping" className="hover:text-[#F4F6FA] transition-colors">Shipping</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
     </>
   );

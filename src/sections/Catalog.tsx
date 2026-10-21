@@ -2,10 +2,9 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Link } from 'react-router-dom';
-import { ChevronDown, Search, Truck, Gift, Tag, MessageCircle, Award } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import ProductCard, { ProductCardStyles } from '@/components/ProductCard';
-import LoyaltyProgressBar from '@/components/LoyaltyProgressBar';
+import ShopPromoStrip from '@/components/ShopPromoStrip';
 import { loadProductsFromSupabase } from '@/lib/supabase-db';
 import { loadHomepageProductSales, rankCatalogBySales } from '@/lib/product-sales';
 import {
@@ -16,21 +15,18 @@ import {
   RESEARCH_CATEGORIES,
   type ResearchCategory,
 } from '@/lib/research-categories';
-import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS, type DiscountSettings } from '@/lib/settings';
+import { getSiteSetting, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS, type DiscountSettings } from '@/lib/settings';
 import { getCache } from '@/lib/cache';
 import { preloadProductImages } from '@/lib/product-image';
 import type { Product } from '@/products';
 import { Skeleton } from '@/components/ui/skeleton';
 import ResearchMarquee from '@/components/ResearchMarquee';
-import { useRewards } from '@/context/RewardsContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const cachedCatalogProducts = getCache<Product[]>('products:all', true);
 const cachedCatalogSales = getCache<Record<string, number>>('products:homepage-sales', true);
 
-/** Catalog-only community invite with admin approval (not the site-wide support Telegram setting). */
-const CATALOG_TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
 
 function CatalogCategoryDropdown({
   value,
@@ -82,10 +78,8 @@ function CatalogCategoryDropdown({
   };
 
   useLayoutEffect(() => {
-    if (!open) {
-      setMenuPos(null);
-      return;
-    }
+    if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Positioning depends on post-layout viewport measurements.
     updateMenuPos();
     const onReposition = () => updateMenuPos();
     window.addEventListener('resize', onReposition);
@@ -205,94 +199,6 @@ function CatalogCategoryDropdown({
   );
 }
 
-/** Pumpkin mark for the Halloween Treat banner and the drifting promo pumpkin. */
-function HalloweenPumpkinIcon({ className }: { className?: string }) {
-  // Gradient/filter ids must stay unique — the icon renders several times per page.
-  const uid = useId().replace(/:/g, '');
-  const bodyId = `pk-body-${uid}`;
-  const stemId = `pk-stem-${uid}`;
-  const faceId = `pk-face-${uid}`;
-  const glowId = `pk-glow-${uid}`;
-  const carveId = `pk-carve-${uid}`;
-
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <defs>
-        <radialGradient id={bodyId} cx="38%" cy="26%" r="80%">
-          <stop offset="0%" stopColor="#FDBA74" />
-          <stop offset="45%" stopColor="#F97316" />
-          <stop offset="100%" stopColor="#B03C06" />
-        </radialGradient>
-        <linearGradient id={stemId} x1="29" y1="9" x2="35" y2="22" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#86EFAC" />
-          <stop offset="100%" stopColor="#15803D" />
-        </linearGradient>
-        <radialGradient id={faceId} cx="50%" cy="42%" r="62%">
-          <stop offset="0%" stopColor="#FEF9C3" />
-          <stop offset="100%" stopColor="#FACC15" />
-        </radialGradient>
-        <filter id={glowId} x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation="1.8" />
-        </filter>
-        <g id={carveId}>
-          <path d="M19.5 29.5 27 30.5 22.8 37.5Z" />
-          <path d="M44.5 29.5 37 30.5 41.2 37.5Z" />
-          <path d="M32 33.5 34.8 38.2 29.2 38.2Z" />
-          <path d="M20.5 41.5c1.3-.3 2.6-.2 3.9.2l1.1 2.6 2.5-2.2c2.7-.3 5.3-.3 8 0l2.5 2.2 1.1-2.6c1.3-.4 2.6-.5 3.9-.2-2.4 6.4-7 9.6-11.5 9.6s-9.1-3.2-11.5-9.6Z" />
-        </g>
-      </defs>
-
-      <path
-        d="M29.6 21.4c-.8-4.1.2-8.3 2.6-10.7 1.5 1 2.3 2.7 2.3 4.7 0 2.2-.6 4.2-.6 6.2Z"
-        fill={`url(#${stemId})`}
-      />
-      <path
-        d="M31.7 11.6c-.6 3-.8 6.3-.6 9.3"
-        stroke="#14532D"
-        strokeWidth="0.9"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
-
-      <ellipse cx="32" cy="39" rx="24" ry="19.5" fill={`url(#${bodyId})`} />
-      <ellipse cx="19.5" cy="39" rx="8" ry="17.5" fill="#EA580C" opacity="0.28" />
-      <ellipse cx="44.5" cy="39" rx="8" ry="17.5" fill="#FDBA74" opacity="0.18" />
-      <path
-        d="M21.5 22.6C17.6 27.6 16 33.1 16 39c0 5.7 1.5 11 5 15.9"
-        stroke="#B03C06"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        opacity="0.45"
-      />
-      <path
-        d="M42.5 22.6C46.4 27.6 48 33.1 48 39c0 5.7-1.5 11-5 15.9"
-        stroke="#B03C06"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        opacity="0.45"
-      />
-      <ellipse
-        cx="23"
-        cy="28"
-        rx="6.5"
-        ry="3.8"
-        fill="#FFFFFF"
-        opacity="0.22"
-        transform="rotate(-22 23 28)"
-      />
-
-      <use href={`#${carveId}`} fill="#FDE047" opacity="0.9" filter={`url(#${glowId})`} />
-      <use href={`#${carveId}`} fill={`url(#${faceId})`} />
-    </svg>
-  );
-}
-
 type SectionKind = 'hot' | 'trend' | 'popular' | 'essential' | 'more';
 
 /** Two-tone marks for the shop headings. Color sits on the symbol only. */
@@ -399,37 +305,28 @@ export default function Catalog() {
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const cardRenderIndex = useRef(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
-  const { lifetimeSpend, isLoggedIn } = useRewards();
   const initialProducts = rankCatalogBySales(cachedCatalogProducts ?? [], cachedCatalogSales ?? {});
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(initialProducts.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [discountSettings, setDiscountSettings] = useState<DiscountSettings>(DEFAULT_DISCOUNT_SETTINGS);
-  const [whatsappLink, setWhatsappLink] = useState(DEFAULT_SUPPORT_LINKS.whatsapp_link);
   const [researchDisclaimer, setResearchDisclaimer] = useState(DEFAULT_RESEARCH_DISCLAIMER_SETTINGS.message);
 
   useEffect(() => {
     let cancelled = false;
-    if (products.length === 0) {
-      setLoading(true);
-      setError(null);
-    }
 
     Promise.all([
       loadProductsFromSupabase(),
       loadHomepageProductSales(),
       getSiteSetting('discount_settings', DEFAULT_DISCOUNT_SETTINGS),
-      getSiteSetting<{ url: string }>('whatsapp_link', { url: DEFAULT_SUPPORT_LINKS.whatsapp_link }),
       getSiteSetting('research_disclaimer_settings', DEFAULT_RESEARCH_DISCLAIMER_SETTINGS),
     ])
-      .then(([data, sales, discount, whatsapp, researchDisclaimerSettings]) => {
+      .then(([data, sales, discount, researchDisclaimerSettings]) => {
         if (!cancelled) {
           setProducts(rankCatalogBySales(data, sales));
           setDiscountSettings(discount);
-          setWhatsappLink(whatsapp?.url || '');
           setResearchDisclaimer(
             researchDisclaimerSettings.message?.trim() || DEFAULT_RESEARCH_DISCLAIMER_SETTINGS.message,
           );
@@ -542,21 +439,18 @@ export default function Catalog() {
   );
   /** Marketing headline count (client: show 60+, not live catalogue total). */
   const shopPeptideHeadlineCount = 60;
+  const priorityProductIds = new Set(filteredProducts.slice(0, 6).map((product) => product.id));
 
   const renderProductCard = (product: Product) => {
-    const priority = cardRenderIndex.current < 6;
-    cardRenderIndex.current += 1;
     return (
       <ProductCard
         key={product.id}
         product={product}
         discountSettings={discountSettings}
-        imagePriority={priority}
+        imagePriority={priorityProductIds.has(product.id)}
       />
     );
   };
-
-  cardRenderIndex.current = 0;
 
   return (
     <>
@@ -567,135 +461,7 @@ export default function Catalog() {
       className="relative z-60 pt-16 sm:pt-20 lg:pt-24 pb-16 lg:pb-24"
     >
       <div className="relative z-10 px-4 sm:px-6 lg:px-12">
-        {/* Promo chips + Rewards / Halloween Treat strip */}
-        <div className="catalog-halloween-strip mb-3 sm:mb-4">
-          {/* Drift pumpkin — rotates across the strip like the old promo animation */}
-          <div className="catalog-halloween-pumpkin" aria-hidden="true">
-            <HalloweenPumpkinIcon className="w-full h-full" />
-          </div>
-
-          {/* Promotional Banner - Compact on mobile */}
-          <div className="mb-3 sm:mb-4 p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#0b1e22] via-[#141229] to-[#1e101f] border border-[rgba(244,246,250,0.08)]">
-            <div className="grid grid-cols-3 gap-1 sm:gap-4">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[#134a42] flex-shrink-0">
-                  <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#2ED1B4]" />
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Free Shipping</p>
-                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Over $250</p>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[#2a2050] flex-shrink-0">
-                  <Gift className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#8B5CF6]" />
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">Special Offer</p>
-                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">$300 = Free BAC</p>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-center sm:text-left">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[#3d1a30] flex-shrink-0">
-                  <Tag className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#EC4899]" />
-                </div>
-                <div>
-                  <p className="text-[10px] sm:text-sm font-medium text-[#F4F6FA]">PRICE MATCH</p>
-                  <p className="text-[8px] sm:text-xs text-[#A9B3C7]">Find it cheaper? We&apos;ll match it.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Rewards + Halloween Treat — single tap target, no hover states */}
-          <Link
-            to={isLoggedIn ? '/dashboard#rewards' : '/login?redirect=/dashboard'}
-            aria-label={
-              isLoggedIn
-                ? 'PEPLAB Rewards — Halloween Treat, free BAC water on all orders'
-                : 'Sign in to view PEPLAB Rewards — Halloween Treat, free BAC water on all orders'
-            }
-            className="catalog-halloween-promo relative block overflow-hidden rounded-xl sm:rounded-2xl border border-[rgba(139,92,246,0.4)] bg-[#0c0a14] shadow-[0_0_24px_rgba(139,92,246,0.18)] no-underline text-inherit"
-          >
-            <div className="catalog-halloween-jacks" aria-hidden="true">
-              <span className="catalog-halloween-jack catalog-halloween-jack--a">
-                <HalloweenPumpkinIcon className="w-full h-full" />
-              </span>
-              <span className="catalog-halloween-jack catalog-halloween-jack--b">
-                <HalloweenPumpkinIcon className="w-full h-full" />
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 items-start">
-              <div className="relative z-10 flex items-center gap-2 sm:gap-3 px-3 pt-3 sm:px-5 sm:pt-4">
-                <div className="p-1.5 sm:p-2 rounded-full bg-[rgba(139,92,246,0.2)] flex-shrink-0">
-                  <Award className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#A78BFA]" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-bold text-white leading-tight tracking-tight text-[11px] sm:text-base">
-                    PEPLAB Rewards
-                  </p>
-                  <p className="leading-snug text-[#C8CDD8] text-[8px] sm:text-[11px] mt-0.5">
-                    1pt/$1
-                  </p>
-                  <p className="leading-snug text-[#C8CDD8] text-[8px] sm:text-[11px]">
-                    Store credit back on every order, by tier
-                  </p>
-                </div>
-              </div>
-
-              <div className="catalog-halloween-treat relative overflow-hidden px-2 pt-2.5 pb-0 sm:px-4 sm:pt-4">
-                <div className="catalog-halloween-web" aria-hidden="true" />
-                <div className="catalog-halloween-copy">
-                  <p className="catalog-halloween-title">HALLOWEEN TREAT</p>
-                  <p className="catalog-halloween-offer">FREE BAC WATER</p>
-                  <p className="catalog-halloween-note">ON ALL ORDERS</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative z-10 block px-3 pb-3 pt-1 pr-10 sm:px-5 sm:pb-4 sm:pr-14 pointer-events-none">
-              <LoyaltyProgressBar
-                compact
-                hideTitle
-                loggedIn={isLoggedIn}
-                lifetimeSpend={lifetimeSpend}
-                className="w-full"
-              />
-            </div>
-          </Link>
-        </div>
-
-        {/* Support chips — forced single row on mobile (no wrap); abbreviated labels below sm */}
-        <div className="flex flex-nowrap items-stretch gap-2 sm:gap-3 mb-4 sm:mb-6 w-full">
-          <a
-            href={CATALOG_TELEGRAM_COMMUNITY}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg bg-[#011d2e] border border-[rgba(0,136,204,0.3)] px-2 py-2 sm:px-3 hover:bg-[#022940] hover:border-[rgba(0,136,204,0.5)] transition-all"
-          >
-            <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-[#0088CC]" />
-            <span className="text-[11px] sm:text-xs font-medium text-[#F4F6FA]">
-              <span className="sm:hidden">Telegram Community</span>
-              <span className="hidden sm:inline">Telegram Community</span>
-            </span>
-          </a>
-
-          {whatsappLink ? (
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex min-w-0 flex-1 items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg bg-[#0b261d] border border-[rgba(34,197,94,0.3)] px-2 py-2 sm:px-3 hover:bg-[#0e3925] hover:border-[rgba(34,197,94,0.5)] transition-all"
-            >
-              <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-[#22C55E]" />
-              <span className="text-[11px] sm:text-xs font-medium text-[#F4F6FA]">
-                <span className="sm:hidden">WhatsApp Support</span>
-                <span className="hidden sm:inline">WhatsApp Support</span>
-              </span>
-            </a>
-          ) : null}
-        </div>
+        <ShopPromoStrip />
 
         {/* Header */}
         <div ref={headerRef} className="mb-8">
@@ -711,7 +477,7 @@ export default function Catalog() {
               <Search aria-hidden />
               <input
                 type="text"
-                placeholder="Search peptides"
+                placeholder="Search peptides, e.g. Tirzepatide, BPC-157, GHK-Cu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search peptides"

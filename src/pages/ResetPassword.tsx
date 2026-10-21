@@ -1,3 +1,4 @@
+import ContentPageHeader from '@/components/ContentPageHeader';
 import { useState, useEffect } from 'react';
 import { Lock, Eye, EyeOff, CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -49,7 +50,7 @@ export default function ResetPassword() {
       } else {
         setIsSuccess(true);
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
@@ -62,6 +63,7 @@ export default function ResetPassword() {
         <SEO title="Reset password | PEPLAB" noIndex />
       <div className="min-h-screen" style={{ background: '#070A12' }}>
         <div className="absolute inset-0 grid-overlay opacity-60" />
+        <ContentPageHeader />
         <main className="relative z-10 px-6 lg:px-12 py-12 lg:py-20">
           <div className="max-w-md mx-auto text-center">
             <div className="p-6 sm:p-8 rounded-2xl bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.2)]">
@@ -91,15 +93,7 @@ export default function ResetPassword() {
       <div className="absolute inset-0 grid-overlay opacity-60" />
 
       {/* Navigation */}
-      <nav className="relative z-50 px-6 lg:px-12 py-6">
-        <div className="flex items-center justify-between">
-          <a href="/" className="flex items-start">
-            <span className="text-3xl lg:text-4xl font-bold tracking-[0.12em] gradient-text leading-none">
-              PEPLAB
-            </span>
-          </a>
-        </div>
-      </nav>
+      <ContentPageHeader />
 
       {/* Main Content */}
       <main className="relative z-10 px-6 lg:px-12 py-12 lg:py-20">
