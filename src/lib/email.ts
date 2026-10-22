@@ -242,7 +242,6 @@ export const sendOrderConfirmation = async (
     <p style="margin:0 0 22px;text-align:center;font-size:14px;color:${T.text};line-height:1.55;">${ship}${phoneHtml}</p>
     <p style="margin:0 0 10px;text-align:center;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${T.muted};">Bank transfer</p>
     ${emailDetailRow('Mobile PAYID', bankResolved.payid_mobile)}
-    ${emailDetailRow('ABN PAYID', bankResolved.payid)}
     ${emailDetailRow('BSB', bankResolved.bsb)}
     ${emailDetailRow('Account number', bankResolved.account_number)}
     ${emailDetailRow('Account name', bankResolved.account_name, false)}
@@ -269,7 +268,7 @@ export const sendOrderConfirmation = async (
     .replace(/{order_number}/g, displayOrderNo)
     .replace(/{total}/g, orderData.total.toFixed(2))
     .replace(/{shipping_address}/g, orderData.shipping_address || '—')
-    .replace(/{payid}/g, escapeHtml(bankResolved.payid))
+    .replace(/{payid}/g, '')
     .replace(/{payid_mobile}/g, escapeHtml(bankResolved.payid_mobile))
     .replace(/{bsb}/g, escapeHtml(bankResolved.bsb))
     .replace(/{account}/g, escapeHtml(bankResolved.account_number))

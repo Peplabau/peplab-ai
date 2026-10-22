@@ -5,7 +5,7 @@ export interface BankDetails {
   account_name: string;
   bsb: string;
   account_number: string;
-  /** ABN PayID */
+  /** Unused. Kept so older saved bank settings still parse. Always stored empty. */
   payid: string;
   /** Mobile / phone PayID */
   payid_mobile: string;
@@ -60,7 +60,7 @@ export const DEFAULT_BANK_DETAILS: BankDetails = {
   account_name: 'PEPLAB',
   bsb: '062-329',
   account_number: '1063 8508',
-  payid: '58670940431',
+  payid: '',
   payid_mobile: '0451111104',
   bank_name: 'Commonwealth Bank of Australia',
 };

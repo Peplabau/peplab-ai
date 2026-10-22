@@ -54,7 +54,7 @@ export const CONFIG = {
     ACCOUNT_NAME: 'PEPLAB',
     BSB: '062-329',
     ACCOUNT_NUMBER: '1063 8508',
-    PAYID: '58670940431',
+    PAYID: '',
     PAYID_MOBILE: '0451111104',
     BANK_NAME: 'Commonwealth Bank of Australia',
   },

@@ -692,10 +692,6 @@ export default function AdminOverviewSection({ onNavigate: _onNavigate }: { onNa
             <p className="text-sm font-mono text-[#F4F6FA]">{CONFIG.BANK_DETAILS.PAYID_MOBILE}</p>
           </div>
           <div className="p-3 rounded-lg bg-[rgba(7,10,18,0.5)]">
-            <p className="text-[10px] text-[#A9B3C7] uppercase">ABN PAYID</p>
-            <p className="text-sm font-mono text-[#F4F6FA]">{CONFIG.BANK_DETAILS.PAYID}</p>
-          </div>
-          <div className="p-3 rounded-lg bg-[rgba(7,10,18,0.5)]">
             <p className="text-[10px] text-[#A9B3C7] uppercase">BSB</p>
             <p className="text-sm font-mono text-[#F4F6FA]">{CONFIG.BANK_DETAILS.BSB}</p>
           </div>

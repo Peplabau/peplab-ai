@@ -6677,7 +6677,7 @@ function SettingsSection() {
     setSaveMessage('');
     try {
       await Promise.all([
-        updateSiteSetting('bank_details', bankDetails),
+        updateSiteSetting('bank_details', { ...bankDetails, payid: '' }),
         updateSiteSetting('discount_settings', discountSettings),
         updateSiteSetting('free_gift_settings', freeGiftSettings),
         updateSiteSetting('telegram_link', { url: supportLinks.telegram_link }),
@@ -6745,15 +6745,6 @@ function SettingsSection() {
               type="text"
               value={bankDetails.payid_mobile}
               onChange={(e) => setBankDetails({ ...bankDetails, payid_mobile: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] text-[#A9B3C7] uppercase">ABN PAYID</label>
-            <input
-              type="text"
-              value={bankDetails.payid}
-              onChange={(e) => setBankDetails({ ...bankDetails, payid: e.target.value })}
               className="w-full px-3 py-2 rounded-lg bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.1)] text-[#F4F6FA] text-sm"
             />
           </div>
