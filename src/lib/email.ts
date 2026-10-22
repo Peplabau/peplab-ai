@@ -674,10 +674,7 @@ export const sendPasswordReset = async (
   to: string,
   resetUrl: string
 ): Promise<boolean> => {
-  const [template, supportLinks] = await Promise.all([
-    getEmailTemplate('password_reset'),
-    getEmailSupportLinks(),
-  ]);
+  const template = await getEmailTemplate('password_reset');
 
   const defaultBody = `
     <p style="margin:0 0 14px;text-align:center;font-size:15px;color:${T.muted};line-height:1.6;">We received a request to reset the password for your PEPLAB account.</p>
@@ -693,7 +690,14 @@ export const sendPasswordReset = async (
     headline: 'Password reset',
     subline: 'Use the button below to choose a new password.',
     bodyHtml: defaultBody,
-    supportLinks,
+    footerHtml: `
+      <p style="margin:0 0 6px;font-size:12px;color:${T.muted};text-align:center;line-height:1.5;">
+        Contact: <a href="mailto:peplab@proton.me" style="color:${T.teal};text-decoration:none;font-weight:600;">peplab@proton.me</a>
+      </p>
+      <p style="margin:0;font-size:12px;color:${T.muted};text-align:center;line-height:1.5;">
+        Website: <a href="https://peplab.ai" style="color:${T.muted};text-decoration:underline;">peplab.ai</a>
+      </p>
+    `,
   })).replace(/{reset_url}/g, resetUrl);
   
   const result = await sendEmail({

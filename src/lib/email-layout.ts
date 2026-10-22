@@ -44,6 +44,8 @@ type WrapOpts = {
   colors?: Partial<{ pageBg: string; panel: string; panel2: string }>;
   /** Telegram / WhatsApp / email for customer-facing footers. */
   supportLinks?: EmailSupportLinks;
+  /** Replaces the default footer. Used by the password-reset email. */
+  footerHtml?: string;
 };
 
 export type EmailSupportLinks = {
@@ -127,14 +129,14 @@ export function wrapPeplabEmail(opts: WrapOpts): string {
           </tr>
           <tr>
             <td align="center" style="padding:20px 24px 24px;border-top:1px solid ${C.borderSub};background:${panel2};">
-              <p style="margin:0 0 8px;font-size:12px;color:${C.muted};text-align:center;line-height:1.5;">
+              ${opts.footerHtml ?? `<p style="margin:0 0 8px;font-size:12px;color:${C.muted};text-align:center;line-height:1.5;">
                 ${supportContact
                   ? `Need help? ${supportContact}`
                   : 'Need help? Visit us online'}
               </p>
               <p style="margin:0;font-size:11px;color:${C.muted};opacity:0.85;text-align:center;">
                 <a href="${site}" style="color:${C.muted};text-decoration:underline;">${site}</a>
-              </p>
+              </p>`}
             </td>
           </tr>
         </table>
