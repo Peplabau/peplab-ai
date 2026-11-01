@@ -14,7 +14,7 @@ import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cached, invalidateCache, setCache, TTL_ADMIN_OVERVIEW, TTL_ADMIN_ORDERS, TTL_ADMIN_PRODUCTS } from '@/lib/cache';
 import { CONFIG } from '@/lib/config';
-import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS } from '@/lib/settings';
+import { fetchAllSiteSettings, updateSiteSetting, DEFAULT_BANK_DETAILS, DEFAULT_DISCOUNT_SETTINGS, DEFAULT_FREE_GIFT_SETTINGS, DEFAULT_SUPPORT_LINKS, DEFAULT_LANDING_PAGE_SETTINGS, DEFAULT_AFFILIATE_PROGRAM_SETTINGS, DEFAULT_RESEARCH_DISCLAIMER_SETTINGS, DEFAULT_SEASONAL_THEME_SETTINGS } from '@/lib/settings';
 import { getEarnedTransactionsCount, getOrderPointsAwarded, getOrderEarnedPointsSum, addUserPoints, normalizeImageUrl, getUserTransactions, getUserPointsBalance, getLifetimePurchaseSpend, getLifetimePurchaseSpendForUsers, logAdminAction, fetchAdminProductWaitlistCounts, syncProductDetailFieldsToSupabase, uploadReviewImage, resetUserBirthday, adminUpdateUserBirthday, adminDeleteUser, invokeAusPostSyncDelivered, type PointsEvent } from '@/lib/supabase-db';
 import { maxBirthdayInputDate, normalizeBirthdayInput } from '@/utils/birthday-reward';
 import ReviewImageUpload, { ReviewPhoto, revokePreviewUrl } from '@/components/ReviewImageUpload';
@@ -6633,6 +6633,7 @@ function SettingsSection() {
   const [landingPageSettings, setLandingPageSettings] = useState(DEFAULT_LANDING_PAGE_SETTINGS);
   const [affiliateProgramSettings, setAffiliateProgramSettings] = useState(DEFAULT_AFFILIATE_PROGRAM_SETTINGS);
   const [researchDisclaimerSettings, setResearchDisclaimerSettings] = useState(DEFAULT_RESEARCH_DISCLAIMER_SETTINGS);
+  const [seasonalThemeSettings, setSeasonalThemeSettings] = useState(DEFAULT_SEASONAL_THEME_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -6651,6 +6652,7 @@ function SettingsSection() {
         landingPageSettings: landingPage,
         affiliateProgramSettings: affiliateProgram,
         researchDisclaimerSettings: researchDisclaimer,
+        seasonalThemeSettings: seasonalTheme,
       } = await fetchAllSiteSettings();
       console.log('[Settings] Settings loaded OK');
       setBankDetails(bank);
@@ -6660,6 +6662,7 @@ function SettingsSection() {
       setLandingPageSettings(landingPage);
       setAffiliateProgramSettings(affiliateProgram);
       setResearchDisclaimerSettings(researchDisclaimer);
+      setSeasonalThemeSettings(seasonalTheme);
     } catch (error) {
       console.error('Error loading settings:', error);
     } finally {
@@ -6685,6 +6688,7 @@ function SettingsSection() {
         updateSiteSetting('landing_page_settings', landingPageSettings),
         updateSiteSetting('affiliate_program_settings', affiliateProgramSettings),
         updateSiteSetting('research_disclaimer_settings', researchDisclaimerSettings),
+        updateSiteSetting('seasonal_theme_settings', seasonalThemeSettings),
       ]);
       setSaveMessage('Settings saved successfully!');
       setTimeout(() => setSaveMessage(''), 3000);
@@ -6807,6 +6811,49 @@ function SettingsSection() {
               landingPageSettings.enabled ? 'translate-x-[22px]' : 'translate-x-[3px]'
             }`} />
           </button>
+        </div>
+      </div>
+
+      {/* Seasonal promo theme */}
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-[rgba(239,68,68,0.1)] to-[rgba(34,197,94,0.08)] border border-[rgba(239,68,68,0.2)]">
+        <h3 className="text-lg font-semibold text-[#F4F6FA] mb-1 flex items-center gap-2">
+          <Gift className="w-5 h-5 text-[#EF4444]" />
+          Seasonal promo theme
+        </h3>
+        <p className="text-xs text-[#A9B3C7] mb-5">
+          Look of the free BAC water promo on the shop strip, home sign-in panel, cart, and landing bar.
+          The offer itself does not change.
+        </p>
+        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-[rgba(7,10,18,0.5)] border border-[rgba(244,246,250,0.08)]">
+          <div>
+            <p className="text-sm font-medium text-[#F4F6FA]">
+              {seasonalThemeSettings.theme === 'christmas' ? 'Christmas Gift' : 'Halloween Treat'}
+            </p>
+            <p className="text-xs text-[#A9B3C7] mt-0.5">
+              {seasonalThemeSettings.theme === 'christmas'
+                ? 'Christmas Gift — Free BAC Water on all orders (lights, snow, Santa hats).'
+                : 'Halloween Treat — Free BAC Water on all orders (pumpkins, web).'}
+            </p>
+          </div>
+          <div className="flex shrink-0 rounded-full bg-[rgba(7,10,18,0.65)] p-1 border border-[rgba(244,246,250,0.08)]">
+            {(['christmas', 'halloween'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setSeasonalThemeSettings({ theme: option })}
+                aria-pressed={seasonalThemeSettings.theme === option}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  seasonalThemeSettings.theme === option
+                    ? option === 'christmas'
+                      ? 'bg-[#DC2626] text-white'
+                      : 'bg-[#F97316] text-white'
+                    : 'text-[#A9B3C7] hover:text-[#F4F6FA]'
+                }`}
+              >
+                {option === 'christmas' ? 'Christmas' : 'Halloween'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

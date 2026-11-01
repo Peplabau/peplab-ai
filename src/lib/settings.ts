@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { cached, invalidateCache, TTL_SETTINGS } from './cache';
+import { cached, getCache, invalidateCache, TTL_SETTINGS } from './cache';
 
 export interface BankDetails {
   account_name: string;
@@ -55,6 +55,13 @@ export interface ResearchDisclaimerSettings {
   message: string;
 }
 
+export type SeasonalTheme = 'christmas' | 'halloween';
+
+/** Seasonal look for the free BAC water promo (strip, lock panel, cart, landing bar). */
+export interface SeasonalThemeSettings {
+  theme: SeasonalTheme;
+}
+
 // Default values (fallback)
 export const DEFAULT_BANK_DETAILS: BankDetails = {
   account_name: 'PEPLAB',
@@ -100,6 +107,20 @@ export const DEFAULT_AFFILIATE_PROGRAM_SETTINGS: AffiliateProgramSettings = {
 export const DEFAULT_RESEARCH_DISCLAIMER_SETTINGS: ResearchDisclaimerSettings = {
   message: 'For Research Purposes Only — Not For Human Consumption',
 };
+
+export const DEFAULT_SEASONAL_THEME_SETTINGS: SeasonalThemeSettings = {
+  theme: 'christmas',
+};
+
+export function normalizeSeasonalTheme(value: unknown): SeasonalTheme {
+  return value === 'halloween' ? 'halloween' : 'christmas';
+}
+
+/** Cached seasonal theme for first paint; falls back to the default. */
+export function getSeasonalThemeSync(): SeasonalTheme {
+  const cachedValue = getCache<SeasonalThemeSettings>('setting:seasonal_theme_settings', true);
+  return normalizeSeasonalTheme(cachedValue?.theme ?? DEFAULT_SEASONAL_THEME_SETTINGS.theme);
+}
 
 export async function getSiteSetting<T>(key: string, defaultValue: T): Promise<T> {
   return cached(
@@ -176,6 +197,7 @@ export async function fetchAllSiteSettings(): Promise<{
   landingPageSettings: LandingPageSettings;
   affiliateProgramSettings: AffiliateProgramSettings;
   researchDisclaimerSettings: ResearchDisclaimerSettings;
+  seasonalThemeSettings: SeasonalThemeSettings;
 }> {
   const defaults = {
     bankDetails: DEFAULT_BANK_DETAILS,
@@ -185,6 +207,7 @@ export async function fetchAllSiteSettings(): Promise<{
     landingPageSettings: DEFAULT_LANDING_PAGE_SETTINGS,
     affiliateProgramSettings: DEFAULT_AFFILIATE_PROGRAM_SETTINGS,
     researchDisclaimerSettings: DEFAULT_RESEARCH_DISCLAIMER_SETTINGS,
+    seasonalThemeSettings: DEFAULT_SEASONAL_THEME_SETTINGS,
   };
 
   try {
@@ -210,6 +233,9 @@ export async function fetchAllSiteSettings(): Promise<{
         landingPageSettings: { ...DEFAULT_LANDING_PAGE_SETTINGS, ...byKey['landing_page_settings'] } as LandingPageSettings,
         affiliateProgramSettings: { ...DEFAULT_AFFILIATE_PROGRAM_SETTINGS, ...byKey['affiliate_program_settings'] } as AffiliateProgramSettings,
         researchDisclaimerSettings: { ...DEFAULT_RESEARCH_DISCLAIMER_SETTINGS, ...byKey['research_disclaimer_settings'] } as ResearchDisclaimerSettings,
+        seasonalThemeSettings: {
+          theme: normalizeSeasonalTheme(byKey['seasonal_theme_settings']?.theme),
+        },
       };
     }
 
@@ -240,6 +266,9 @@ export async function fetchAllSiteSettings(): Promise<{
         landingPageSettings: { ...DEFAULT_LANDING_PAGE_SETTINGS, ...byKey['landing_page_settings'] } as LandingPageSettings,
         affiliateProgramSettings: { ...DEFAULT_AFFILIATE_PROGRAM_SETTINGS, ...byKey['affiliate_program_settings'] } as AffiliateProgramSettings,
         researchDisclaimerSettings: { ...DEFAULT_RESEARCH_DISCLAIMER_SETTINGS, ...byKey['research_disclaimer_settings'] } as ResearchDisclaimerSettings,
+        seasonalThemeSettings: {
+          theme: normalizeSeasonalTheme(byKey['seasonal_theme_settings']?.theme),
+        },
       };
     }
 

@@ -9,6 +9,7 @@ import { getOptimizedProductImageUrl } from '@/lib/product-image';
 import { CONFIG } from '@/lib/config';
 import { useRewards } from '@/context/RewardsContext';
 import { calculatePurchasePoints } from '@/utils/points';
+import { SEASONAL_PROMO_COPY, useSeasonalTheme } from '@/hooks/use-seasonal-theme';
 
 export default function CartDrawer({ checkoutHref = '/checkout' }: { checkoutHref?: string }) {
   const {
@@ -22,6 +23,7 @@ export default function CartDrawer({ checkoutHref = '/checkout' }: { checkoutHre
     freeGiftAdded,
   } = useCart();
   const { loyaltyTier, isLoggedIn } = useRewards();
+  const seasonalTheme = useSeasonalTheme();
 
   const [showSydneyOption, setShowSydneyOption] = useState(false);
 
@@ -187,7 +189,7 @@ export default function CartDrawer({ checkoutHref = '/checkout' }: { checkoutHre
             <div className="flex items-center gap-1.5">
               <Gift className="w-3 h-3 sm:w-4 sm:h-4 text-[#8B5CF6]" />
               <span className="text-[10px] sm:text-xs text-[#8B5CF6] font-medium">
-                Halloween Special — Free BAC Water added!
+                {SEASONAL_PROMO_COPY[seasonalTheme].cartNote}
               </span>
             </div>
           </div>
