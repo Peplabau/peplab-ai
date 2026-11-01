@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { cached, invalidateCache, TTL_SETTINGS } from './cache';
+import { cached, getCache, invalidateCache, TTL_SETTINGS } from './cache';
 
 export interface BankDetails {
   account_name: string;
