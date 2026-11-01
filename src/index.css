@@ -4498,19 +4498,6 @@ a.catalog-halloween-promo:active {
   background: radial-gradient(ellipse 80% 70% at 50% 40%, rgba(30, 41, 82, 0.35), transparent 70%);
 }
 
-.catalog-xmas-sparkles {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle, rgba(253, 224, 138, 0.95) 0 0.8px, transparent 1.4px),
-    radial-gradient(circle, rgba(251, 191, 36, 0.7) 0 1.1px, transparent 2px),
-    radial-gradient(circle, rgba(255, 255, 255, 0.75) 0 0.7px, transparent 1.3px),
-    radial-gradient(circle, rgba(253, 230, 138, 0.55) 0 1.4px, transparent 2.6px);
-  background-size: 23px 19px, 41px 37px, 31px 27px, 67px 53px;
-  background-position: 0 0, 11px 17px, 19px 7px, 29px 31px;
-  animation: catalog-xmas-twinkle 3.2s ease-in-out infinite;
-}
-
 .catalog-xmas-star {
   position: absolute;
   width: 11px;
@@ -4584,7 +4571,6 @@ a.catalog-halloween-promo:active {
 
 @media (prefers-reduced-motion: reduce) {
   .catalog-xmas-lights,
-  .catalog-xmas-sparkles,
   .catalog-xmas-star {
     animation: none;
   }
