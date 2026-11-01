@@ -4430,6 +4430,166 @@ a.catalog-halloween-promo:active {
   }
 }
 
+/* Christmas variant of the seasonal promo (admin → Seasonal promo theme) */
+.catalog-season--christmas .catalog-halloween-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  color: #ef4444;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.catalog-season--christmas .catalog-halloween-offer {
+  color: #4ade80;
+  text-shadow: 0 0 14px rgba(74, 222, 128, 0.5);
+}
+
+.catalog-season--christmas .catalog-halloween-jack {
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.55));
+}
+
+.catalog-xmas-gift {
+  width: 1.15em;
+  height: 1.15em;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.45));
+}
+
+.catalog-xmas-chip-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.3));
+}
+
+@media (min-width: 640px) {
+  .catalog-xmas-chip-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+.catalog-xmas-flake {
+  filter: drop-shadow(0 0 8px rgba(186, 230, 253, 0.8));
+  opacity: 0.9;
+}
+
+.catalog-season--christmas .catalog-halloween-jack {
+  animation-duration: 3.6s;
+}
+
+.catalog-season--christmas .catalog-halloween-jack--a {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.catalog-season--christmas .catalog-halloween-jack--b {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+.catalog-xmas-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 70% at 50% 40%, rgba(30, 41, 82, 0.35), transparent 70%);
+}
+
+.catalog-xmas-sparkles {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(253, 224, 138, 0.95) 0 0.8px, transparent 1.4px),
+    radial-gradient(circle, rgba(251, 191, 36, 0.7) 0 1.1px, transparent 2px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.75) 0 0.7px, transparent 1.3px),
+    radial-gradient(circle, rgba(253, 230, 138, 0.55) 0 1.4px, transparent 2.6px);
+  background-size: 23px 19px, 41px 37px, 31px 27px, 67px 53px;
+  background-position: 0 0, 11px 17px, 19px 7px, 29px 31px;
+  animation: catalog-xmas-twinkle 3.2s ease-in-out infinite;
+}
+
+.catalog-xmas-star {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle, #fffbea 0 1px, rgba(251, 191, 36, 0.85) 1.6px, transparent 4px),
+    linear-gradient(90deg, transparent 44%, rgba(253, 230, 138, 0.9) 50%, transparent 56%),
+    linear-gradient(0deg, transparent 44%, rgba(253, 230, 138, 0.9) 50%, transparent 56%);
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.85));
+  animation: catalog-xmas-twinkle 2.4s ease-in-out infinite;
+}
+
+.catalog-xmas-scene-flake {
+  position: absolute;
+  color: #f8fafc;
+  opacity: 0.85;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 5px rgba(186, 230, 253, 0.7));
+}
+
+.catalog-xmas-lights {
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 34px;
+  z-index: 2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='34' viewBox='0 0 120 34'%3E%3Cpath d='M0 3Q60 30 120 3' fill='none' stroke='%23584a2e' stroke-width='1.1'/%3E%3Cg fill='%23fbbf24'%3E%3Ccircle cx='12' cy='10' r='6' opacity='.22'/%3E%3Ccircle cx='36' cy='16.5' r='6' opacity='.22'/%3E%3Ccircle cx='60' cy='18.5' r='6' opacity='.22'/%3E%3Ccircle cx='84' cy='16.5' r='6' opacity='.22'/%3E%3Ccircle cx='108' cy='10' r='6' opacity='.22'/%3E%3Ccircle cx='12' cy='10' r='3.4' opacity='.5'/%3E%3Ccircle cx='36' cy='16.5' r='3.4' opacity='.5'/%3E%3Ccircle cx='60' cy='18.5' r='3.4' opacity='.5'/%3E%3Ccircle cx='84' cy='16.5' r='3.4' opacity='.5'/%3E%3Ccircle cx='108' cy='10' r='3.4' opacity='.5'/%3E%3C/g%3E%3Cg fill='%23fff3c4'%3E%3Cellipse cx='12' cy='10' rx='1.8' ry='2.3'/%3E%3Cellipse cx='36' cy='16.5' rx='1.8' ry='2.3'/%3E%3Cellipse cx='60' cy='18.5' rx='1.8' ry='2.3'/%3E%3Cellipse cx='84' cy='16.5' rx='1.8' ry='2.3'/%3E%3Cellipse cx='108' cy='10' rx='1.8' ry='2.3'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 120px 34px;
+  background-repeat: repeat-x;
+  animation: catalog-xmas-twinkle 2.6s ease-in-out infinite;
+}
+
+.catalog-xmas-snowbank {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.6rem;
+  z-index: 3;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='30' viewBox='0 0 200 30' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='s' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='1' stop-color='%23cbd5e1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 16C22 6 44 6 66 13S110 22 134 11S178 7 200 16V30H0Z' fill='url(%23s)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='30' viewBox='0 0 150 30' preserveAspectRatio='none'%3E%3Cpath d='M0 12C20 4 40 6 58 12S100 18 120 9S140 8 150 12V30H0Z' fill='%23e2e8f0' fill-opacity='.55'/%3E%3C/svg%3E");
+  background-size: 200px 100%, 150px 100%;
+  background-position: 0 bottom, 60px bottom;
+  background-repeat: repeat-x;
+  filter: drop-shadow(0 -2px 6px rgba(226, 232, 240, 0.35));
+}
+
+@media (min-width: 640px) {
+  .catalog-xmas-lights {
+    height: 44px;
+    background-size: 170px 44px;
+  }
+
+  .catalog-xmas-snowbank {
+    height: 2.1rem;
+  }
+}
+
+@keyframes catalog-xmas-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-xmas-lights,
+  .catalog-xmas-sparkles,
+  .catalog-xmas-star {
+    animation: none;
+  }
+}
+
 .coa-archive-hero {
   --coa-rg-purple: #8b5cf6;
   --coa-rg-pink: #ec4899;
