@@ -253,7 +253,6 @@ const XMAS_STARS = [
 export function ChristmasScene() {
   return (
     <div className="catalog-xmas-scene" aria-hidden="true">
-      <div className="catalog-xmas-sparkles" />
       {XMAS_STARS.map((star) => (
         <span
           key={`${star.left}-${star.top}`}
