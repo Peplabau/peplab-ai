@@ -1,7 +1,7 @@
 import { Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
+const TELEGRAM_COMMUNITY = 'https://t.me/+QhHqp9rVqPw2ZGJl';
 const HERO_IMG_SRC = '/shop/hero-img.png';
 
 type ShopHeroProps = {

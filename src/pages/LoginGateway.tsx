@@ -36,7 +36,7 @@ const VERIFICATION_PENDING_COPY =
   "Your account is created. We've also sent a quick confirmation email — open it to finish setting up your dashboard access.";
 
 /** Login-gateway Community button — group invite with admin approval (not the support Telegram setting). */
-const LOGIN_COMMUNITY_TELEGRAM = 'https://t.me/+lG6-bsBkKD0xMzY9';
+const LOGIN_COMMUNITY_TELEGRAM = 'https://t.me/+QhHqp9rVqPw2ZGJl';
 
 const REF_STORAGE_KEY = 'peplab_ref';
 

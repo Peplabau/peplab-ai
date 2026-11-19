@@ -9,6 +9,7 @@ import {
   loadFreeGiftSettings,
   resolveFreeGiftCartItem,
 } from '@/lib/free-gift';
+import { trackAddToCart } from '@/lib/analytics';
 
 export interface CartItem {
   productId: string;
@@ -327,6 +328,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [isLoading, bundlePricingKey, saveCartToSupabase]);
 
   const addItem = useCallback((newItem: CartItem) => {
+    if (!newItem.isFree) {
+      const unit = newItem.basePrice != null
+        ? getCartLineUnitPrice(newItem.productId, newItem.basePrice, newItem.quantity, bundleDiscountSettings, newItem.name)
+        : newItem.price;
+      trackAddToCart({
+        itemId: newItem.productId,
+        itemName: newItem.name,
+        itemVariant: String(newItem.dosage),
+        price: unit,
+        quantity: newItem.quantity,
+      });
+    }
     setItems((prev) => {
       const existingIndex = prev.findIndex(
         (item) =>
