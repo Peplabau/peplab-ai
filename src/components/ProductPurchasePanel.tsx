@@ -20,6 +20,7 @@ import type { DiscountSettings } from '@/lib/settings';
 import CoaDialog from '@/components/CoaDialog';
 import { getCoaDisplayData } from '@/lib/coa-utils';
 import { ProductCardStyles } from '@/components/ProductCard';
+import { trackViewItem } from '@/lib/analytics';
 
 interface ProductPurchasePanelProps {
   product: Product;
@@ -77,6 +78,19 @@ export default function ProductPurchasePanel({
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
+
+  const viewVariant = sel ? formatDosageLabel(sel.mg, sel.unit) : '';
+  const viewPrice = sel ? getBuy1UnitPrice(sel.originalPrice, discountSettings) : 0;
+
+  useEffect(() => {
+    if (!viewVariant) return;
+    trackViewItem({
+      itemId: product.id,
+      itemName: product.name,
+      itemVariant: viewVariant,
+      price: viewPrice,
+    });
+  }, [product.id, product.name, viewPrice, viewVariant]);
 
   if (!sel) return null;
 
