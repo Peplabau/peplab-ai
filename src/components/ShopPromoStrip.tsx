@@ -7,7 +7,7 @@ import { useRewards } from '@/context/RewardsContext';
 import { SEASONAL_PROMO_COPY, useSeasonalTheme } from '@/hooks/use-seasonal-theme';
 
 /** Catalog / home community invite with admin approval. */
-export const SHOP_TELEGRAM_COMMUNITY = 'https://t.me/+lG6-bsBkKD0xMzY9';
+export const SHOP_TELEGRAM_COMMUNITY = 'https://t.me/+QhHqp9rVqPw2ZGJl';
 
 /** Pumpkin mark for the Halloween Treat banner and the drifting promo pumpkin. */
 export function HalloweenPumpkinIcon({ className }: { className?: string }) {
