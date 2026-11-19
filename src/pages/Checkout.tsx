@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   ArrowLeft, 
   Truck, 
@@ -40,6 +40,7 @@ import { generateOrderNumberForCheckout, generatePreorderOrderNumberForCheckout 
 import { copyTextToClipboard } from '@/lib/clipboard';
 import { formatOrderNumberDisplay } from '@/utils/order-number';
 import { trackGoogleAdsPurchase } from '@/lib/google-ads';
+import { trackAddPaymentInfo, trackBeginCheckout, trackPurchase } from '@/lib/analytics';
 import { getMarketingBundleOffLabel, productExcludesVolumeBundle } from '@/utils/pricing';
 import {
   calculatePurchasePoints,
@@ -254,6 +255,15 @@ export default function Checkout() {
     : 0;
 
   const finalTotal = paidItemsTotal + shippingCost - pointsDiscount - affiliateDiscountAmount;
+  const beginCheckoutFired = useRef(false);
+
+  useEffect(() => {
+    if (isCartLoading || beginCheckoutFired.current) return;
+    const paidItems = items.filter((item) => !item.isFree);
+    if (!paidItems.length) return;
+    beginCheckoutFired.current = true;
+    trackBeginCheckout({ items: paidItems, value: paidItemsTotal });
+  }, [isCartLoading, items, paidItemsTotal]);
 
   const referralPromoDiscountActive = referralBenefitsActive && affiliateDiscountAmount > 0;
   const estimatedPurchaseRewardPts = calculatePurchasePoints(paidItemsTotal, {
@@ -314,6 +324,7 @@ export default function Checkout() {
         ? await generatePreorderOrderNumberForCheckout()
         : await generateOrderNumberForCheckout();
       const finalOrderTotal = paidItemsTotal + shippingCost - pointsDiscount - affiliateDiscountAmount;
+      const purchasedItems = items.filter((item) => !item.isFree);
       setOrderNumber(newOrderNumber);
       setOrderTotal(finalOrderTotal);
       setCompletedOrderWasPreorder(wasPreorderCheckout);
@@ -505,6 +516,18 @@ export default function Checkout() {
 
       clearCart();
       trackGoogleAdsPurchase(finalOrderTotal, newOrderNumber);
+      trackAddPaymentInfo({
+        items: purchasedItems,
+        value: finalOrderTotal,
+        shipping: shippingCost,
+        paymentType: 'payid',
+      });
+      trackPurchase({
+        transactionId: newOrderNumber,
+        items: purchasedItems,
+        value: finalOrderTotal,
+        shipping: shippingCost,
+      });
       setOrderComplete(true);
     } catch (err) {
       console.error('Order submission error:', err);
