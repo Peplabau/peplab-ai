@@ -14,6 +14,11 @@
 VITE_CLUCHED_PUBLIC_KEY=orch_pk_…
 ```
 
+**Vercel:** add `VITE_CLUCHED_PUBLIC_KEY` under Project → Settings → Environment Variables
+(Production). Vite bakes this in at **build** time, so the next Git push to the
+production branch (usually `main`) triggers an auto-redeploy that picks up the key.
+A dashboard-only “Redeploy” is not required if Git integration is connected.
+
 ### Supabase → Project Settings → Edge Functions → Secrets
 
 | Secret | Value |

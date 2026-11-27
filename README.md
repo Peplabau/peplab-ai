@@ -1,4 +1,18 @@
- # React + TypeScript + Vite   
+# PEPLAB (peplab.ai)
+
+React + TypeScript + Vite storefront. Production deploys from GitHub → Vercel.
+
+## Card checkout (Cluched)
+
+Set `VITE_CLUCHED_PUBLIC_KEY` in Vercel (and local `.env`). Secret keys stay in
+Supabase Edge Function secrets — see [docs/cluched-setup.md](docs/cluched-setup.md).
+
+After changing a `VITE_*` variable, push a commit to the production branch so
+Vercel rebuilds (env vars are applied at build time).
+
+---
+
+## React + TypeScript + Vite
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 Currently, two official plugins are available: 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
