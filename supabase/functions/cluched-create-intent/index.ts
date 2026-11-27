@@ -109,9 +109,11 @@ Deno.serve(async (req: Request) => {
         : [{ url: webhookUrl }],
     });
 
+    // Embedded checkout (PDF Option C) only needs payment_intent (pi_…).
+    // `url` is the hosted page — we keep it for optional fallback but do not require it.
     const paymentIntent = String(intent.payment_intent || "");
     const checkoutUrl = String(intent.url || "");
-    if (!paymentIntent || !checkoutUrl) {
+    if (!paymentIntent) {
       return json({ error: "Payment provider returned an incomplete response" }, 502);
     }
 

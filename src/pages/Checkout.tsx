@@ -60,6 +60,7 @@ import {
   isCluchedEnabled,
   type CluchedPaymentMethod,
 } from '@/lib/cluched';
+import CluchedPaymentEmbed from '@/components/CluchedPaymentEmbed';
 
 interface ShippingMethod {
   id: string;
@@ -128,7 +129,8 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState<CluchedPaymentMethod>('payid');
   const [completedPaymentMethod, setCompletedPaymentMethod] = useState<CluchedPaymentMethod>('payid');
   const [cardPayError, setCardPayError] = useState<string | null>(null);
-  const [isRedirectingToCard, setIsRedirectingToCard] = useState(false);
+  const [isPreparingCard, setIsPreparingCard] = useState(false);
+  const [cardPaymentIntent, setCardPaymentIntent] = useState<string | null>(null);
 
   const [bankDetails, setBankDetails] = useState<BankDetails>(DEFAULT_BANK_DETAILS);
 
@@ -544,15 +546,16 @@ export default function Checkout() {
       setOrderComplete(true);
 
       if (paymentMethod === 'cluched' && cluchedEnabled) {
-        setIsRedirectingToCard(true);
+        // Stay on peplab.ai — embed the payment form (no pay.orchestrapay.com redirect).
+        setIsPreparingCard(true);
         setCardPayError(null);
+        setCardPaymentIntent(null);
         try {
           const intent = await createCluchedPaymentIntent({
             orderNumber: newOrderNumber,
             email: contactEmail.trim(),
           });
-          window.location.assign(intent.checkoutUrl);
-          return;
+          setCardPaymentIntent(intent.paymentIntent);
         } catch (cardErr) {
           console.error('Cluched intent error:', cardErr);
           setCardPayError(
@@ -560,7 +563,8 @@ export default function Checkout() {
               ? cardErr.message
               : 'Card checkout could not start. Use bank transfer below, or try again.',
           );
-          setIsRedirectingToCard(false);
+        } finally {
+          setIsPreparingCard(false);
         }
       }
     } catch (err) {
@@ -622,26 +626,35 @@ export default function Checkout() {
             <h2 className="text-lg font-bold text-amber-500 text-center mb-1">MAKE PAYMENT</h2>
             <p className="text-xs text-amber-400 text-center">
               {completedPaymentMethod === 'cluched'
-                ? isRedirectingToCard
-                  ? 'Redirecting you to secure card checkout…'
-                  : 'Complete card payment, or use bank transfer below'
+                ? 'Complete card payment below (you stay on peplab.ai)'
                 : 'Complete your order by making a bank transfer'}
             </p>
           </div>
 
-          {isRedirectingToCard && (
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10 mb-4 flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-[#2ED1B4] animate-spin shrink-0" />
-              <p className="text-sm text-gray-300">Opening secure card checkout…</p>
-            </div>
-          )}
-
-          {cardPayError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 mb-4 text-left">
-              <p className="text-xs text-rose-200 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{cardPayError}</span>
-              </p>
+          {completedPaymentMethod === 'cluched' && (
+            <div className="mb-4 space-y-3">
+              {isPreparingCard && (
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 text-[#2ED1B4] animate-spin shrink-0" />
+                  <p className="text-sm text-gray-300">Loading secure card checkout…</p>
+                </div>
+              )}
+              {cardPayError && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 text-left">
+                  <p className="text-xs text-rose-200 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{cardPayError}</span>
+                  </p>
+                </div>
+              )}
+              {cardPaymentIntent && (
+                <CluchedPaymentEmbed
+                  orderNumber={orderNumber}
+                  email={contactEmail.trim()}
+                  paymentIntent={cardPaymentIntent}
+                  onFailure={(message) => setCardPayError(message)}
+                />
+              )}
             </div>
           )}
 
@@ -657,7 +670,8 @@ export default function Checkout() {
             </div>
           </div>
 
-          {/* Bank Details */}
+          {/* Bank Details — always for PayID; for card, shown as fallback if embed fails */}
+          {(completedPaymentMethod !== 'cluched' || cardPayError || !cardPaymentIntent) && (
           <div className="p-4 rounded-xl bg-gradient-to-br from-[#2ED1B4]/10 to-[#8B5CF6]/10 border border-[#2ED1B4]/20 mb-4">
             <div className="flex items-center gap-2 mb-3">
               <Building2 className="w-5 h-5 text-[#2ED1B4]" />
@@ -760,8 +774,10 @@ export default function Checkout() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Instructions */}
+          {completedPaymentMethod !== 'cluched' || cardPayError || !cardPaymentIntent ? (
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 mb-4">
             <p className="text-xs text-gray-400 mb-2">How to pay:</p>
             <ol className="text-sm text-white space-y-1">
@@ -775,6 +791,16 @@ export default function Checkout() {
               </li>
             </ol>
           </div>
+          ) : (
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 mb-4">
+            <p className="text-xs text-gray-400 mb-2">How to pay:</p>
+            <ol className="text-sm text-white space-y-1">
+              <li>1. Enter your card details in the form above</li>
+              <li>2. Tap <span className="text-[#2ED1B4] font-semibold">Pay now</span></li>
+              <li>3. Stay on peplab.ai — you will see confirmation when payment clears</li>
+            </ol>
+          </div>
+          )}
 
           {/* Telegram Support */}
           <a 
@@ -1393,7 +1419,7 @@ export default function Checkout() {
                     Card / online checkout
                   </p>
                   <p className="text-[10px] text-gray-400">
-                    Secure Cluched hosted payment — you will be redirected after placing the order
+                    Secure card form on peplab.ai — you will not leave this site
                   </p>
                 </div>
               </label>
