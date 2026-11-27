@@ -54,6 +54,8 @@ export const CONFIG = {
    * Secret key belongs in Supabase Edge Function secrets — never VITE_.
    */
   CLUCHED_PUBLIC_KEY: (import.meta.env.VITE_CLUCHED_PUBLIC_KEY as string | undefined)?.trim() || '',
+  /** Optional payment form id (pf_…) to pin methods — PDF ch. 11 / Option C `paymentForm`. */
+  CLUCHED_PAYMENT_FORM_ID: (import.meta.env.VITE_CLUCHED_PAYMENT_FORM_ID as string | undefined)?.trim() || '',
 
   // Bank Transfer Details - CUSTOMER PAYS TO THIS ACCOUNT
   BANK_DETAILS: {

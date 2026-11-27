@@ -3,8 +3,12 @@
 ## What was built
 
 - Checkout can choose **Bank transfer / PayID** or **Card / online checkout** (when public key is set).
-- Card flow: place order → Edge Function creates a payment intent → redirect to Cluched hosted pay page → return to `/checkout/complete`.
+- Card flow follows **PDF Option C** (`@orchestrapay/react` `<PaymentForm />`):
+  place order → Edge Function creates a payment intent → embed form on peplab.ai
+  (browser URL stays peplab.ai) → poll + webhook → `/checkout/complete`.
+- Do **not** use hosted redirect (`pay.orchestrapay.com`) so the link stays on peplab.ai.
 - Webhook marks the order `payment_status=confirmed` / `status=processing` (same as admin “mark paid”).
+- Sandbox still needs a **Sandbox Gateway** connector in Cluched, or the embed shows “No payment methods configured”.
 
 ## 1. Paste keys
 
