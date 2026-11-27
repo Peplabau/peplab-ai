@@ -21,6 +21,16 @@ verify_jwt = false
 [functions.auspost-track-public]
 verify_jwt = false
 
+# Cluched Orchestration — guest checkout + webhook (secrets hold orch_sk_…)
+[functions.cluched-create-intent]
+verify_jwt = false
+
+[functions.cluched-webhook]
+verify_jwt = false
+
+[functions.cluched-order-status]
+verify_jwt = false
+
 # -----------------------------------------------------------------------------
 # Auth — frictionless signup (no email verification)
 # -----------------------------------------------------------------------------

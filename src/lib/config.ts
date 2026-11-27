@@ -49,6 +49,12 @@ export const CONFIG = {
   AUSPOST_API_KEY: import.meta.env.VITE_AUSPOST_API_KEY || '',
   AUSPOST_API_SECRET: import.meta.env.VITE_AUSPOST_API_SECRET || '',
 
+  /**
+   * Cluched Orchestration public key only (orch_pk_…).
+   * Secret key belongs in Supabase Edge Function secrets — never VITE_.
+   */
+  CLUCHED_PUBLIC_KEY: (import.meta.env.VITE_CLUCHED_PUBLIC_KEY as string | undefined)?.trim() || '',
+
   // Bank Transfer Details - CUSTOMER PAYS TO THIS ACCOUNT
   BANK_DETAILS: {
     ACCOUNT_NAME: 'PEPLAB',

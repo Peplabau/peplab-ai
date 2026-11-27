@@ -15,6 +15,7 @@ import {
   X,
   Lock,
   Tag,
+  CreditCard,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useRewards, REDEMPTION_TIERS } from '@/context/RewardsContext';
@@ -54,6 +55,11 @@ import {
   type CheckoutShippingDetails,
 } from '@/lib/checkout-profile';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  createCluchedPaymentIntent,
+  isCluchedEnabled,
+  type CluchedPaymentMethod,
+} from '@/lib/cluched';
 
 interface ShippingMethod {
   id: string;
@@ -118,6 +124,11 @@ export default function Checkout() {
   const [copyNotice, setCopyNotice] = useState<string | null>(null);
   /** Success screen: cart included preorder line(s). */
   const [completedOrderWasPreorder, setCompletedOrderWasPreorder] = useState(false);
+  const cluchedEnabled = isCluchedEnabled();
+  const [paymentMethod, setPaymentMethod] = useState<CluchedPaymentMethod>('payid');
+  const [completedPaymentMethod, setCompletedPaymentMethod] = useState<CluchedPaymentMethod>('payid');
+  const [cardPayError, setCardPayError] = useState<string | null>(null);
+  const [isRedirectingToCard, setIsRedirectingToCard] = useState(false);
 
   const [bankDetails, setBankDetails] = useState<BankDetails>(DEFAULT_BANK_DETAILS);
 
@@ -350,6 +361,7 @@ export default function Checkout() {
         age_verified: true,
         status: 'pending_payment',
         payment_status: 'pending',
+        payment_method: paymentMethod,
         order_source: 'direct',
         is_preorder: wasPreorderCheckout,
         items: items.map(item => ({
@@ -520,7 +532,7 @@ export default function Checkout() {
         items: purchasedItems,
         value: finalOrderTotal,
         shipping: shippingCost,
-        paymentType: 'payid',
+        paymentType: paymentMethod === 'cluched' ? 'card' : 'payid',
       });
       trackPurchase({
         transactionId: newOrderNumber,
@@ -528,7 +540,29 @@ export default function Checkout() {
         value: finalOrderTotal,
         shipping: shippingCost,
       });
+      setCompletedPaymentMethod(paymentMethod);
       setOrderComplete(true);
+
+      if (paymentMethod === 'cluched' && cluchedEnabled) {
+        setIsRedirectingToCard(true);
+        setCardPayError(null);
+        try {
+          const intent = await createCluchedPaymentIntent({
+            orderNumber: newOrderNumber,
+            email: contactEmail.trim(),
+          });
+          window.location.assign(intent.checkoutUrl);
+          return;
+        } catch (cardErr) {
+          console.error('Cluched intent error:', cardErr);
+          setCardPayError(
+            cardErr instanceof Error
+              ? cardErr.message
+              : 'Card checkout could not start. Use bank transfer below, or try again.',
+          );
+          setIsRedirectingToCard(false);
+        }
+      }
     } catch (err) {
       console.error('Order submission error:', err);
       setSubmitError('Failed to create order. Please try again.');
@@ -586,8 +620,30 @@ export default function Checkout() {
           {/* MAKE PAYMENT Reminder */}
           <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 mb-4">
             <h2 className="text-lg font-bold text-amber-500 text-center mb-1">MAKE PAYMENT</h2>
-            <p className="text-xs text-amber-400 text-center">Complete your order by making a bank transfer</p>
+            <p className="text-xs text-amber-400 text-center">
+              {completedPaymentMethod === 'cluched'
+                ? isRedirectingToCard
+                  ? 'Redirecting you to secure card checkout…'
+                  : 'Complete card payment, or use bank transfer below'
+                : 'Complete your order by making a bank transfer'}
+            </p>
           </div>
+
+          {isRedirectingToCard && (
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 mb-4 flex items-center gap-3">
+              <Loader2 className="w-5 h-5 text-[#2ED1B4] animate-spin shrink-0" />
+              <p className="text-sm text-gray-300">Opening secure card checkout…</p>
+            </div>
+          )}
+
+          {cardPayError && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 mb-4 text-left">
+              <p className="text-xs text-rose-200 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{cardPayError}</span>
+              </p>
+            </div>
+          )}
 
           {/* Order Details */}
           <div className="p-4 rounded-xl bg-white/5 border border-white/10 mb-4">
@@ -1289,17 +1345,71 @@ export default function Checkout() {
             </div>
           </div>
 
-          {/* Payment Info */}
-          <div className="p-3 rounded-xl bg-gradient-to-br from-[#2ED1B4]/10 to-[#8B5CF6]/10 border border-[#2ED1B4]/20">
-            <div className="flex items-center gap-2 mb-1.5">
+          {/* Payment method */}
+          <div className="p-3 rounded-xl bg-gradient-to-br from-[#2ED1B4]/10 to-[#8B5CF6]/10 border border-[#2ED1B4]/20 space-y-2">
+            <div className="flex items-center gap-2 mb-1">
               <Building2 className="w-3.5 h-3.5 text-[#2ED1B4]" />
-              <span className="text-xs font-medium text-white">Payment Methods</span>
+              <span className="text-xs font-medium text-white">Payment method</span>
             </div>
-            <ul className="text-[10px] text-gray-400 space-y-0.5">
-              <li>• Bank Transfer (details after order)</li>
-              <li>• Cash on pickup</li>
-              <li>• <a href={CONFIG.SOCIAL.TELEGRAM} target="_blank" rel="noopener noreferrer" className="text-[#2ED1B4] underline">Message us on Telegram</a> for more info</li>
-            </ul>
+
+            <label
+              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer ${
+                paymentMethod === 'payid'
+                  ? 'border-[#2ED1B4]/50 bg-black/30'
+                  : 'border-white/10 bg-black/20'
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment_method"
+                className="mt-1"
+                checked={paymentMethod === 'payid'}
+                onChange={() => setPaymentMethod('payid')}
+              />
+              <div>
+                <p className="text-sm text-white font-medium">Bank transfer / PayID</p>
+                <p className="text-[10px] text-gray-400">Details shown after you place the order</p>
+              </div>
+            </label>
+
+            {cluchedEnabled && (
+              <label
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer ${
+                  paymentMethod === 'cluched'
+                    ? 'border-[#2ED1B4]/50 bg-black/30'
+                    : 'border-white/10 bg-black/20'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="payment_method"
+                  className="mt-1"
+                  checked={paymentMethod === 'cluched'}
+                  onChange={() => setPaymentMethod('cluched')}
+                />
+                <div className="flex-1">
+                  <p className="text-sm text-white font-medium flex items-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5 text-[#2ED1B4]" />
+                    Card / online checkout
+                  </p>
+                  <p className="text-[10px] text-gray-400">
+                    Secure Cluched hosted payment — you will be redirected after placing the order
+                  </p>
+                </div>
+              </label>
+            )}
+
+            <p className="text-[10px] text-gray-500 pt-1">
+              Cash on pickup and other options:{' '}
+              <a
+                href={CONFIG.SOCIAL.TELEGRAM}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#2ED1B4] underline"
+              >
+                Telegram support
+              </a>
+            </p>
           </div>
 
           <div className="p-3 rounded-xl bg-white/5 border border-white/10">
@@ -1321,6 +1431,8 @@ export default function Checkout() {
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Processing...
               </span>
+            ) : paymentMethod === 'cluched' && cluchedEnabled ? (
+              `Place order & pay — $${finalTotal.toFixed(2)}`
             ) : (
               `Complete Order — $${finalTotal.toFixed(2)}`
             )}

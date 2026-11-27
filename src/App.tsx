@@ -41,6 +41,7 @@ import Footer from '@/sections/Footer';
 // Route-level code-splitting: keeps initial bundle smaller (faster deploy + faster first load).
 const Contact = lazy(() => import('@/pages/Contact'));
 const Checkout = lazy(() => import('@/pages/Checkout'));
+const CheckoutComplete = lazy(() => import('@/pages/CheckoutComplete'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const Refund = lazy(() => import('@/pages/Refund'));
@@ -544,6 +545,7 @@ function App() {
               <Route path="/new-landing" element={<Navigate to={LANDING_PATH} replace />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout/complete" element={<CheckoutComplete />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/refund" element={<Refund />} />
